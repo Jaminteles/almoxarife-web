@@ -3,7 +3,7 @@ import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 
 import MainLayout from "./layouts/MainLayout";
 
-import Home from "./pages/Home";
+import Home from "./pages";
 
 // Funcionários
 import FuncionariosList from "./pages/funcionarios/List";
