@@ -8,7 +8,6 @@ import {
   Paper
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import BackButton from "../../components/BackButton";
 
 export default function FornecedorForm() {
   const navigate = useNavigate();
@@ -37,8 +36,7 @@ export default function FornecedorForm() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 3 }}>
-      <BackButton />
+    <Container maxWidth="sm">
 
       <Paper sx={{ p: 3, borderRadius: 3 }}>
         <Typography variant="h5" mb={2}>

@@ -1,6 +1,5 @@
 import { Container, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import BackButton from "../../components/BackButton";
 import ListTemplate from "../../components/ListTemplate";
 
 export default function FuncionariosList() {
@@ -16,8 +15,7 @@ export default function FuncionariosList() {
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 3 }}>
-      <BackButton />
+    <Container maxWidth="lg">
 
       <ListTemplate
         title="Funcionários"

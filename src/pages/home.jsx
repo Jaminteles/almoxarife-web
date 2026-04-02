@@ -1,8 +1,6 @@
-import { Container, Typography, Button, Box } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Container, Typography, Box } from "@mui/material";
 
 export default function Home() {
-  const navigate = useNavigate();
 
   return (
     <Container maxWidth="md">
@@ -19,21 +17,7 @@ export default function Home() {
         </Typography>
 
         <Box display="flex" gap={3}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate("/funcionarios")}
-          >
-            Funcionários
-          </Button>
 
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate("/fornecedores")}
-          >
-            Fornecedores
-          </Button>
         </Box>
       </Box>
     </Container>
