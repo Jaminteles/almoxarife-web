@@ -1,24 +1,42 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+
+// Home
+import Home from "./pages/home";
+
+// Funcionários
+import FuncionariosList from "./pages/funcionarios/List";
+import FuncionarioForm from "./pages/funcionarios/Form";
+
+// Fornecedores
+import FornecedoresList from "./pages/fornecedores/List";
+import FornecedorForm from "./pages/fornecedores/Form";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Routes>
+            {/* Home */}
+          <Route path="/" element={<Home />} />
+
+          {/* Funcionários */}
+          <Route path="/funcionarios" element={<FuncionariosList />} />
+          <Route path="/funcionarios/novo" element={<FuncionarioForm />} />
+
+          {/* Fornecedores */}
+          <Route path="/fornecedores" element={<FornecedoresList />} />
+          <Route path="/fornecedores/novo" element={<FornecedorForm />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
