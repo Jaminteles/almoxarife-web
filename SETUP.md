@@ -55,91 +55,151 @@ npm list
 
 ---
 
-## 🏃 Executar a Aplicação
+## 🏃 Executar a Aplicação Completa
 
-### Em Desenvolvimento
-
+### Terminal 1: Frontend React
 ```bash
 npm start
 ```
+- URL: http://localhost:3000
+- Hot Reload: ✅ Ativado
 
-- **URL**: http://localhost:3000
-- **Hot Reload**: Ativado (mudanças refletem automaticamente)
-- **DevTools**: Disponível no navegador (F12)
-
-### Em Produção
-
+### Terminal 2: Backend Node.js
 ```bash
-npm run build
+cd backend
+npm install  # Se for primeira vez
+npm run dev  # ou npm start
 ```
+- URL: http://localhost:5000/api
+- Reload automático com nodemon: ✅ Ativado
 
-Cria pasta `build/` otimizada para deployment.
-
+### Verificar se está funcionando
 ```bash
-serve -s build
-```
+# Terminal 3: Testar API
+curl http://localhost:5000/api/funcionarios
 
-Ou deploy direto em hospedagem (Vercel, Netlify, etc).
+# Deve retornar:
+# {"sucesso":true,"dados":[],"total":0}
+```
 
 ---
 
-## 📁 Estrutura de Arquivos Gerada
+## 🖥️ Backend (Node.js + Express)
 
+### Dependências Instaladas
+- **express**: Framework web
+- **cors**: Permitir requisições do frontend
+- **bcrypt**: Hash seguro de senhas
+- **uuid**: Gerar IDs únicos
+- **nodemon**: Reload automático em desenvolvimento
+
+### Estrutura do Backend
 ```
-almoxarife-web/
-├── node_modules/          # Dependências instaladas
-├── public/                # Arquivos estáticos
-│   ├── index.html         # HTML principal
-│   ├── manifest.json      # PWA manifest
-│   └── robots.txt         # SEO
+backend/
 ├── src/
-│   ├── components/        # Componentes reutilizáveis
-│   ├── pages/             # Páginas/Rotas
-│   ├── layouts/           # Layouts
-│   ├── App.js             # App principal
-│   ├── index.js           # Entry point
-│   └── ...
-├── package.json           # Dependências e scripts
-├── package-lock.json      # Lock de versões
-├── README.md              # Documentação
-├── .gitignore            # Arquivos ignorados
-└── ...
+│   ├── app.js                    # Config Express + CORS
+│   ├── controllers/
+│   │   └── funcionarioController.js    # Lógica de negócio
+│   ├── repositories/
+│   │   └── funcionarioRepository.js    # Acesso a dados
+│   └── routes/
+│       └── funcionario.js               # Endpoints
+├── server.js                     # Inicialização
+└── package.json
 ```
+
+### Setup Inicial do Backend (Primeira Vez)
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+### Endpoints Disponíveis
+
+#### Listar Funcionários
+```bash
+GET http://localhost:5000/api/funcionarios
+Response: {"sucesso":true,"dados":[...],"total":2}
+```
+
+#### Criar Funcionário
+```bash
+POST http://localhost:5000/api/funcionarios
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "cpf": "123.456.789-00",
+  "email": "joao@empresa.com",
+  "cargo": "Almoxarife",
+  "login": "joao_silva",
+  "senha": "SenhaSegura123"
+}
+
+Response: {"sucesso":true,"mensagem":"Funcionário cadastrado com sucesso","dados":{...}}
+```
+
+#### Buscar Funcionário
+```bash
+GET http://localhost:5000/api/funcionarios/:id
+Response: {"sucesso":true,"dados":{...}}
+```
+
+#### Atualizar Funcionário
+```bash
+PUT http://localhost:5000/api/funcionarios/:id
+Content-Type: application/json
+
+{
+  "cargo": "Almoxarife Sênior"
+}
+
+Response: {"sucesso":true,"mensagem":"Funcionário atualizado com sucesso","dados":{...}}
+```
+
+#### Remover Funcionário
+```bash
+DELETE http://localhost:5000/api/funcionarios/:id
+Response: {"sucesso":true,"mensagem":"Funcionário removido com sucesso"}
+```
+
+### Segurança Implementada
+- ✅ Hash de senhas com bcrypt (salt rounds: 10)
+- ✅ Validação de campos obrigatórios
+- ✅ Validação de duplicatas (CPF, Login)
+- ✅ Remoção automática de senhas nas respostas
+- ✅ CORS configurado
+
+### Próximas Melhorias
+- [ ] Implements endpoints de Fornecedores
+- [ ] Integração com banco de dados real
+- [ ] Autenticação com JWT
+- [ ] Tratamento de erros melhorado
+- [ ] Testes unitários
 
 ---
 
 ## 🔧 Variáveis de Ambiente
 
-### Criar Arquivo `.env`
+### Frontend - Criar Arquivo `.env`
 
-Na raiz do projeto, crie `.env`:
+Na raiz do projeto (mesmo nível do src/), crie `.env`:
 
 ```env
-# API
+# API Backend
 REACT_APP_API_URL=http://localhost:5000/api
 REACT_APP_API_TIMEOUT=30000
 
-# Autenticação
+# Autenticação (futuro)
 REACT_APP_JWT_KEY=sua_chave_jwt_aqui
 
 # Ambiente
 REACT_APP_ENV=development
 REACT_APP_DEBUG=true
-
-# Analytics (futuro)
-REACT_APP_GOOGLE_ANALYTICS_ID=seu_id_aqui
 ```
 
-### Usar Variáveis no Código
-
-```javascript
-const apiUrl = process.env.REACT_APP_API_URL;
-const isDev = process.env.REACT_APP_ENV === 'development';
-
-console.log(`Conectando a: ${apiUrl}`);
-```
-
-### Arquivo `.env.example`
+### Frontend - Arquivo `.env.example`
 
 Crie `.env.example` para documentação:
 
@@ -152,31 +212,17 @@ REACT_APP_ENV=development
 REACT_APP_DEBUG=true
 ```
 
+### Backend - Variáveis (futuro)
+```env
+NODE_ENV=development
+PORT=5000
+DATABASE_URL=postgresql://usuario:senha@localhost/almoxarife
+JWT_SECRET=sua_chave_jwt_aqui
+```
+
 ---
 
-## 🐍 Backend (Opcional - Setup Recomendado)
-
-### Python + Flask (Exemplo)
-
-#### 1. Criar Pasta Backend
-
-```bash
-mkdir backend
-cd backend
-python -m venv venv
-```
-
-#### 2. Ativar Virtual Environment
-
-**Windows**:
-```bash
-venv\Scripts\activate
-```
-
-**Mac/Linux**:
-```bash
-source venv/bin/activate
-```
+## 🐍 Banco de Dados (Próxima Fase)
 
 #### 3. Instalar Dependências
 

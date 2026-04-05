@@ -218,47 +218,156 @@ function handleSubmit(e) {
 }
 ```
 
-## 🔗 Integração com API (Próximo Passo)
+## 🔗 Integração com API (Implementação)
+
+### ✅ Backend Disponível
+O backend já está **parcialmente funcional** em `http://localhost:5000/api`:
+- ✅ Endpoints CRUD de Funcionários
+- ✅ Hash de senhas com bcrypt
+- ✅ Validações de duplicatas
+- ✅ CORS configurado
+- ❌ Banco de dados real (ainda em memória)
+- ❌ Endpoints de Fornecedores (ainda não implementados)
 
 ### Estrutura Recomendada
-```
-src/services/api.js
-```
+Criar `src/services/api.js`:
 
 ```javascript
 // src/services/api.js
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-export async function createFuncionario(data) {
+export async function listarFuncionarios() {
+  const response = await fetch(`${API_BASE_URL}/funcionarios`);
+  if (!response.ok) throw new Error('Erro ao listar');
+  return response.json();
+}
+
+export async function buscarFuncionario(id) {
+  const response = await fetch(`${API_BASE_URL}/funcionarios/${id}`);
+  if (!response.ok) throw new Error('Erro ao buscar');
+  return response.json();
+}
+
+export async function criarFuncionario(data) {
   const response = await fetch(`${API_BASE_URL}/funcionarios`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.erro || 'Erro ao criar');
+  }
   return response.json();
 }
 
-export async function getFuncionarios() {
-  const response = await fetch(`${API_BASE_URL}/funcionarios`);
+export async function atualizarFuncionario(id, data) {
+  const response = await fetch(`${API_BASE_URL}/funcionarios/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error('Erro ao atualizar');
+  return response.json();
+}
+
+export async function removerFuncionario(id) {
+  const response = await fetch(`${API_BASE_URL}/funcionarios/${id}`, {
+    method: 'DELETE'
+  });
+  if (!response.ok) throw new Error('Erro ao remover');
   return response.json();
 }
 ```
 
-### Uso em Componentes
+### Usar em Formulários
 ```jsx
-import { createFuncionario } from "../../services/api";
+import { criarFuncionario } from "../../services/api";
+import { useState } from "react";
 
-async function handleSubmit(e) {
-  e.preventDefault();
-  
-  try {
-    const result = await createFuncionario(form);
-    navigate("/funcionarios");
-  } catch (error) {
-    console.error("Erro ao cadastrar:", error);
-    alert("Erro ao cadastrar funcionário");
+export default function FuncionarioForm() {
+  const [form, setForm] = useState({ /* campos */ });
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setErro("");
+    
+    try {
+      const resultado = await criarFuncionario(form);
+      alert("✅ " + resultado.mensagem);
+      navigate("/funcionarios");
+    } catch (error) {
+      setErro(error.message);
+      alert("❌ " + error.message);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* campos do formulário */}
+      {erro && <Alert severity="error">{erro}</Alert>}
+      <Button type="submit" disabled={loading}>
+        {loading ? "Enviando..." : "Cadastrar"}
+      </Button>
+    </form>
+  );
 }
+```
+
+### Usar em Listagens
+```jsx
+import { useEffect, useState } from "react";
+import { listarFuncionarios } from "../../services/api";
+
+export default function FuncionariosList() {
+  const [dados, setDados] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const resultado = await listarFuncionarios();
+        setDados(resultado.dados);
+      } catch (error) {
+        console.error("Erro:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregar();
+  }, []);
+
+  if (loading) return <p>Carregando...</p>;
+
+  return (
+    <ListTemplate
+      title="Funcionários"
+      columns={["Nome", "CPF", "Email", "Cargo"]}
+      data={dados}
+      onCreate={() => navigate("/funcionarios/novo")}
+    />
+  );
+}
+```
+
+### Backend - Estrutura e Fluxo
+```
+Frontend (React)
+    ↓
+    fetch → http://localhost:5000/api/funcionarios
+    ↓
+Backend (Express)
+    ↓
+Routes → Controllers → Repositories → Memória/BD
+    ↓
+Response JSON (sucesso ou erro)
+    ↓
+Frontend (processa e exibe)
 ```
 
 ## 🧪 Teste Básico (usar setupTests.js)

@@ -87,7 +87,52 @@ export default function ComponentName({ prop1, prop2, onAction }) {
 - **Emotion**: Sistema CSS-in-JS do MUI
 - **sx prop**: Usar para estilos inline em componentes MUI
 
-## 🔐 Segurança (Considerações Futuras)
+## �️ Arquitetura do Backend
+
+### Estrutura
+```
+backend/
+├── src/
+│   ├── app.js                    # Configuração Express
+│   ├── controllers/
+│   │   └── funcionarioController.js    # Lógica de negócio
+│   ├── repositories/
+│   │   └── funcionarioRepository.js    # Acesso a dados
+│   └── routes/
+│       └── funcionario.js               # Definição de rotas
+├── server.js                     # Inicialização do servidor
+└── package.json                  # Dependências
+```
+
+### Padrão MVC Simplificado
+- **Routes**: Define endpoints HTTP e mapeia para controllers
+- **Controllers**: Lógica de negócio, validações, hash de senhas
+- **Repositories**: Acesso à dados (futuramente banco de dados)
+
+### Endpoints Implementados (Funcionários)
+| Método | Rota | Status |
+|--------|------|--------|
+| GET | /api/funcionarios | ✅ Implementado |
+| POST | /api/funcionarios | ✅ Implementado |
+| GET | /api/funcionarios/:id | ✅ Implementado |
+| PUT | /api/funcionarios/:id | ✅ Implementado |
+| DELETE | /api/funcionarios/:id | ✅ Implementado |
+
+### Segurança Implementada
+- ✅ Hash de senhas com bcrypt (salt rounds: 10)
+- ✅ Validação de duplicatas (CPF, Login)
+- ✅ Remoção de senhas nas respostas
+- ✅ CORS habilitado
+- ✅ Validação de campos obrigatórios
+
+### Próximas Implementações
+- [ ] Endpoints CRUD de Fornecedores
+- [ ] Banco de dados real (PostgreSQL/MongoDB)
+- [ ] Autenticação com JWT
+- [ ] Validação avançada de CPF/CNPJ
+- [ ] Rate limiting
+
+## �🔐 Segurança (Considerações Futuras)
 
 - [ ] Validação de entrada (CPF, CNPJ, email)
 - [ ] Sanitização de dados
@@ -97,25 +142,70 @@ export default function ComponentName({ prop1, prop2, onAction }) {
 
 ## 🔌 Integração com API
 
-### Padrão Proposto (TODO)
+### Status Atual
+- ✅ Backend rodando em `http://localhost:5000`
+- ✅ CORS configurado para aceitar frontend
+- ✅ Endpoints de Funcionários prontos
+- ❌ Frontend ainda usa dados mockados em console.log
 
+### Próximo Passo: Substituir Calls Mockadas por Fetch Real
+
+**Antes (mock)**:
 ```jsx
-// No formulário, substituir console.log por:
+function handleSubmit(e) {
+  e.preventDefault();
+  console.log("Dados:", form);  // ← Apenas loga
+  navigate('/funcionarios');
+}
+```
+
+**Depois (com API)**:
+```jsx
 async function handleSubmit(e) {
   e.preventDefault();
   try {
-    const response = await fetch('/api/funcionarios', {
+    const response = await fetch('http://localhost:5000/api/funcionarios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     });
-    if (response.ok) {
-      navigate('/funcionarios');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      setError(error.erro);
+      return;
     }
+    
+    const data = await response.json();
+    alert('✅ ' + data.mensagem);
+    navigate('/funcionarios');
   } catch (error) {
     console.error('Erro:', error);
+    setError('Erro ao conectar com servidor');
   }
 }
+```
+
+### Padrão de Integração (Serviço)
+Criar `src/services/api.js`:
+```javascript
+const API_URL = 'http://localhost:5000/api';
+
+export async function listarFuncionarios() {
+  const response = await fetch(`${API_URL}/funcionarios`);
+  return response.json();
+}
+
+export async function criarFuncionario(dados) {
+  const response = await fetch(`${API_URL}/funcionarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  });
+  return response.json();
+}
+
+// ... outros endpoints
 ```
 
 ## 📦 Estado da Aplicação

@@ -107,6 +107,7 @@ O projeto utiliza **MainLayout** que oferece:
 
 ## 🎨 Tecnologias Utilizadas
 
+### Frontend
 | Tecnologia | Versão | Uso |
 |-----------|--------|-----|
 | React | 19.2.4 | Framework principal |
@@ -114,13 +115,32 @@ O projeto utiliza **MainLayout** que oferece:
 | Material-UI (MUI) | 7.3.9 | Componentes visuais |
 | Emotion | 11.14.0+ | Estilização CSS-in-JS |
 
+### Backend
+| Tecnologia | Versão | Uso |
+|-----------|--------|-----|
+| Node.js | 14+ | Runtime JavaScript |
+| Express | 4.18.2 | Framework web |
+| CORS | 2.8.5 | Controle de acesso |
+| bcrypt | 5.1.1 | Hash de senhas |
+| UUID | 9.0.0 | Geração de IDs únicos |
+| Nodemon | 3.0.0 | Reload automático (dev) |
+
 ## 📝 Scripts Disponíveis
 
+### Frontend
 ```bash
 npm start        # Inicia servidor de desenvolvimento (porta 3000)
 npm run build    # Cria build otimizado para produção
 npm test         # Executa testes
 npm run eject    # Expõe configurações (irreversível)
+```
+
+### Backend
+```bash
+cd backend
+npm install      # Instala dependências do backend
+npm start        # Inicia servidor (porta 5000)
+npm run dev      # Inicia com nodemon (reload automático)
 ```
 
 ## 🔧 Componentes Principais
@@ -143,11 +163,36 @@ Template genérico para exibir listas com filtros.
 />
 ```
 
-## 📌 Próximos Passos / TODO
+## � Backend - Em Desenvolvimento
 
-- [ ] Integrar com API backend (substituir console.log por fetch/axios)
-- [ ] Validação de formulários (CPF, CNPJ, email)
-- [ ] Persistência de dados (banco de dados)
+O backend está parcialmente implementado com:
+
+### ✅ Implementado
+- [x] Servidor Express com CORS
+- [x] Endpoints CRUD de Funcionários (/api/funcionarios)
+- [x] Hash de senhas com bcrypt
+- [x] Validação de duplicatas (CPF, Login)
+- [x] Estrutura de repositório em memória
+- [x] Remoção de senhas nas respostas
+
+### ❌ Faltando
+- [ ] Banco de dados real (PostgreSQL/MongoDB)
+- [ ] Endpoints CRUD de Fornecedores
+- [ ] Integração com frontend (fetch/axios)
+- [ ] Autenticação com JWT
+- [ ] Testes unitários
+- [ ] Validação de CPF/CNPJ
+
+**Próxima Fase**: Integrar frontend com backend (substituir console.log por fetch/axios)
+
+## 📌 Próximos Passos
+
+- [ ] Implementar endpoints de Fornecedores no backend
+- [ ] Conectar frontend com API backend
+- [ ] Implementar autenticação e autorização
+- [ ] Adicionar banco de dados persistente
+- [ ] Validação completa de formulários
+- [ ] Testes automatizados
 - [ ] Autenticação de usuários
 - [ ] Funcionalidades de edição e exclusão
 - [ ] Testes unitários e de integração
