@@ -39,7 +39,7 @@ export default function ListTemplate({
       {/* Botão novo */}
       <Box display="flex" justifyContent="flex-end" mb={2}>
         <Button variant="contained" onClick={onCreate}>
-          + Novo
+          CADASTRAR
         </Button>
       </Box>
 

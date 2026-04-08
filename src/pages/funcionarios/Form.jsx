@@ -50,15 +50,14 @@ export default function FuncionarioForm() {
           <Stack spacing={2}>
             <TextField name="nome" label="Nome" onChange={handleChange} required />
             <TextField name="cpf" label="CPF" onChange={handleChange} required />
-            <TextField name="email" label="Email" onChange={handleChange} required />
             <TextField name="cargo" label="Cargo" onChange={handleChange} required />
-            <TextField name="login" label="Login" onChange={handleChange} required />
+            <TextField name="email" label="Email" onChange={handleChange} required />            
             <TextField
               name="senha"
               label="Senha"
               type="password"
               onChange={handleChange}
-              required
+              requireds
             />
 
             <Stack direction="row" spacing={2}>

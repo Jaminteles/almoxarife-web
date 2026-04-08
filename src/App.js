@@ -30,10 +30,10 @@ function App() {
             <Route path="/" element={<Home />} />
 
             <Route path="/funcionarios" element={<FuncionariosList />} />
-            <Route path="/funcionarios/novo" element={<FuncionarioForm />} />
+            <Route path="/funcionarios/cadastro" element={<FuncionarioForm />} />
 
             <Route path="/fornecedores" element={<FornecedoresList />} />
-            <Route path="/fornecedores/novo" element={<FornecedorForm />} />
+            <Route path="/fornecedores/cadastro" element={<FornecedorForm />} />
           </Routes>
         </MainLayout>
       </BrowserRouter>
