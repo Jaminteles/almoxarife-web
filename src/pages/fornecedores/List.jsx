@@ -1,9 +1,61 @@
-import { Container, TextField } from "@mui/material";
+import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
 export default function FornecedoresList() {
   const navigate = useNavigate();
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [inactivating, setInactivating] = useState(false);
+  const [error, setError] = useState("");
+
+  // Remove formatação (. / -) do CPF/CNPJ
+  function removeFormatting(value) {
+    return value.replace(/[.\/-]/g, "");
+  }
+
+  function handleEdit(item) {
+    const cnpjClean = removeFormatting(item.cnpj);
+    navigate(`/fornecedores/${cnpjClean}/editar`);
+  }
+
+  function handleInactivateClick(item) {
+    setSelectedItem(item);
+    setOpenConfirm(true);
+  }
+
+  function handleConfirmInactivate() {
+    setInactivating(true);
+    setError("");
+
+    const cnpjClean = removeFormatting(selectedItem.cnpj);
+
+    fetch(`http://localhost:3001/api/fornecedores/${cnpjClean}`, {
+      method: "DELETE"
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sucesso) {
+          // Recarregar a página ou remover da lista
+          window.location.reload();
+        } else {
+          setError(data.erro || "Erro ao inativar fornecedor");
+          setInactivating(false);
+        }
+      })
+      .catch(err => {
+        setError("Erro ao inativar: " + err.message);
+        setInactivating(false);
+      });
+
+    setOpenConfirm(false);
+  }
+
+  function handleCloseConfirm() {
+    setOpenConfirm(false);
+    setSelectedItem(null);
+  }
 
   const data = [
     {
@@ -50,12 +102,15 @@ export default function FornecedoresList() {
 
   return (
     <Container maxWidth="lg">
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate
         title="Fornecedores"
         columns={["Nome", "CNPJ", "Telefone"]}
         data={data}
         onCreate={() => navigate("/fornecedores/cadastro")}
+        onEdit={handleEdit}
+        onInactivate={handleInactivateClick}
         filters={
           <>
             <TextField label="Nome" size="small" />
@@ -63,6 +118,34 @@ export default function FornecedoresList() {
           </>
         }
       />
+
+      {/* Dialog de confirmação */}
+      <Dialog
+        open={openConfirm}
+        onClose={handleCloseConfirm}
+      >
+        <DialogTitle>Confirmar Inativação</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deseja inativar o fornecedor <strong>{selectedItem?.nome}</strong>?
+            <br />
+            Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmInactivate}
+            color="warning"
+            variant="contained"
+            disabled={inactivating}
+          >
+            {inactivating ? "Inativando..." : "Inativar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

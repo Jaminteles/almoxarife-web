@@ -1,9 +1,61 @@
-import { Container, TextField } from "@mui/material";
+import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
 export default function FuncionariosList() {
   const navigate = useNavigate();
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [inactivating, setInactivating] = useState(false);
+  const [error, setError] = useState("");
+
+  // Remove formatação (. / -) do CPF/CNPJ
+  function removeFormatting(value) {
+    return value.replace(/[.\/-]/g, "");
+  }
+
+  function handleEdit(item) {
+    const cpfClean = removeFormatting(item.cpf);
+    navigate(`/funcionarios/${cpfClean}/editar`);
+  }
+
+  function handleInactivateClick(item) {
+    setSelectedItem(item);
+    setOpenConfirm(true);
+  }
+
+  function handleConfirmInactivate() {
+    setInactivating(true);
+    setError("");
+
+    const cpfClean = removeFormatting(selectedItem.cpf);
+
+    fetch(`http://localhost:3001/api/funcionarios/${cpfClean}`, {
+      method: "DELETE"
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sucesso) {
+          // Recarregar a página ou remover da lista
+          window.location.reload();
+        } else {
+          setError(data.erro || "Erro ao inativar funcionário");
+          setInactivating(false);
+        }
+      })
+      .catch(err => {
+        setError("Erro ao inativar: " + err.message);
+        setInactivating(false);
+      });
+
+    setOpenConfirm(false);
+  }
+
+  function handleCloseConfirm() {
+    setOpenConfirm(false);
+    setSelectedItem(null);
+  }
 
   const data = [
     {
@@ -58,12 +110,15 @@ export default function FuncionariosList() {
 
   return (
     <Container maxWidth="lg">
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate
         title="Funcionários"
         columns={["Nome", "CPF", "Email", "Cargo"]}
         data={data}
         onCreate={() => navigate("/funcionarios/cadastro")}
+        onEdit={handleEdit}
+        onInactivate={handleInactivateClick}
         filters={
           <>
             <TextField label="Nome" size="small" />
@@ -72,6 +127,34 @@ export default function FuncionariosList() {
           </>
         }
       />
+
+      {/* Dialog de confirmação */}
+      <Dialog
+        open={openConfirm}
+        onClose={handleCloseConfirm}
+      >
+        <DialogTitle>Confirmar Inativação</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deseja inativar o funcionário <strong>{selectedItem?.nome}</strong>?
+            <br />
+            Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmInactivate}
+            color="warning"
+            variant="contained"
+            disabled={inactivating}
+          >
+            {inactivating ? "Inativando..." : "Inativar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

@@ -17,7 +17,10 @@ export default function ListTemplate({
   filters,
   columns,
   data,
-  onCreate
+  onCreate,
+  onEdit,
+  onInactivate,
+  rowKey = null
 }) {
   return (
     <Paper sx={{ p: 3, borderRadius: 3 }}>
@@ -62,10 +65,19 @@ export default function ListTemplate({
               ))}
               <TableCell>
                 <Stack direction="row" spacing={1}>
-                  <Button size="small" variant="outlined">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => onEdit && onEdit(item)}
+                  >
                     Editar
                   </Button>
-                  <Button size="small" color="warning" variant="outlined">
+                  <Button
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    onClick={() => onInactivate && onInactivate(item)}
+                  >
                     Inativar
                   </Button>
                 </Stack>
