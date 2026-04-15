@@ -1,59 +1,51 @@
 /**
- * Mudar esse arquivo quando deicidir o banco de dados
+ * Repository de Funcionário - Usando Sequelize ORM
 */
-const { v4: uuidv4 } = require("uuid");
+import db from "../models/index.js"
 
-// "Banco de dados" em memória — resetado quando o servidor reinicia
-let funcionarios = [];
+// Pega o model do Funcionário do db
+const Funcionario = db.Funcionario
 
-function listarTodos() {
-  return funcionarios;
+// Listar todos
+export async function listarTodos() {
+  return await Funcionario.findAll()
 }
 
-function buscarPorId(id) {
-  return funcionarios.find((f) => f.id === id) || null;
+// Buscar por ID
+export async function buscarPorId(id) {
+  return await Funcionario.findByPk(id)
 }
 
-function criar(dados) {
-  const novo = {
-    id: uuidv4(),           // gera ID único automático
-    ...dados,               // spread: copia nome, cpf, email, etc.
-    ativo: true,
-    dataCadastro: new Date().toISOString(),
-    dataAtualizacao: new Date().toISOString(),
-  };
-
-  funcionarios.push(novo);
-  return novo;
+// Criar novo
+export async function criar(dados) {
+  return await Funcionario.create(dados)
 }
 
-function atualizar(id, dados) {
-  const index = funcionarios.findIndex((f) => f.id === id);
-  if (index === -1) return null;
-
-  funcionarios[index] = {
-    ...funcionarios[index],  // mantém os dados antigos
-    ...dados,                // sobrescreve com os novos
-    dataAtualizacao: new Date().toISOString(),
-  };
-
-  return funcionarios[index];
+// Atualizar
+export async function atualizar(id, dados) {
+  await Funcionario.update(dados, {
+    where: { id }
+  })
+  return await Funcionario.findByPk(id)
 }
 
-function remover(id) {
-  const index = funcionarios.findIndex((f) => f.id === id);
-  if (index === -1) return false;
-
-  funcionarios.splice(index, 1);
-  return true;
+// Remover
+export async function remover(id) {
+  return await Funcionario.destroy({
+    where: { id }
+  })
 }
 
-function buscarPorCpf(cpf) {
-  return funcionarios.find((f) => f.cpf === cpf) || null;
+// Buscar por CPF
+export async function buscarPorCpf(cpf) {
+  return await Funcionario.findOne({
+    where: { cpf }
+  })
 }
 
-function buscarPorLogin(login) {
-  return funcionarios.find((f) => f.login === login) || null;
+// Buscar por Login
+export async function buscarPorLogin(login) {
+  return await Funcionario.findOne({
+    where: { login }
+  })
 }
-
-module.exports = { listarTodos, buscarPorId, criar, atualizar, remover, buscarPorCpf, buscarPorLogin };
