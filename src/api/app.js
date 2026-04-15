@@ -1,17 +1,20 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express"
+import cors from "cors"
+import funcionarioRoutes from "./routes/funcionario.js"
+import fornecedorRoutes from "./routes/fornecedor.routes.js"
 
-const funcionarioRoutes = require("./routes/funcionario");
-
-const app = express();
+const app = express()
 
 // Permite receber JSON no corpo das requisições
-app.use(express.json());
+app.use(express.json())
 
 // Permite o frontend React chamar este backend
-app.use(cors());
+app.use(cors())
 
 // Registra as rotas de funcionários sob o prefixo /api/funcionarios
-app.use("/api/funcionarios", funcionarioRoutes);
+app.use("/api/funcionarios", funcionarioRoutes)
 
-module.exports = app;
+// Registra as rotas de fornecedores sob o prefixo /api/fornecedores
+app.use("/api/fornecedores", fornecedorRoutes)
+
+export default app
