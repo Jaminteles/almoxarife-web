@@ -5,7 +5,7 @@ import fornecedorModel from "./fornecedor.model.js"
 
 // Conexão com o banco
 // ALTERAR PARAMETROS
-const sequelize = new Sequelize("almoxarife", "root", "", {
+const sequelize = new Sequelize("bd_almoxarifado", "root", "desus", {
     host: "localhost",
     dialect: "mysql"
 })
