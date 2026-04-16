@@ -1,48 +1,81 @@
 import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
+
+const API_URL = "http://localhost:5000/api";
 
 export default function FornecedoresList() {
   const navigate = useNavigate();
+  const [data, setData] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inactivating, setInactivating] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Remove formatação (. / -) do CPF/CNPJ
-  function removeFormatting(value) {
-    return value.replace(/[.\/-]/g, "");
+  useEffect(() => {
+    carregarFornecedores();
+  }, []);
+
+  function carregarFornecedores() {
+    setLoading(true);
+    fetch(`${API_URL}/fornecedores`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) {
+          const formatado = result.dados.map(f => ({
+            id_fornecedor: f.id_fornecedor,
+            razao_social: f.razao_social,
+            cnpj: formatarCnpj(f.cnpj),
+            email: f.email,
+            telefone: f.telefones?.map(t => t.telefone).join(", ") || "—"
+          }));
+          setData(formatado);
+        } else {
+          setError(result.erro || "Erro ao carregar fornecedores");
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Erro ao conectar com o servidor: " + err.message);
+        setLoading(false);
+      });
+  }
+
+  function formatarCnpj(cnpj) {
+    if (!cnpj || cnpj.length !== 14) return cnpj;
+    return `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12)}`;
   }
 
   function handleEdit(item) {
-    const cnpjClean = removeFormatting(item.cnpj);
-    navigate(`/fornecedores/${cnpjClean}/editar`);
+    const original = data.find(d => d.razao_social === item.razao_social && d.cnpj === item.cnpj);
+    if (original) navigate(`/fornecedores/${original.id_fornecedor}/editar`);
   }
 
   function handleInactivateClick(item) {
-    setSelectedItem(item);
-    setOpenConfirm(true);
+    const original = data.find(d => d.razao_social === item.razao_social && d.cnpj === item.cnpj);
+    if (original) {
+      setSelectedItem(original);
+      setOpenConfirm(true);
+    }
   }
 
   function handleConfirmInactivate() {
     setInactivating(true);
     setError("");
 
-    const cnpjClean = removeFormatting(selectedItem.cnpj);
-
-    fetch(`http://localhost:3001/api/fornecedores/${cnpjClean}`, {
+    fetch(`${API_URL}/fornecedores/${selectedItem.id_fornecedor}`, {
       method: "DELETE"
     })
       .then(res => res.json())
-      .then(data => {
-        if (data.sucesso) {
-          // Recarregar a página ou remover da lista
-          window.location.reload();
+      .then(result => {
+        if (result.sucesso) {
+          carregarFornecedores();
         } else {
-          setError(data.erro || "Erro ao inativar fornecedor");
-          setInactivating(false);
+          setError(result.erro || "Erro ao inativar fornecedor");
         }
+        setInactivating(false);
       })
       .catch(err => {
         setError("Erro ao inativar: " + err.message);
@@ -57,48 +90,7 @@ export default function FornecedoresList() {
     setSelectedItem(null);
   }
 
-  const data = [
-    {
-      nome: "ABC Supplies Ltda",
-      cnpj: "12.345.678/0001-90",
-      telefone: "(11) 99999-1234"
-    },
-    {
-      nome: "XYZ Distribuidora",
-      cnpj: "98.765.432/0001-10",
-      telefone: "(21) 88888-5678"
-    },
-    {
-      nome: "Mega Fornecedores",
-      cnpj: "11.222.333/0001-45",
-      telefone: "(31) 77777-9012"
-    },
-    {
-      nome: "Global Trade Co",
-      cnpj: "44.555.666/0001-78",
-      telefone: "(41) 66666-3456"
-    },
-    {
-      nome: "Local Materiais",
-      cnpj: "77.888.999/0001-23",
-      telefone: "(51) 55555-7890"
-    },
-    {
-      nome: "Indústria Nacional",
-      cnpj: "33.444.555/0001-67",
-      telefone: "(61) 44444-1234"
-    },
-    {
-      nome: "Comércio Geral",
-      cnpj: "66.777.888/0001-89",
-      telefone: "(71) 33333-5678"
-    },
-    {
-      nome: "Fornecedor Premium",
-      cnpj: "22.333.444/0001-12",
-      telefone: "(81) 22222-9012"
-    }
-  ];
+  const dataTabela = data.map(({ id_fornecedor, ...rest }) => rest);
 
   return (
     <Container maxWidth="lg">
@@ -106,42 +98,29 @@ export default function FornecedoresList() {
 
       <ListTemplate
         title="Fornecedores"
-        columns={["Nome", "CNPJ", "Telefone"]}
-        data={data}
+        columns={["Razão Social", "CNPJ", "Email", "Telefone"]}
+        data={dataTabela}
         onCreate={() => navigate("/fornecedores/cadastro")}
         onEdit={handleEdit}
         onInactivate={handleInactivateClick}
         filters={
           <>
-            <TextField label="Nome" size="small" />
+            <TextField label="Razão Social" size="small" />
             <TextField label="CNPJ" size="small" />
           </>
         }
       />
 
-      {/* Dialog de confirmação */}
-      <Dialog
-        open={openConfirm}
-        onClose={handleCloseConfirm}
-      >
+      <Dialog open={openConfirm} onClose={handleCloseConfirm}>
         <DialogTitle>Confirmar Inativação</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Deseja inativar o fornecedor <strong>{selectedItem?.nome}</strong>?
-            <br />
-            Esta ação não pode ser desfeita.
+            Deseja inativar o fornecedor <strong>{selectedItem?.razao_social}</strong>?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseConfirm} disabled={inactivating}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmInactivate}
-            color="warning"
-            variant="contained"
-            disabled={inactivating}
-          >
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>Cancelar</Button>
+          <Button onClick={handleConfirmInactivate} color="warning" variant="contained" disabled={inactivating}>
             {inactivating ? "Inativando..." : "Inativar"}
           </Button>
         </DialogActions>

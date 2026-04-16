@@ -33,11 +33,11 @@ function App() {
 
             <Route path="/funcionarios" element={<FuncionariosList />} />
             <Route path="/funcionarios/cadastro" element={<FuncionarioForm />} />
-            <Route path="/funcionarios/:cpf/editar" element={<FuncionarioEdit />} />
+            <Route path="/funcionarios/:id/editar" element={<FuncionarioEdit />} />
 
             <Route path="/fornecedores" element={<FornecedoresList />} />
             <Route path="/fornecedores/cadastro" element={<FornecedorForm />} />
-            <Route path="/fornecedores/:cnpj/editar" element={<FornecedorEdit />} />
+            <Route path="/fornecedores/:id/editar" element={<FornecedorEdit />} />
           </Routes>
         </MainLayout>
       </BrowserRouter>

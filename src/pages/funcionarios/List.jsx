@@ -1,23 +1,57 @@
 import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
+
+const API_URL = "http://localhost:5000/api";
 
 export default function FuncionariosList() {
   const navigate = useNavigate();
+  const [data, setData] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inactivating, setInactivating] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Remove formatação (. / -) do CPF/CNPJ
-  function removeFormatting(value) {
-    return value.replace(/[.\/-]/g, "");
+  // Carrega funcionários da API
+  useEffect(() => {
+    carregarFuncionarios();
+  }, []);
+
+  function carregarFuncionarios() {
+    setLoading(true);
+    fetch(`${API_URL}/funcionarios`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) {
+          // Mapeia para o formato da tabela
+          const formatado = result.dados.map(f => ({
+            id_funcionario: f.id_funcionario,
+            nome: f.nome,
+            cpf: formatarCpf(f.cpf),
+            cargo: f.cargo?.nome_cargo || "—",
+            email: f.usuario?.email || "—"
+          }));
+          setData(formatado);
+        } else {
+          setError(result.erro || "Erro ao carregar funcionários");
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Erro ao conectar com o servidor: " + err.message);
+        setLoading(false);
+      });
+  }
+
+  function formatarCpf(cpf) {
+    if (!cpf || cpf.length !== 11) return cpf;
+    return `${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
   }
 
   function handleEdit(item) {
-    const cpfClean = removeFormatting(item.cpf);
-    navigate(`/funcionarios/${cpfClean}/editar`);
+    navigate(`/funcionarios/${item.id_funcionario}/editar`);
   }
 
   function handleInactivateClick(item) {
@@ -29,20 +63,17 @@ export default function FuncionariosList() {
     setInactivating(true);
     setError("");
 
-    const cpfClean = removeFormatting(selectedItem.cpf);
-
-    fetch(`http://localhost:3001/api/funcionarios/${cpfClean}`, {
+    fetch(`${API_URL}/funcionarios/${selectedItem.id_funcionario}`, {
       method: "DELETE"
     })
       .then(res => res.json())
-      .then(data => {
-        if (data.sucesso) {
-          // Recarregar a página ou remover da lista
-          window.location.reload();
+      .then(result => {
+        if (result.sucesso) {
+          carregarFuncionarios();
         } else {
-          setError(data.erro || "Erro ao inativar funcionário");
-          setInactivating(false);
+          setError(result.erro || "Erro ao inativar funcionário");
         }
+        setInactivating(false);
       })
       .catch(err => {
         setError("Erro ao inativar: " + err.message);
@@ -57,56 +88,8 @@ export default function FuncionariosList() {
     setSelectedItem(null);
   }
 
-  const data = [
-    {
-      nome: "João Silva",
-      cpf: "123.456.789-01",
-      email: "joao.silva@email.com",
-      cargo: "Almoxarife"
-    },
-    {
-      nome: "Maria Santos",
-      cpf: "987.654.321-00",
-      email: "maria.santos@email.com",
-      cargo: "Ajudante"
-    },
-    {
-      nome: "Pedro Oliveira",
-      cpf: "456.789.123-45",
-      email: "pedro.oliveira@email.com",
-      cargo: "Almoxarife"
-    },
-    {
-      nome: "Ana Costa",
-      cpf: "321.654.987-12",
-      email: "ana.costa@email.com",
-      cargo: "Ajudante"
-    },
-    {
-      nome: "Carlos Pereira",
-      cpf: "789.123.456-78",
-      email: "carlos.pereira@email.com",
-      cargo: "Engenheiro"
-    },
-    {
-      nome: "Fernanda Lima",
-      cpf: "654.321.987-65",
-      email: "fernanda.lima@email.com",
-      cargo: "Ajudante"
-    },
-    {
-      nome: "Roberto Alves",
-      cpf: "147.258.369-14",
-      email: "roberto.alves@email.com",
-      cargo: "Engenheiro"
-    },
-    {
-      nome: "Juliana Rocha",
-      cpf: "963.852.741-96",
-      email: "juliana.rocha@email.com",
-      cargo: "Administrador"
-    }
-  ];
+  // Filtra apenas as colunas visíveis (sem o id_funcionario)
+  const dataTabela = data.map(({ id_funcionario, ...rest }) => ({ ...rest, id_funcionario }));
 
   return (
     <Container maxWidth="lg">
@@ -114,43 +97,38 @@ export default function FuncionariosList() {
 
       <ListTemplate
         title="Funcionários"
-        columns={["Nome", "CPF", "Email", "Cargo"]}
-        data={data}
+        columns={["Nome", "CPF", "Cargo", "Email"]}
+        data={dataTabela.map(({ id_funcionario, ...visivel }) => visivel)}
         onCreate={() => navigate("/funcionarios/cadastro")}
-        onEdit={handleEdit}
-        onInactivate={handleInactivateClick}
+        onEdit={(item) => {
+          // Recupera o id_funcionario pelo índice
+          const idx = dataTabela.findIndex(d => d.nome === item.nome && d.cpf === item.cpf);
+          if (idx >= 0) handleEdit(dataTabela[idx]);
+        }}
+        onInactivate={(item) => {
+          const idx = dataTabela.findIndex(d => d.nome === item.nome && d.cpf === item.cpf);
+          if (idx >= 0) handleInactivateClick(dataTabela[idx]);
+        }}
         filters={
           <>
             <TextField label="Nome" size="small" />
             <TextField label="CPF" size="small" />
-            <TextField label="Email" size="small" />
           </>
         }
       />
 
-      {/* Dialog de confirmação */}
-      <Dialog
-        open={openConfirm}
-        onClose={handleCloseConfirm}
-      >
+      <Dialog open={openConfirm} onClose={handleCloseConfirm}>
         <DialogTitle>Confirmar Inativação</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Deseja inativar o funcionário <strong>{selectedItem?.nome}</strong>?
             <br />
-            Esta ação não pode ser desfeita.
+            Esta ação pode ser revertida pelo administrador.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseConfirm} disabled={inactivating}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmInactivate}
-            color="warning"
-            variant="contained"
-            disabled={inactivating}
-          >
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>Cancelar</Button>
+          <Button onClick={handleConfirmInactivate} color="warning" variant="contained" disabled={inactivating}>
             {inactivating ? "Inativando..." : "Inativar"}
           </Button>
         </DialogActions>

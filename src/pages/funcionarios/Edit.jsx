@@ -7,83 +7,89 @@ import {
   Typography,
   Paper,
   CircularProgress,
-  Alert
+  Alert,
+  MenuItem
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 
+const API_URL = "http://localhost:5000/api";
+
 export default function FuncionarioEdit() {
   const navigate = useNavigate();
-  const { cpf } = useParams();
-
-  // Remove formatação (. / -) do CPF/CNPJ
-  function removeFormatting(value) {
-    return value.replace(/[.\/-]/g, "");
-  }
-
-  const cpfClean = removeFormatting(cpf);
+  const { id } = useParams();
 
   const [form, setForm] = useState({
     nome: "",
     cpf: "",
+    id_cargo: "",
     email: "",
-    cargo: "",
-    login: ""
+    access_level: "CONSULTA"
   });
 
+  const [cargos, setCargos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Buscar dados do funcionário
-    fetch(`http://localhost:3001/api/funcionarios/${cpfClean}`)
+    // Carregar cargos
+    fetch(`${API_URL}/cargos`)
       .then(res => res.json())
-      .then(data => {
-        if (data.sucesso) {
-          setForm(data.dados);
-          setLoading(false);
+      .then(result => {
+        if (result.sucesso) setCargos(result.dados);
+      })
+      .catch(() => {});
+
+    // Carregar dados do funcionário
+    fetch(`${API_URL}/funcionarios/${id}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) {
+          const f = result.dados;
+          setForm({
+            nome: f.nome,
+            cpf: f.cpf,
+            id_cargo: f.id_cargo,
+            email: f.usuario?.email || "",
+            access_level: f.usuario?.access_level || "CONSULTA"
+          });
         } else {
           setError("Funcionário não encontrado");
-          setLoading(false);
         }
+        setLoading(false);
       })
       .catch(err => {
         setError("Erro ao carregar funcionário: " + err.message);
         setLoading(false);
       });
-  }, [cpfClean]);
+  }, [id]);
 
   function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function handleSubmit(e) {
     e.preventDefault();
+    setError("");
+    setSaving(true);
 
-    // Não enviar campos que não devem ser alterados
-    const dados = { ...form };
-    delete dados.id;
-
-    fetch(`http://localhost:3001/api/funcionarios/${cpfClean}`, {
+    fetch(`${API_URL}/funcionarios/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(dados)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form)
     })
       .then(res => res.json())
-      .then(data => {
-        if (data.sucesso) {
-          console.log("Funcionário atualizado:", data.dados);
+      .then(result => {
+        if (result.sucesso) {
           navigate("/funcionarios");
         } else {
-          setError(data.erro || "Erro ao atualizar funcionário");
+          setError(result.erro || "Erro ao atualizar funcionário");
         }
+        setSaving(false);
       })
       .catch(err => {
         setError("Erro ao atualizar: " + err.message);
+        setSaving(false);
       });
   }
 
@@ -97,59 +103,62 @@ export default function FuncionarioEdit() {
 
   return (
     <Container maxWidth="sm">
-
       <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h5" mb={2}>
-          Editar Funcionário
-        </Typography>
+        <Typography variant="h5" mb={2}>Editar Funcionário</Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
+            <TextField name="nome" label="Nome" value={form.nome} onChange={handleChange} required />
+            <TextField name="cpf" label="CPF" value={form.cpf} onChange={handleChange} required />
+
             <TextField
-              name="nome"
-              label="Nome"
-              value={form.nome}
-              onChange={handleChange}
-              required
-            />
-            <TextField
-              name="cpf"
-              label="CPF"
-              value={form.cpf}
-              onChange={handleChange}
-              required
-            />
-            <TextField
-              name="cargo"
+              name="id_cargo"
               label="Cargo"
-              value={form.cargo}
+              select
+              value={form.id_cargo}
               onChange={handleChange}
               required
-            />
+            >
+              {cargos.map(c => (
+                <MenuItem key={c.id_cargo} value={c.id_cargo}>
+                  {c.nome_cargo}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
+              Dados de Acesso ao Sistema
+            </Typography>
+
+            <TextField name="email" label="Email" type="email" value={form.email} onChange={handleChange} />
+
             <TextField
-              name="email"
-              label="Email"
-              value={form.email}
+              name="senha"
+              label="Nova Senha (deixe vazio para não alterar)"
+              type="password"
               onChange={handleChange}
-              required
-            />
-            <TextField
-              name="login"
-              label="Login"
-              value={form.login}
-              onChange={handleChange}
-              required
             />
 
+            <TextField
+              name="access_level"
+              label="Nível de Acesso"
+              select
+              value={form.access_level}
+              onChange={handleChange}
+            >
+              <MenuItem value="CENTRAL">Central</MenuItem>
+              <MenuItem value="ALMOXARIFE">Almoxarife</MenuItem>
+              <MenuItem value="AUXILIAR">Auxiliar</MenuItem>
+              <MenuItem value="CONSULTA">Consulta</MenuItem>
+            </TextField>
+
             <Stack direction="row" spacing={2}>
-              <Button type="submit" variant="contained">
-                Salvar
+              <Button type="submit" variant="contained" disabled={saving}>
+                {saving ? "Salvando..." : "Salvar"}
               </Button>
-              <Button variant="outlined" onClick={() => navigate(-1)}>
-                Cancelar
-              </Button>
+              <Button variant="outlined" onClick={() => navigate(-1)}>Cancelar</Button>
             </Stack>
           </Stack>
         </form>

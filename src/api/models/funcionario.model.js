@@ -1,56 +1,32 @@
 export default (sequelize, DataTypes) => {
   const Funcionario = sequelize.define("Funcionario", {
-    
-    id: {
-      type: DataTypes.INTEGER,
+    id_funcionario: {
+      type: DataTypes.CHAR(36),
       primaryKey: true,
-      autoIncrement: true
+      defaultValue: DataTypes.UUIDV4
     },
-
     nome: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false
     },
-
     cpf: {
-      type: DataTypes.STRING,
+      type: DataTypes.CHAR(11),
       allowNull: false,
       unique: true
     },
-
-    email: {
-      type: DataTypes.STRING,
+    id_cargo: {
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false
     },
-
-    cargo: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-
-    login: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-
-    senha: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-
-    ativo: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
+    is_active: {
+      type: DataTypes.TINYINT(1),
+      defaultValue: 1
     }
-
   }, {
-    
-    tableName: "FUNCIONARIOS",
+    tableName: "Funcionarios",
     timestamps: true,
-    createdAt: "dataCadastro",
-    updatedAt: "dataAtualizacao"
-
+    createdAt: "created_at",
+    updatedAt: "updated_at"
   })
 
   return Funcionario

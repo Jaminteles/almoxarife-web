@@ -1,45 +1,38 @@
 export default (sequelize, DataTypes) => {
   const Fornecedor = sequelize.define("Fornecedor", {
-    
-    id: {
-      type: DataTypes.INTEGER,
+    id_fornecedor: {
+      type: DataTypes.INTEGER.UNSIGNED,
       primaryKey: true,
       autoIncrement: true
     },
-
-    nome: {
-      type: DataTypes.STRING,
+    razao_social: {
+      type: DataTypes.STRING(150),
       allowNull: false
     },
-
+    nome_fantasia: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
     cnpj: {
-      type: DataTypes.STRING,
+      type: DataTypes.CHAR(14),
       allowNull: false,
       unique: true
     },
-
-    telefone: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-
     email: {
-      type: DataTypes.STRING,
-      allowNull: false
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true
     },
-
-    endereco: {
-      type: DataTypes.STRING,
-      allowNull: false
+    ativo: {
+      type: DataTypes.TINYINT(1),
+      allowNull: false,
+      defaultValue: 1
     }
-
   }, {
-    
-    tableName: "FORNECEDORES",
+    tableName: "Fornecedores",
     timestamps: true,
-    createdAt: "dataCadastro",
-    updatedAt: "dataAtualizacao"
-
+    createdAt: "criado_em",
+    updatedAt: "atualizado_em"
   })
 
   return Fornecedor
