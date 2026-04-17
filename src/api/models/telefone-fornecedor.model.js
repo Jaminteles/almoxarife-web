@@ -11,7 +11,8 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: "Telefone_Fornecedor",
-    timestamps: false
+    timestamps: false,
+    charset: 'utf8mb4'
   })
 
   return TelefoneFornecedor

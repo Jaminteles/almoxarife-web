@@ -12,7 +12,8 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: "Cargos",
-    timestamps: false
+    timestamps: false,
+    charset: 'utf8mb4'
   })
 
   return Cargo

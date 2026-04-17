@@ -29,7 +29,8 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: "Usuarios_Sistema",
-    timestamps: false
+    timestamps: false,
+    charset: 'utf8mb4'
   })
 
   return UsuarioSistema
