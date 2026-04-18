@@ -1,18 +1,40 @@
-import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
+import {
+  Container,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
 const API_URL = "http://localhost:5000/api";
 
+/**
+ * FornecedoresList — Tela de listagem de fornecedores.
+ * 
+ * VALIDAÇÃO DO BACKEND (RF012 - Fluxo de Exceção):
+ * Se o fornecedor tiver pedidos em andamento (status 'PENDENTE'),
+ * o backend retorna erro: "Não é possível inativar fornecedor com pedidos em andamento."
+ */
 export default function FornecedoresList() {
   const navigate = useNavigate();
+
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inactivating, setInactivating] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     carregarFornecedores();
@@ -45,7 +67,7 @@ export default function FornecedoresList() {
 
   function formatarCnpj(cnpj) {
     if (!cnpj || cnpj.length !== 14) return cnpj;
-    return `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12)}`;
+    return `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`;
   }
 
   function handleEdit(item) {
@@ -72,13 +94,26 @@ export default function FornecedoresList() {
       .then(result => {
         if (result.sucesso) {
           carregarFornecedores();
+          setSnackbar({
+            open: true,
+            message: `Fornecedor "${selectedItem.razao_social}" inativado com sucesso`,
+            severity: "success"
+          });
         } else {
-          setError(result.erro || "Erro ao inativar fornecedor");
+          setSnackbar({
+            open: true,
+            message: result.erro || "Erro ao inativar fornecedor",
+            severity: "error"
+          });
         }
         setInactivating(false);
       })
       .catch(err => {
-        setError("Erro ao inativar: " + err.message);
+        setSnackbar({
+          open: true,
+          message: "Erro ao inativar: " + err.message,
+          severity: "error"
+        });
         setInactivating(false);
       });
 
@@ -90,7 +125,8 @@ export default function FornecedoresList() {
     setSelectedItem(null);
   }
 
-  const dataTabela = data.map(({ id_fornecedor, ...rest }) => rest);
+  // Remove o id_fornecedor dos dados visíveis na tabela
+  const dataVisivel = data.map(({ id_fornecedor, ...visivel }) => visivel);
 
   return (
     <Container maxWidth="lg">
@@ -99,9 +135,11 @@ export default function FornecedoresList() {
       <ListTemplate
         title="Fornecedores"
         columns={["Razão Social", "CNPJ", "Email", "Telefone"]}
-        data={dataTabela}
+        data={dataVisivel}
+        loading={loading}
         onCreate={() => navigate("/fornecedores/cadastro")}
         onEdit={handleEdit}
+        /* onInactivate ativa o botão "Inativar" neste módulo */
         onInactivate={handleInactivateClick}
         filters={
           <>
@@ -111,20 +149,47 @@ export default function FornecedoresList() {
         }
       />
 
+      {/* Dialog de confirmação conforme RF012 */}
       <Dialog open={openConfirm} onClose={handleCloseConfirm}>
         <DialogTitle>Confirmar Inativação</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Deseja inativar o fornecedor <strong>{selectedItem?.razao_social}</strong>?
+            <br />
+            <br />
+            O registro será mantido no sistema para histórico e referência futura.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseConfirm} disabled={inactivating}>Cancelar</Button>
-          <Button onClick={handleConfirmInactivate} color="warning" variant="contained" disabled={inactivating}>
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmInactivate}
+            color="warning"
+            variant="contained"
+            disabled={inactivating}
+          >
             {inactivating ? "Inativando..." : "Inativar"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

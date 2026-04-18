@@ -1,75 +1,73 @@
+/**
+ * fornecedor.service.js — Camada de Serviço
+ */
+
 import * as fornecedorRepo from "../repositories/fornecedor.repository.js"
-import { validarEmail } from "../utils/validations/email.validation.js"
 
-// ── Validações ──
+// ═══ VALIDAÇÕES ═══
 
-const validarCamposObrigatorios = (dados) => {
-  if (!dados.razao_social || !dados.cnpj || !dados.email) {
-    throw new Error("Campos obrigatórios: razao_social, cnpj, email")
+function validarCamposObrigatorios(dados) {
+  if (!dados.razao_social || dados.razao_social.trim().length < 2) {
+    throw new Error("Razão Social deve ter pelo menos 2 caracteres")
   }
-  validarEmail(dados.email)
+  if (!dados.cnpj) {
+    throw new Error("CNPJ é obrigatório")
+  }
+  if (!dados.email) {
+    throw new Error("Email é obrigatório")
+  }
 }
 
-const validarFormatoCnpj = (cnpj) => {
-  const cnpjTrim = cnpj.trim()
-  const regexCnpj = /^[0-9./-]+$/
-
-  if (!regexCnpj.test(cnpjTrim)) {
-    throw new Error("Formato de CNPJ inválido. Use apenas números, pontos, barras e traços.")
-  }
-
-  const cnpjLimpo = cnpjTrim.replace(/[^\d]+/g, "")
-
+function validarFormatoCnpj(cnpj) {
+  const cnpjLimpo = cnpj.replace(/[^\d]/g, "")
   if (cnpjLimpo.length !== 14) {
-    throw new Error("CNPJ deve conter 14 dígitos")
+    throw new Error("CNPJ deve ter 14 dígitos")
   }
-
   return cnpjLimpo
 }
 
-const validarEnderecos = (enderecos) => {
-  if (!enderecos || enderecos.length === 0) return
+function validarEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!regex.test(email)) {
+    throw new Error("Formato de email inválido")
+  }
+}
 
-  for (const end of enderecos) {
-    if (!end.cep || !end.logradouro || !end.numero || !end.bairro || !end.cidade || !end.estado) {
-      throw new Error("Endereço incompleto. Campos obrigatórios: cep, logradouro, numero, bairro, cidade, estado")
-    }
-    // Limpar CEP
-    end.cep = end.cep.replace(/[^\d]/g, "")
-    if (end.cep.length !== 8) {
-      throw new Error("CEP deve conter 8 dígitos")
+function validarEnderecos(enderecos) {
+  if (!Array.isArray(enderecos)) return
+  for (const e of enderecos) {
+    if (!e.logradouro || !e.cidade || !e.estado) {
+      throw new Error("Endereço deve ter logradouro, cidade e estado")
     }
   }
 }
 
-// ── Regras de Negócio ──
+// ═══ CRUD ═══
 
 export const cadastrarFornecedor = async (dados) => {
   validarCamposObrigatorios(dados)
+  validarEmail(dados.email)
 
   const cnpjLimpo = validarFormatoCnpj(dados.cnpj)
 
-  // Verificar duplicidade de CNPJ
+  // Verifica CNPJ duplicado
   const cnpjExistente = await fornecedorRepo.buscarPorCnpj(cnpjLimpo)
   if (cnpjExistente) {
     throw new Error("CNPJ já registrado no sistema")
   }
 
-  // Verificar duplicidade de email
+  // Verifica email duplicado
   const emailExistente = await fornecedorRepo.buscarPorEmail(dados.email)
   if (emailExistente) {
     throw new Error("Email já registrado no sistema")
   }
 
-  // Validar endereços se informados
-  validarEnderecos(dados.enderecos)
-
-  // Montar objeto para criação (com nested create)
+  // Monta dados para criação
   const dadosCriacao = {
-    razao_social: dados.razao_social,
-    nome_fantasia: dados.nome_fantasia || null,
+    razao_social: dados.razao_social.trim(),
+    nome_fantasia: dados.nome_fantasia?.trim() || null,
     cnpj: cnpjLimpo,
-    email: dados.email
+    email: dados.email.trim()
   }
 
   // Telefones
@@ -105,35 +103,47 @@ export const editarFornecedor = async (id, dados) => {
   }
 
   validarCamposObrigatorios(dados)
+  validarEmail(dados.email)
 
   const cnpjLimpo = validarFormatoCnpj(dados.cnpj)
 
-  // Verificar duplicidade de CNPJ (excluindo o próprio)
+  /**
+   * VERIFICAÇÃO DE CNPJ DUPLICADO — COM parseInt(id)
+   * 
+   * A lógica é: "Existe outro fornecedor com esse CNPJ?"
+   * 
+   * parseInt(id) converte a string "5" para o número 5,
+   * permitindo a comparação correta com id_fornecedor (que é number).
+   * 
+   * Se o CNPJ encontrado pertence ao PRÓPRIO fornecedor sendo editado,
+   * não é duplicata → deixa passar.
+   * Se pertence a OUTRO → bloqueia.
+   */
   const cnpjExistente = await fornecedorRepo.buscarPorCnpj(cnpjLimpo)
   if (cnpjExistente && cnpjExistente.id_fornecedor !== parseInt(id)) {
     throw new Error("CNPJ já registrado no sistema")
   }
 
-  // Verificar duplicidade de email
+  // Mesma lógica para email — parseInt no id
   const emailExistente = await fornecedorRepo.buscarPorEmail(dados.email)
   if (emailExistente && emailExistente.id_fornecedor !== parseInt(id)) {
     throw new Error("Email já registrado no sistema")
   }
 
-  // Atualizar dados principais
+  // Atualiza dados principais
   await fornecedorRepo.atualizar(id, {
-    razao_social: dados.razao_social,
-    nome_fantasia: dados.nome_fantasia || null,
+    razao_social: dados.razao_social.trim(),
+    nome_fantasia: dados.nome_fantasia?.trim() || null,
     cnpj: cnpjLimpo,
-    email: dados.email
+    email: dados.email.trim()
   })
 
-  // Atualizar telefones (substituir todos)
+  // Substitui telefones se informados
   if (dados.telefones !== undefined) {
     await fornecedorRepo.substituirTelefones(id, dados.telefones)
   }
 
-  // Atualizar endereços (substituir todos)
+  // Substitui endereços se informados
   if (dados.enderecos !== undefined) {
     validarEnderecos(dados.enderecos)
     await fornecedorRepo.substituirEnderecos(id, dados.enderecos)
@@ -142,10 +152,30 @@ export const editarFornecedor = async (id, dados) => {
   return await fornecedorRepo.buscarPorId(id)
 }
 
+/**
+ * INATIVAR FORNECEDOR (RF012)
+ *
+ * Validações antes de inativar:
+ * 1. Fornecedor deve existir
+ * 2. Fornecedor deve estar ativo (não inativar quem já está inativo)
+ * 3. Fornecedor não pode ter pedidos pendentes
+ */
 export const inativarFornecedor = async (id) => {
   const fornecedor = await fornecedorRepo.buscarPorId(id)
   if (!fornecedor) {
     throw new Error("Fornecedor não encontrado")
   }
+
+  if (fornecedor.ativo === false || fornecedor.ativo === 0) {
+    throw new Error("Fornecedor já está inativo")
+  }
+
+  const pedidosPendentes = await fornecedorRepo.verificarPedidosPendentes(id)
+  if (pedidosPendentes && pedidosPendentes > 0) {
+    throw new Error(
+      "Não é possível inativar um fornecedor com pedidos em andamento."
+    )
+  }
+
   return await fornecedorRepo.inativar(id)
 }
