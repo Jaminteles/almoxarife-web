@@ -39,7 +39,8 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: "Endereco_Fornecedor",
-    timestamps: false
+    timestamps: false,
+    charset: 'utf8mb4'
   })
 
   return EnderecoFornecedor

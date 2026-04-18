@@ -32,7 +32,8 @@ export default (sequelize, DataTypes) => {
     tableName: "Fornecedores",
     timestamps: true,
     createdAt: "criado_em",
-    updatedAt: "atualizado_em"
+    updatedAt: "atualizado_em",
+    charset: 'utf8mb4'
   })
 
   return Fornecedor

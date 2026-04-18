@@ -26,7 +26,8 @@ export default (sequelize, DataTypes) => {
     tableName: "Funcionarios",
     timestamps: true,
     createdAt: "created_at",
-    updatedAt: "updated_at"
+    updatedAt: "updated_at",
+    charset: 'utf8mb4'
   })
 
   return Funcionario
