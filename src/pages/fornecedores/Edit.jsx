@@ -10,11 +10,14 @@ import {
   Alert,
   IconButton,
   Divider,
+  Grid,
   Box
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import FormPageHeader from "../../components/FormPageHeader";
+import EnderecoFields from "../../components/EnderecoFields";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -85,7 +88,6 @@ export default function FornecedorEdit() {
     novos[index] = value;
     setTelefones(novos);
   }
-
   function adicionarTelefone() { setTelefones([...telefones, ""]); }
   function removerTelefone(index) {
     if (telefones.length === 1) return;
@@ -97,7 +99,6 @@ export default function FornecedorEdit() {
     novos[index] = { ...novos[index], [campo]: value };
     setEnderecos(novos);
   }
-
   function adicionarEndereco() { setEnderecos([...enderecos, { ...enderecoVazio }]); }
   function removerEndereco(index) {
     if (enderecos.length === 1) return;
@@ -137,86 +138,104 @@ export default function FornecedorEdit() {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h5" mb={2}>Editar Fornecedor</Typography>
+    <Container maxWidth="md">
+      <FormPageHeader
+        title="Editar Fornecedor"
+        subtitle="Atualize as informações do fornecedor."
+        backTo="/fornecedores"
+      />
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Paper sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 3 }}>
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
         <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField name="razao_social" label="Razão Social" value={form.razao_social} onChange={handleChange} required />
-            <TextField name="nome_fantasia" label="Nome Fantasia" value={form.nome_fantasia} onChange={handleChange} />
-            <TextField name="cnpj" label="CNPJ" value={form.cnpj} onChange={handleChange} required />
-            <TextField name="email" label="Email" type="email" value={form.email} onChange={handleChange} required />
+          {/* === Dados principais === */}
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Dados do fornecedor
+          </Typography>
 
-            {/* Telefones */}
-            <Divider />
-            <Typography variant="subtitle2" color="text.secondary">Telefones</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={8}>
+              <TextField name="razao_social" label="Razão Social *" value={form.razao_social} onChange={handleChange} required fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField name="nome_fantasia" label="Nome Fantasia" value={form.nome_fantasia} onChange={handleChange} fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField name="cnpj" label="CNPJ *" value={form.cnpj} onChange={handleChange} required fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField name="email" label="Email *" type="email" value={form.email} onChange={handleChange} required fullWidth />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* === Telefones === */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Telefones
+            </Typography>
+            <Button size="small" startIcon={<AddCircleOutlineIcon />} onClick={adicionarTelefone}>
+              Adicionar
+            </Button>
+          </Box>
+
+          <Stack spacing={1.5}>
             {telefones.map((tel, i) => (
               <Stack key={i} direction="row" spacing={1} alignItems="center">
-                <TextField fullWidth size="small" label={`Telefone ${i + 1}`} value={tel}
-                  onChange={(e) => handleTelefoneChange(i, e.target.value)} />
+                <TextField
+                  fullWidth size="small"
+                  label={`Telefone ${i + 1}`}
+                  value={tel}
+                  onChange={(e) => handleTelefoneChange(i, e.target.value)}
+                />
                 <IconButton color="error" onClick={() => removerTelefone(i)} disabled={telefones.length === 1}>
                   <RemoveCircleOutlineIcon />
                 </IconButton>
               </Stack>
             ))}
-            <Button size="small" startIcon={<AddCircleOutlineIcon />} onClick={adicionarTelefone}>
-              Adicionar Telefone
-            </Button>
+          </Stack>
 
-            {/* Endereços */}
-            <Divider />
-            <Typography variant="subtitle2" color="text.secondary">Endereço</Typography>
-            {enderecos.map((end, i) => (
-              <Box key={i} sx={{ border: "1px solid rgba(255,255,255,0.12)", borderRadius: 2, p: 2, mb: 1 }}>
-                <Stack spacing={1.5}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption">Endereço {i + 1}</Typography>
-                    <IconButton size="small" color="error" onClick={() => removerEndereco(i)} disabled={enderecos.length === 1}>
-                      <RemoveCircleOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                  <Stack direction="row" spacing={1}>
-                    <TextField size="small" label="CEP" value={end.cep}
-                      onChange={(e) => handleEnderecoChange(i, "cep", e.target.value)} sx={{ width: "40%" }} />
-                    <TextField size="small" label="Estado" value={end.estado}
-                      onChange={(e) => handleEnderecoChange(i, "estado", e.target.value)} sx={{ width: "20%" }}
-                      inputProps={{ maxLength: 2 }} />
-                    <TextField size="small" label="Cidade" value={end.cidade}
-                      onChange={(e) => handleEnderecoChange(i, "cidade", e.target.value)} sx={{ width: "40%" }} />
-                  </Stack>
-                  <TextField size="small" label="Logradouro" value={end.logradouro}
-                    onChange={(e) => handleEnderecoChange(i, "logradouro", e.target.value)} fullWidth />
-                  <Stack direction="row" spacing={1}>
-                    <TextField size="small" label="Número" value={end.numero}
-                      onChange={(e) => handleEnderecoChange(i, "numero", e.target.value)} sx={{ width: "30%" }} />
-                    <TextField size="small" label="Bairro" value={end.bairro}
-                      onChange={(e) => handleEnderecoChange(i, "bairro", e.target.value)} sx={{ width: "70%" }} />
-                  </Stack>
-                  <TextField size="small" label="Complemento" value={end.complemento}
-                    onChange={(e) => handleEnderecoChange(i, "complemento", e.target.value)} fullWidth />
-                </Stack>
-              </Box>
-            ))}
+          <Divider sx={{ my: 3 }} />
+
+          {/* === Endereços === */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Endereços
+            </Typography>
             <Button size="small" startIcon={<AddCircleOutlineIcon />} onClick={adicionarEndereco}>
-              Adicionar Endereço
+              Adicionar
             </Button>
+          </Box>
 
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-              <Button type="submit" variant="contained" disabled={saving}>
-                {saving ? "Salvando..." : "Salvar"}
-              </Button>
-              <Button variant="outlined" onClick={() => navigate(-1)}>Cancelar</Button>
-            </Stack>
+          <Stack spacing={2}>
+            {enderecos.map((end, i) => (
+              <EnderecoFields
+                key={i}
+                endereco={end}
+                index={i}
+                onChange={handleEnderecoChange}
+                onRemove={removerEndereco}
+                disableRemove={enderecos.length === 1}
+              />
+            ))}
+          </Stack>
+
+          <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
+            <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </Stack>
         </form>
       </Paper>

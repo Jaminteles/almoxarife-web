@@ -16,7 +16,7 @@ const includeAll = [
 // Se filtros for {} ou não for passado, retorna todos.
 // ──────────────────────────────────────────────────────────────
 export async function listarTodos(filtros = {}) {
-  const where = {}
+  const where = { ativo: 1 }; // Filtrar apenas registros ativos
 
   // Busca parcial (substring) — case-insensitive pela collation padrão do MySQL
   if (filtros.razao_social) {
@@ -99,5 +99,9 @@ export async function substituirEnderecos(idFornecedor, enderecos) {
 
 // Inativar (soft delete)
 export async function inativar(id) {
+  const fornecedor = await Fornecedor.findByPk(id)
+  if (fornecedor && fornecedor.ativo === 0) {
+    throw new Error("Fornecedor já está inativo")
+  }
   return await Fornecedor.update({ ativo: 0 }, { where: { id_fornecedor: id } })
 }

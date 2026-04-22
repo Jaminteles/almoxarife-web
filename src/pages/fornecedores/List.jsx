@@ -50,11 +50,11 @@ export default function FornecedoresList() {
       .then(result => {
         if (result.sucesso) {
           const formatado = result.dados.map(f => ({
-            id_fornecedor: f.id_fornecedor,
-            razao_social: f.razao_social,
-            cnpj: formatarCnpj(f.cnpj),
-            email: f.email,
-            telefone: f.telefones?.map(t => t.telefone).join(", ") || "—"
+            "Razão Social": f.razao_social,
+            "CNPJ": formatarCnpj(f.cnpj),
+            "Email": f.email,
+            "Telefone": f.telefones?.map(t => t.telefone).join(", ") || "—",
+            __id__: f.id_fornecedor
           }));
           setData(formatado);
         } else {
@@ -93,23 +93,19 @@ export default function FornecedoresList() {
   }
 
   function handleEdit(item) {
-    const original = data.find(d => d.razao_social === item.razao_social && d.cnpj === item.cnpj);
-    if (original) navigate(`/fornecedores/${original.id_fornecedor}/editar`);
+    navigate(`/fornecedores/${item.__id__}/editar`);
   }
 
   function handleInactivateClick(item) {
-    const original = data.find(d => d.razao_social === item.razao_social && d.cnpj === item.cnpj);
-    if (original) {
-      setSelectedItem(original);
-      setOpenConfirm(true);
-    }
+    setSelectedItem(item);
+    setOpenConfirm(true);
   }
 
   function handleConfirmInactivate() {
     setInactivating(true);
     setError("");
 
-    fetch(`${API_URL}/fornecedores/${selectedItem.id_fornecedor}`, {
+    fetch(`${API_URL}/fornecedores/${selectedItem.__id__}`, {
       method: "DELETE"
     })
       .then(res => res.json())
@@ -134,7 +130,7 @@ export default function FornecedoresList() {
     setSelectedItem(null);
   }
 
-  const dataTabela = data.map(({ id_fornecedor, ...rest }) => rest);
+  const dataTabela = data;
 
   return (
     <Container maxWidth="lg">
