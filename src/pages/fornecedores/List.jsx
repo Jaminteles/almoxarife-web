@@ -1,48 +1,51 @@
-import {
-  Container,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Alert,
-  Snackbar
-} from "@mui/material";
+import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
 const API_URL = "http://localhost:5000/api";
 
-/**
- * FornecedoresList — Tela de listagem de fornecedores.
- * 
- * VALIDAÇÃO DO BACKEND (RF012 - Fluxo de Exceção):
- * Se o fornecedor tiver pedidos em andamento (status 'PENDENTE'),
- * o backend retorna erro: "Não é possível inativar fornecedor com pedidos em andamento."
- */
 export default function FornecedoresList() {
   const navigate = useNavigate();
-
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inactivating, setInactivating] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  // Estado dos filtros de busca (controlled inputs)
+  const [filtros, setFiltros] = useState({
+    razao_social: "",
+    cnpj: ""
+  });
 
+  // Carrega tudo na primeira vez
   useEffect(() => {
     carregarFornecedores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function carregarFornecedores() {
+  // ── Função central de busca ──
+  // Aceita filtros como parâmetro OU usa os do state
+  function carregarFornecedores(filtrosBusca = {}) {
     setLoading(true);
-    fetch(`${API_URL}/fornecedores`)
+    setError("");
+
+    // Monta a query string apenas com campos preenchidos
+    const params = new URLSearchParams();
+    Object.entries(filtrosBusca).forEach(([chave, valor]) => {
+      if (valor && String(valor).trim() !== "") {
+        params.append(chave, String(valor).trim());
+      }
+    });
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_URL}/fornecedores?${queryString}`
+      : `${API_URL}/fornecedores`;
+
+    fetch(url)
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) {
@@ -67,7 +70,26 @@ export default function FornecedoresList() {
 
   function formatarCnpj(cnpj) {
     if (!cnpj || cnpj.length !== 14) return cnpj;
-    return `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`;
+    return `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12)}`;
+  }
+
+  // ── Handlers dos filtros ──
+  function handleFiltroChange(campo, valor) {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  }
+
+  function handleBuscar() {
+    carregarFornecedores(filtros);
+  }
+
+  function handleLimpar() {
+    setFiltros({ razao_social: "", cnpj: "" });
+    carregarFornecedores({});
+  }
+
+  // Permitir buscar apertando Enter em qualquer campo de filtro
+  function handleKeyDown(e) {
+    if (e.key === "Enter") handleBuscar();
   }
 
   function handleEdit(item) {
@@ -93,27 +115,14 @@ export default function FornecedoresList() {
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) {
-          carregarFornecedores();
-          setSnackbar({
-            open: true,
-            message: `Fornecedor "${selectedItem.razao_social}" inativado com sucesso`,
-            severity: "success"
-          });
+          carregarFornecedores(filtros); // recarrega mantendo filtros atuais
         } else {
-          setSnackbar({
-            open: true,
-            message: result.erro || "Erro ao inativar fornecedor",
-            severity: "error"
-          });
+          setError(result.erro || "Erro ao inativar fornecedor");
         }
         setInactivating(false);
       })
       .catch(err => {
-        setSnackbar({
-          open: true,
-          message: "Erro ao inativar: " + err.message,
-          severity: "error"
-        });
+        setError("Erro ao inativar: " + err.message);
         setInactivating(false);
       });
 
@@ -125,8 +134,7 @@ export default function FornecedoresList() {
     setSelectedItem(null);
   }
 
-  // Remove o id_fornecedor dos dados visíveis na tabela
-  const dataVisivel = data.map(({ id_fornecedor, ...visivel }) => visivel);
+  const dataTabela = data.map(({ id_fornecedor, ...rest }) => rest);
 
   return (
     <Container maxWidth="lg">
@@ -135,61 +143,48 @@ export default function FornecedoresList() {
       <ListTemplate
         title="Fornecedores"
         columns={["Razão Social", "CNPJ", "Email", "Telefone"]}
-        data={dataVisivel}
+        data={dataTabela}
         loading={loading}
         onCreate={() => navigate("/fornecedores/cadastro")}
         onEdit={handleEdit}
-        /* onInactivate ativa o botão "Inativar" neste módulo */
         onInactivate={handleInactivateClick}
+        onSearch={handleBuscar}
+        onClear={handleLimpar}
+        emptyMessage="Nenhum fornecedor encontrado com os parâmetros informados."
         filters={
           <>
-            <TextField label="Razão Social" size="small" />
-            <TextField label="CNPJ" size="small" />
+            <TextField
+              label="Razão Social"
+              size="small"
+              value={filtros.razao_social}
+              onChange={(e) => handleFiltroChange("razao_social", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <TextField
+              label="CNPJ"
+              size="small"
+              value={filtros.cnpj}
+              onChange={(e) => handleFiltroChange("cnpj", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
           </>
         }
       />
 
-      {/* Dialog de confirmação conforme RF012 */}
       <Dialog open={openConfirm} onClose={handleCloseConfirm}>
         <DialogTitle>Confirmar Inativação</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Deseja inativar o fornecedor <strong>{selectedItem?.razao_social}</strong>?
-            <br />
-            <br />
-            O registro será mantido no sistema para histórico e referência futura.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseConfirm} disabled={inactivating}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmInactivate}
-            color="warning"
-            variant="contained"
-            disabled={inactivating}
-          >
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>Cancelar</Button>
+          <Button onClick={handleConfirmInactivate} color="warning" variant="contained" disabled={inactivating}>
             {inactivating ? "Inativando..." : "Inativar"}
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

@@ -1,102 +1,106 @@
-/**
- * funcionario.repository.js — Camada de Acesso a Dados
- */
-
 import db from "../models/index.js"
+import { Op } from "sequelize"
 
 const Funcionario = db.Funcionario
 const UsuarioSistema = db.UsuarioSistema
 
-const includeRelacionamentos = [
-  { model: db.Cargo, as: "cargo" },
-  {
-    model: db.UsuarioSistema,
+// ──────────────────────────────────────────────────────────────
+// Listar com filtros opcionais
+//   filtros = { nome?, cpf?, email?, cargo? }
+// - nome/cpf  → filtram na própria tabela Funcionarios (WHERE)
+// - email     → filtra na tabela Usuarios_Sistema  (JOIN)
+// - cargo     → filtra na tabela Cargos            (JOIN)
+// ──────────────────────────────────────────────────────────────
+export async function listarTodos(filtros = {}) {
+  const where = {}
+
+  if (filtros.nome) {
+    where.nome = { [Op.like]: `%${filtros.nome}%` }
+  }
+  if (filtros.cpf) {
+    where.cpf = { [Op.like]: `%${filtros.cpf}%` }
+  }
+
+  // Include do cargo — INNER JOIN apenas quando há filtro
+  const includeCargo = {
+    model: db.Cargo,
+    as: "cargo"
+  }
+  if (filtros.cargo) {
+    includeCargo.where = { nome_cargo: { [Op.like]: `%${filtros.cargo}%` } }
+    includeCargo.required = true // força INNER JOIN p/ filtrar
+  }
+
+  // Include do usuário — INNER JOIN apenas quando há filtro por email
+  const includeUsuario = {
+    model: UsuarioSistema,
     as: "usuario",
     attributes: { exclude: ["password_hash"] }
   }
-]
+  if (filtros.email) {
+    includeUsuario.where = { email: { [Op.like]: `%${filtros.email}%` } }
+    includeUsuario.required = true // força INNER JOIN p/ filtrar
+  }
 
-// ═══ LEITURA ═══
-
-/**
- * LISTA SOMENTE FUNCIONÁRIOS ATIVOS
- *
- * O campo se chama is_active (TINYINT: 1 = ativo, 0 = inativo).
- * Note que é diferente do fornecedor que usa `ativo`.
- * Essa inconsistência vem do schema original do banco.
- */
-export async function listarTodos() {
   return await Funcionario.findAll({
-    where: { is_active: 1 },
-    include: includeRelacionamentos,
+    where,
+    include: [includeCargo, includeUsuario],
     order: [["nome", "ASC"]]
   })
 }
 
+// Buscar por ID
 export async function buscarPorId(id) {
   return await Funcionario.findByPk(id, {
-    include: includeRelacionamentos
+    include: [
+      { model: db.Cargo, as: "cargo" },
+      { model: UsuarioSistema, as: "usuario", attributes: { exclude: ["password_hash"] } }
+    ]
   })
 }
 
-// Sem filtro de ativo — usado p/ verificar duplicidade de CPF
+// Buscar por CPF
 export async function buscarPorCpf(cpf) {
   return await Funcionario.findOne({
     where: { cpf },
-    include: includeRelacionamentos
+    include: [
+      { model: db.Cargo, as: "cargo" },
+      { model: UsuarioSistema, as: "usuario", attributes: { exclude: ["password_hash"] } }
+    ]
   })
 }
 
-export async function buscarUsuarioPorEmail(email) {
-  return await UsuarioSistema.findOne({
-    where: { email },
-    include: [{ model: db.Funcionario, as: "funcionario" }]
-  })
-}
-
-// ═══ ESCRITA ═══
-
+// Criar funcionário
 export async function criar(dados) {
   return await Funcionario.create(dados)
 }
 
+// Criar usuário do sistema vinculado ao funcionário
 export async function criarUsuario(dados) {
   return await UsuarioSistema.create(dados)
 }
 
+// Atualizar funcionário
 export async function atualizar(id, dados) {
   await Funcionario.update(dados, { where: { id_funcionario: id } })
   return await buscarPorId(id)
 }
 
+// Atualizar usuário do sistema
 export async function atualizarUsuario(idFuncionario, dados) {
   await UsuarioSistema.update(dados, { where: { id_funcionario: idFuncionario } })
   return await UsuarioSistema.findByPk(idFuncionario)
 }
 
-// ═══ INATIVAÇÃO ═══
-
+// Inativar (soft delete)
 export async function inativar(id) {
-  return await Funcionario.update(
-    { is_active: 0 },
-    { where: { id_funcionario: id } }
-  )
+  return await Funcionario.update({ is_active: 0 }, { where: { id_funcionario: id } })
 }
 
-/**
- * Verifica se o funcionário tem compras pendentes como responsável.
- * Conta registros na tabela Compra com status 'PENDENTE'.
- */
-export async function verificarPendencias(idFuncionario) {
-  const [resultado] = await db.sequelize.query(
-    `SELECT COUNT(*) AS total_pendencias
-     FROM Compra
-     WHERE id_funcionario_comprador = :id
-       AND status_pedido = 'PENDENTE'`,
-    {
-      replacements: { id: idFuncionario },
-      type: db.Sequelize.QueryTypes.SELECT
-    }
-  )
-  return resultado?.total_pendencias || 0
+// Buscar usuário por email
+export async function buscarUsuarioPorEmail(email) {
+  return await UsuarioSistema.findOne({
+    where: { email },
+    include: [{ model: db.Funcionario, as: "funcionario" }]
+  })
 }

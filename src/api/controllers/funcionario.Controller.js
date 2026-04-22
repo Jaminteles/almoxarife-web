@@ -1,9 +1,14 @@
 import * as funcionarioService from "../services/funcionario.service.js"
 
-// Listar todos
+// Listar / Buscar com filtros
+// GET /api/funcionarios
+// GET /api/funcionarios?nome=maria&cpf=123&cargo=almoxarife&email=teste
 export const listar = async (req, res) => {
   try {
-    const dados = await funcionarioService.listarFuncionarios()
+    const { nome, cpf, email, cargo } = req.query
+    const filtros = { nome, cpf, email, cargo }
+
+    const dados = await funcionarioService.listarFuncionarios(filtros)
     res.json({ sucesso: true, dados, total: dados.length })
   } catch (erro) {
     res.status(400).json({ sucesso: false, erro: erro.message })

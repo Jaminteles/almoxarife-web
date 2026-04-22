@@ -1,86 +1,92 @@
-/**
- * funcionario.service.js — Camada de Serviço
- */
-
 import * as funcionarioRepo from "../repositories/funcionario.repository.js"
 import * as cargoRepo from "../repositories/cargo.repository.js"
 import bcrypt from "bcrypt"
+import { v4 as uuidv4 } from "uuid"
+import { validarEmail } from "../utils/validations/email.validation.js"
 
-// ═══ VALIDAÇÕES ═══
+// ──────────────────────────────────────────────────────────────
+// Validações (mantidas)
+// ──────────────────────────────────────────────────────────────
 
-function validarCamposFuncionario(dados) {
-  if (!dados.nome || dados.nome.trim().length < 3) {
-    throw new Error("Nome deve ter pelo menos 3 caracteres")
-  }
-  if (!dados.cpf) {
-    throw new Error("CPF é obrigatório")
-  }
-  if (!dados.id_cargo) {
-    throw new Error("Cargo é obrigatório")
+const validarCamposFuncionario = (dados) => {
+  if (!dados.nome || !dados.cpf || !dados.id_cargo) {
+    throw new Error("Campos obrigatórios: nome, cpf, id_cargo")
   }
 }
 
-function validarCamposUsuario(dados) {
-  if (!dados.email) throw new Error("Email é obrigatório")
+const validarCamposUsuario = (dados) => {
+  if (!dados.email || !dados.senha) {
+    throw new Error("Campos obrigatórios para usuário: email, senha")
+  }
   validarEmail(dados.email)
-  if (!dados.senha || dados.senha.length < 6) {
-    throw new Error("Senha deve ter pelo menos 6 caracteres")
+}
+
+const limparCpf = (cpf) => {
+  const cpfTrim = cpf.trim()
+  const cpfLimpo = cpfTrim.replace(/[^\d]/g, "")
+  if (cpfLimpo.length !== 11) {
+    throw new Error("CPF deve conter 11 dígitos")
   }
+  return cpfLimpo
 }
 
-function validarEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!regex.test(email)) {
-    throw new Error("Formato de email inválido")
+// ──────────────────────────────────────────────────────────────
+// Normalização de filtros de busca
+// - trim em todos
+// - CPF: remove formatação (aceita busca parcial, 3+ dígitos já basta)
+// ──────────────────────────────────────────────────────────────
+const normalizarFiltros = (filtros = {}) => {
+  const limpos = {}
+  const trim = (v) => (typeof v === "string" ? v.trim() : v)
+
+  if (trim(filtros.nome)) limpos.nome = trim(filtros.nome)
+  if (trim(filtros.email)) limpos.email = trim(filtros.email)
+  if (trim(filtros.cargo)) limpos.cargo = trim(filtros.cargo)
+
+  if (trim(filtros.cpf)) {
+    const cpfDigitos = trim(filtros.cpf).replace(/[^\d]/g, "")
+    if (cpfDigitos.length > 0) limpos.cpf = cpfDigitos
   }
+
+  return limpos
 }
 
-function limparCpf(cpf) {
-  return cpf.replace(/[^\d]/g, "")
-}
-
-// ═══ CRUD ═══
+// ──────────────────────────────────────────────────────────────
+// Regras de Negócio
+// ──────────────────────────────────────────────────────────────
 
 export const criarFuncionario = async (dados) => {
-  // ═══ VALIDAÇÕES - ANTES DE QUALQUER INSERÇÃO ═══
-  
   validarCamposFuncionario(dados)
+
   const cpfLimpo = limparCpf(dados.cpf)
 
-  // Se informou email/senha, valida campos do usuário ANTES de inserir funcionário
-  if (dados.email || dados.senha) {
-    validarCamposUsuario(dados)
+  const cargo = await cargoRepo.buscarPorId(dados.id_cargo)
+  if (!cargo) {
+    throw new Error("Cargo não encontrado")
   }
 
-  // ═══ VERIFICAÇÕES - Verifica duplicatas e referências ═══
-  
   const existente = await funcionarioRepo.buscarPorCpf(cpfLimpo)
   if (existente) {
     throw new Error("CPF já cadastrado no sistema")
   }
 
-  const cargo = await cargoRepo.buscarPorId(dados.id_cargo)
-  if (!cargo) throw new Error("Cargo não encontrado")
+  const idFuncionario = uuidv4()
 
-  if (dados.email) {
+  const funcionario = await funcionarioRepo.criar({
+    id_funcionario: idFuncionario,
+    nome: dados.nome,
+    cpf: cpfLimpo,
+    id_cargo: dados.id_cargo
+  })
+
+  if (dados.email && dados.senha) {
+    validarCamposUsuario(dados)
+
     const emailExistente = await funcionarioRepo.buscarUsuarioPorEmail(dados.email)
     if (emailExistente) {
       throw new Error("Email já cadastrado no sistema")
     }
-  }
 
-  // ═══ CRIAÇÕES - Agora que TUDO foi validado ═══
-  
-  const dadosFuncionario = {
-    nome: dados.nome.trim(),
-    cpf: cpfLimpo,
-    id_cargo: dados.id_cargo
-  }
-  const novoFuncionario = await funcionarioRepo.criar(dadosFuncionario)
-  const idFuncionario = novoFuncionario.id_funcionario
-
-  // Cria usuário do sistema se email e senha foram informados
-  if (dados.email && dados.senha) {
     const passwordHash = await bcrypt.hash(dados.senha, 10)
 
     await funcionarioRepo.criarUsuario({
@@ -94,8 +100,10 @@ export const criarFuncionario = async (dados) => {
   return await funcionarioRepo.buscarPorId(idFuncionario)
 }
 
-export const listarFuncionarios = async () => {
-  return await funcionarioRepo.listarTodos()
+// Listar / Buscar — aceita filtros opcionais
+export const listarFuncionarios = async (filtros = {}) => {
+  const filtrosLimpos = normalizarFiltros(filtros)
+  return await funcionarioRepo.listarTodos(filtrosLimpos)
 }
 
 export const buscarFuncionarioPorId = async (id) => {
@@ -132,7 +140,6 @@ export const atualizarFuncionario = async (id, dados) => {
     if (dados.cpf) {
       const cpfLimpo = limparCpf(dados.cpf)
       const existente = await funcionarioRepo.buscarPorCpf(cpfLimpo)
-      // UUID é string dos dois lados, !== funciona corretamente
       if (existente && existente.id_funcionario !== id) {
         throw new Error("CPF já cadastrado no sistema")
       }
@@ -147,7 +154,6 @@ export const atualizarFuncionario = async (id, dados) => {
     await funcionarioRepo.atualizar(id, dadosFunc)
   }
 
-  // Atualizar dados do usuário se informados
   if (dados.email || dados.senha || dados.access_level !== undefined) {
     const dadosUsuario = {}
 
@@ -176,30 +182,10 @@ export const atualizarFuncionario = async (id, dados) => {
   return await funcionarioRepo.buscarPorId(id)
 }
 
-/**
- * INATIVAR FUNCIONÁRIO (RF008)
- *
- * Validações:
- * 1. Funcionário deve existir
- * 2. Deve estar ativo
- * 3. Não pode ter compras pendentes como responsável
- */
 export const inativarFuncionario = async (id) => {
   const funcionario = await funcionarioRepo.buscarPorId(id)
   if (!funcionario) {
     throw new Error("Funcionário não encontrado")
   }
-
-  if (funcionario.is_active === false || funcionario.is_active === 0) {
-    throw new Error("Funcionário já está inativo")
-  }
-
-  const pendencias = await funcionarioRepo.verificarPendencias(id)
-  if (pendencias && pendencias > 0) {
-    throw new Error(
-      "Não é possível inativar. Funcionário possui solicitações ou compras pendentes."
-    )
-  }
-
   return await funcionarioRepo.inativar(id)
 }

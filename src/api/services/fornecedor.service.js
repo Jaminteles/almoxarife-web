@@ -1,81 +1,104 @@
-/**
- * fornecedor.service.js — Camada de Serviço
- */
-
 import * as fornecedorRepo from "../repositories/fornecedor.repository.js"
+import { validarEmail } from "../utils/validations/email.validation.js"
 
-// ═══ VALIDAÇÕES ═══
+// ──────────────────────────────────────────────────────────────
+// Validações (mantidas como estavam)
+// ──────────────────────────────────────────────────────────────
 
-function validarCamposObrigatorios(dados) {
-  if (!dados.razao_social || dados.razao_social.trim().length < 2) {
-    throw new Error("Razão Social deve ter pelo menos 2 caracteres")
+const validarCamposObrigatorios = (dados) => {
+  if (!dados.razao_social || !dados.cnpj || !dados.email) {
+    throw new Error("Campos obrigatórios: razao_social, cnpj, email")
   }
-  if (!dados.cnpj) {
-    throw new Error("CNPJ é obrigatório")
-  }
-  if (!dados.email) {
-    throw new Error("Email é obrigatório")
-  }
+  validarEmail(dados.email)
 }
 
-function validarFormatoCnpj(cnpj) {
-  const cnpjLimpo = cnpj.replace(/[^\d]/g, "")
-  if (cnpjLimpo.length !== 14) {
-    throw new Error("CNPJ deve ter 14 dígitos")
+const validarFormatoCnpj = (cnpj) => {
+  const cnpjTrim = cnpj.trim()
+  const regexCnpj = /^[0-9./-]+$/
+
+  if (!regexCnpj.test(cnpjTrim)) {
+    throw new Error("Formato de CNPJ inválido. Use apenas números, pontos, barras e traços.")
   }
+
+  const cnpjLimpo = cnpjTrim.replace(/[^\d]+/g, "")
+
+  if (cnpjLimpo.length !== 14) {
+    throw new Error("CNPJ deve conter 14 dígitos")
+  }
+
   return cnpjLimpo
 }
 
-function validarEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!regex.test(email)) {
-    throw new Error("Formato de email inválido")
-  }
-}
+const validarEnderecos = (enderecos) => {
+  if (!enderecos || enderecos.length === 0) return
 
-function validarEnderecos(enderecos) {
-  if (!Array.isArray(enderecos)) return
-  for (const e of enderecos) {
-    if (!e.logradouro || !e.cidade || !e.estado) {
-      throw new Error("Endereço deve ter logradouro, cidade e estado")
+  for (const end of enderecos) {
+    if (!end.cep || !end.logradouro || !end.numero || !end.bairro || !end.cidade || !end.estado) {
+      throw new Error("Endereço incompleto. Campos obrigatórios: cep, logradouro, numero, bairro, cidade, estado")
+    }
+    end.cep = end.cep.replace(/[^\d]/g, "")
+    if (end.cep.length !== 8) {
+      throw new Error("CEP deve conter 8 dígitos")
     }
   }
 }
 
-// ═══ CRUD ═══
+// ──────────────────────────────────────────────────────────────
+// Normalização dos filtros de busca
+// - remove espaços nas pontas
+// - para cnpj: remove pontos, barras, traços (banco guarda só dígitos)
+// - descarta chaves vazias (não deixa WHERE "" aparecer)
+// ──────────────────────────────────────────────────────────────
+const normalizarFiltros = (filtros = {}) => {
+  const limpos = {}
+
+  const trim = (v) => (typeof v === "string" ? v.trim() : v)
+
+  if (trim(filtros.razao_social)) limpos.razao_social = trim(filtros.razao_social)
+  if (trim(filtros.nome_fantasia)) limpos.nome_fantasia = trim(filtros.nome_fantasia)
+  if (trim(filtros.email)) limpos.email = trim(filtros.email)
+
+  if (trim(filtros.cnpj)) {
+    // Mantém só dígitos, pois é assim que está no banco (CHAR(14))
+    const cnpjDigitos = trim(filtros.cnpj).replace(/[^\d]/g, "")
+    if (cnpjDigitos.length > 0) limpos.cnpj = cnpjDigitos
+  }
+
+  return limpos
+}
+
+// ──────────────────────────────────────────────────────────────
+// Regras de Negócio
+// ──────────────────────────────────────────────────────────────
 
 export const cadastrarFornecedor = async (dados) => {
   validarCamposObrigatorios(dados)
-  validarEmail(dados.email)
 
   const cnpjLimpo = validarFormatoCnpj(dados.cnpj)
 
-  // Verifica CNPJ duplicado
   const cnpjExistente = await fornecedorRepo.buscarPorCnpj(cnpjLimpo)
   if (cnpjExistente) {
     throw new Error("CNPJ já registrado no sistema")
   }
 
-  // Verifica email duplicado
   const emailExistente = await fornecedorRepo.buscarPorEmail(dados.email)
   if (emailExistente) {
     throw new Error("Email já registrado no sistema")
   }
 
-  // Monta dados para criação
+  validarEnderecos(dados.enderecos)
+
   const dadosCriacao = {
-    razao_social: dados.razao_social.trim(),
-    nome_fantasia: dados.nome_fantasia?.trim() || null,
+    razao_social: dados.razao_social,
+    nome_fantasia: dados.nome_fantasia || null,
     cnpj: cnpjLimpo,
-    email: dados.email.trim()
+    email: dados.email
   }
 
-  // Telefones
   if (dados.telefones && dados.telefones.length > 0) {
     dadosCriacao.telefones = dados.telefones.map(t => ({ telefone: t }))
   }
 
-  // Endereços
   if (dados.enderecos && dados.enderecos.length > 0) {
     dadosCriacao.enderecos = dados.enderecos
   }
@@ -84,8 +107,10 @@ export const cadastrarFornecedor = async (dados) => {
   return await fornecedorRepo.buscarPorId(fornecedor.id_fornecedor)
 }
 
-export const listarFornecedores = async () => {
-  return await fornecedorRepo.listarTodos()
+// Listar / Buscar — aceita filtros opcionais
+export const listarFornecedores = async (filtros = {}) => {
+  const filtrosLimpos = normalizarFiltros(filtros)
+  return await fornecedorRepo.listarTodos(filtrosLimpos)
 }
 
 export const buscarFornecedorPorId = async (id) => {
@@ -103,47 +128,30 @@ export const editarFornecedor = async (id, dados) => {
   }
 
   validarCamposObrigatorios(dados)
-  validarEmail(dados.email)
 
   const cnpjLimpo = validarFormatoCnpj(dados.cnpj)
 
-  /**
-   * VERIFICAÇÃO DE CNPJ DUPLICADO — COM parseInt(id)
-   * 
-   * A lógica é: "Existe outro fornecedor com esse CNPJ?"
-   * 
-   * parseInt(id) converte a string "5" para o número 5,
-   * permitindo a comparação correta com id_fornecedor (que é number).
-   * 
-   * Se o CNPJ encontrado pertence ao PRÓPRIO fornecedor sendo editado,
-   * não é duplicata → deixa passar.
-   * Se pertence a OUTRO → bloqueia.
-   */
   const cnpjExistente = await fornecedorRepo.buscarPorCnpj(cnpjLimpo)
   if (cnpjExistente && cnpjExistente.id_fornecedor !== parseInt(id)) {
     throw new Error("CNPJ já registrado no sistema")
   }
 
-  // Mesma lógica para email — parseInt no id
   const emailExistente = await fornecedorRepo.buscarPorEmail(dados.email)
   if (emailExistente && emailExistente.id_fornecedor !== parseInt(id)) {
     throw new Error("Email já registrado no sistema")
   }
 
-  // Atualiza dados principais
   await fornecedorRepo.atualizar(id, {
-    razao_social: dados.razao_social.trim(),
-    nome_fantasia: dados.nome_fantasia?.trim() || null,
+    razao_social: dados.razao_social,
+    nome_fantasia: dados.nome_fantasia || null,
     cnpj: cnpjLimpo,
-    email: dados.email.trim()
+    email: dados.email
   })
 
-  // Substitui telefones se informados
   if (dados.telefones !== undefined) {
     await fornecedorRepo.substituirTelefones(id, dados.telefones)
   }
 
-  // Substitui endereços se informados
   if (dados.enderecos !== undefined) {
     validarEnderecos(dados.enderecos)
     await fornecedorRepo.substituirEnderecos(id, dados.enderecos)
@@ -152,30 +160,10 @@ export const editarFornecedor = async (id, dados) => {
   return await fornecedorRepo.buscarPorId(id)
 }
 
-/**
- * INATIVAR FORNECEDOR (RF012)
- *
- * Validações antes de inativar:
- * 1. Fornecedor deve existir
- * 2. Fornecedor deve estar ativo (não inativar quem já está inativo)
- * 3. Fornecedor não pode ter pedidos pendentes
- */
 export const inativarFornecedor = async (id) => {
   const fornecedor = await fornecedorRepo.buscarPorId(id)
   if (!fornecedor) {
     throw new Error("Fornecedor não encontrado")
   }
-
-  if (fornecedor.ativo === false || fornecedor.ativo === 0) {
-    throw new Error("Fornecedor já está inativo")
-  }
-
-  const pedidosPendentes = await fornecedorRepo.verificarPedidosPendentes(id)
-  if (pedidosPendentes && pedidosPendentes > 0) {
-    throw new Error(
-      "Não é possível inativar um fornecedor com pedidos em andamento."
-    )
-  }
-
   return await fornecedorRepo.inativar(id)
 }

@@ -17,10 +17,16 @@ export const cadastrar = async (req, res) => {
   }
 }
 
-// Listar todos
+// Listar / Buscar com filtros
+// GET /api/fornecedores
+// GET /api/fornecedores?razao_social=joao&cnpj=11222333
 export const listar = async (req, res) => {
   try {
-    const resultado = await fornecedorService.listarFornecedores()
+    // Extrai só as chaves que nos interessam — evita passar coisa aleatória
+    const { razao_social, nome_fantasia, cnpj, email } = req.query
+    const filtros = { razao_social, nome_fantasia, cnpj, email }
+
+    const resultado = await fornecedorService.listarFornecedores(filtros)
     res.json({
       sucesso: true,
       dados: resultado,

@@ -1,51 +1,52 @@
-import {
-  Container,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Alert,
-  Snackbar
-} from "@mui/material";
+import { Container, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
 const API_URL = "http://localhost:5000/api";
 
-/**
- * FuncionariosList — Tela de listagem de funcionários.
- */
 export default function FuncionariosList() {
   const navigate = useNavigate();
-
-  // ═══ ESTADOS ═══
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // Estados do Dialog de confirmação de inativação
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inactivating, setInactivating] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Estado do Snackbar de feedback
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  // Estado dos filtros de busca (controlled inputs)
+  const [filtros, setFiltros] = useState({
+    nome: "",
+    cpf: "",
+    email: "",
+    cargo: ""
+  });
 
-  // ═══ CARREGAMENTO INICIAL ═══
+  // Carrega tudo na primeira vez
   useEffect(() => {
     carregarFuncionarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Carrega a lista de funcionários da API.
-   */
-  function carregarFuncionarios() {
+  // ── Função central de busca ──
+  function carregarFuncionarios(filtrosBusca = {}) {
     setLoading(true);
-    fetch(`${API_URL}/funcionarios`)
+    setError("");
+
+    // Monta a query string apenas com campos preenchidos
+    const params = new URLSearchParams();
+    Object.entries(filtrosBusca).forEach(([chave, valor]) => {
+      if (valor && String(valor).trim() !== "") {
+        params.append(chave, String(valor).trim());
+      }
+    });
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_URL}/funcionarios?${queryString}`
+      : `${API_URL}/funcionarios`;
+
+    fetch(url)
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) {
@@ -68,28 +69,42 @@ export default function FuncionariosList() {
       });
   }
 
-  /**
-   * Formata CPF de "12345678901" para "123.456.789-01"
-   */
   function formatarCpf(cpf) {
     if (!cpf || cpf.length !== 11) return cpf;
-    return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
+    return `${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
   }
 
-  // ═══ HANDLERS ═══
+  // ── Handlers dos filtros ──
+  function handleFiltroChange(campo, valor) {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  }
+
+  function handleBuscar() {
+    carregarFuncionarios(filtros);
+  }
+
+  function handleLimpar() {
+    setFiltros({ nome: "", cpf: "", email: "", cargo: "" });
+    carregarFuncionarios({});
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter") handleBuscar();
+  }
 
   function handleEdit(item) {
-    navigate(`/funcionarios/${item.id_funcionario}/editar`);
+    const original = data.find(d => d.nome === item.nome && d.cpf === item.cpf);
+    if (original) navigate(`/funcionarios/${original.id_funcionario}/editar`);
   }
 
   function handleInactivateClick(item) {
-    setSelectedItem(item);
-    setOpenConfirm(true);
+    const original = data.find(d => d.nome === item.nome && d.cpf === item.cpf);
+    if (original) {
+      setSelectedItem(original);
+      setOpenConfirm(true);
+    }
   }
 
-  /**
-   * Executa a inativação após confirmação do usuário.
-   */
   function handleConfirmInactivate() {
     setInactivating(true);
     setError("");
@@ -100,30 +115,14 @@ export default function FuncionariosList() {
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) {
-          // Recarrega a lista para refletir a mudança
-          carregarFuncionarios();
-          // Mostra feedback de sucesso via Snackbar
-          setSnackbar({
-            open: true,
-            message: `Funcionário "${selectedItem.nome}" inativado com sucesso`,
-            severity: "success"
-          });
+          carregarFuncionarios(filtros); // recarrega mantendo os filtros atuais
         } else {
-          // Mostra erro retornado pelo backend (ex: "Funcionário possui solicitações pendentes")
-          setSnackbar({
-            open: true,
-            message: result.erro || "Erro ao inativar funcionário",
-            severity: "error"
-          });
+          setError(result.erro || "Erro ao inativar funcionário");
         }
         setInactivating(false);
       })
       .catch(err => {
-        setSnackbar({
-          open: true,
-          message: "Erro ao inativar: " + err.message,
-          severity: "error"
-        });
+        setError("Erro ao inativar: " + err.message);
         setInactivating(false);
       });
 
@@ -135,11 +134,8 @@ export default function FuncionariosList() {
     setSelectedItem(null);
   }
 
-  // ═══ PREPARAÇÃO DOS DADOS PARA A TABELA ═══
-  const dataTabela = data;
-
-  // Remove o id_funcionario antes de passar para o template visual
-  const dataVisivel = data.map(({ id_funcionario, ...visivel }) => visivel);
+  // Remove id_funcionario da exibição da tabela
+  const dataTabela = data.map(({ id_funcionario, ...rest }) => rest);
 
   return (
     <Container maxWidth="lg">
@@ -148,80 +144,64 @@ export default function FuncionariosList() {
       <ListTemplate
         title="Funcionários"
         columns={["Nome", "CPF", "Cargo", "Email"]}
-        data={dataVisivel}
+        data={dataTabela}
         loading={loading}
         onCreate={() => navigate("/funcionarios/cadastro")}
-        onEdit={(item) => {
-          // Encontra o item original (com ID) pelo nome e CPF
-          const original = dataTabela.find(d => d.nome === item.nome && d.cpf === item.cpf);
-          if (original) handleEdit(original);
-        }}
-        /**
-         * onInactivate — ESTA É A PROP QUE FAZ O BOTÃO APARECER
-         * ======================================================
-         * Como o ListTemplate agora renderiza o botão "Inativar" de forma
-         * CONDICIONAL (só se onInactivate for passado), este é o ponto
-         * que "ativa" o botão para o módulo de Funcionários.
-         * 
-         * Módulos que NÃO passam essa prop simplesmente não terão o botão.
-         */
-        onInactivate={(item) => {
-          const original = dataTabela.find(d => d.nome === item.nome && d.cpf === item.cpf);
-          if (original) handleInactivateClick(original);
-        }}
+        onEdit={handleEdit}
+        onInactivate={handleInactivateClick}
+        onSearch={handleBuscar}
+        onClear={handleLimpar}
+        emptyMessage="Nenhum funcionário encontrado."
         filters={
           <>
-            <TextField label="Nome" size="small" />
-            <TextField label="CPF" size="small" />
+            <TextField
+              label="Nome"
+              size="small"
+              value={filtros.nome}
+              onChange={(e) => handleFiltroChange("nome", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <TextField
+              label="CPF"
+              size="small"
+              value={filtros.cpf}
+              onChange={(e) => handleFiltroChange("cpf", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <TextField
+              label="Cargo"
+              size="small"
+              value={filtros.cargo}
+              onChange={(e) => handleFiltroChange("cargo", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <TextField
+              label="Email"
+              size="small"
+              value={filtros.email}
+              onChange={(e) => handleFiltroChange("email", e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
           </>
         }
       />
 
-      {/* ═══ DIALOG DE CONFIRMAÇÃO ═══ 
-          Conforme RF008: "O sistema exibe a mensagem de confirmação: 
-          'Deseja inativar [Nome do Funcionário]?'"
-      */}
       <Dialog open={openConfirm} onClose={handleCloseConfirm}>
         <DialogTitle>Confirmar Inativação</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Deseja inativar o funcionário <strong>{selectedItem?.nome}</strong>?
             <br />
-            <br />
-            Esta ação altera o status para "Inativo". O registro será mantido
-            no sistema para fins de histórico e auditoria.
+            Esta ação pode ser revertida pelo administrador.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseConfirm} disabled={inactivating}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmInactivate}
-            color="warning"
-            variant="contained"
-            disabled={inactivating}
-          >
+          <Button onClick={handleCloseConfirm} disabled={inactivating}>Cancelar</Button>
+          <Button onClick={handleConfirmInactivate} color="warning" variant="contained" disabled={inactivating}>
             {inactivating ? "Inativando..." : "Inativar"}
           </Button>
         </DialogActions>
       </Dialog>
-      
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }
