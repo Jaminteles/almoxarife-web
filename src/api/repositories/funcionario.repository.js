@@ -12,7 +12,7 @@ const UsuarioSistema = db.UsuarioSistema
 // - cargo     → filtra na tabela Cargos            (JOIN)
 // ──────────────────────────────────────────────────────────────
 export async function listarTodos(filtros = {}) {
-  const where = {}
+  const where = { is_active: 1 }; // Filtrar apenas funcionários ativos
 
   if (filtros.nome) {
     where.nome = { [Op.like]: `%${filtros.nome}%` }
@@ -94,6 +94,10 @@ export async function atualizarUsuario(idFuncionario, dados) {
 
 // Inativar (soft delete)
 export async function inativar(id) {
+  const funcionario = await Funcionario.findByPk(id)
+  if (funcionario && funcionario.is_active === 0) {
+    throw new Error("Funcionário já está inativo")
+  }
   return await Funcionario.update({ is_active: 0 }, { where: { id_funcionario: id } })
 }
 

@@ -7,9 +7,12 @@ import {
   Typography,
   Paper,
   Alert,
-  MenuItem
+  MenuItem,
+  Grid,
+  Divider
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import FormPageHeader from "../../components/FormPageHeader";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -68,61 +71,115 @@ export default function FuncionarioForm() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h5" mb={2}>
-          Cadastrar Funcionário
-        </Typography>
+    <Container maxWidth="md">
+      <FormPageHeader
+        title="Cadastrar Funcionário"
+        subtitle="Preencha os dados do novo funcionário do sistema."
+        backTo="/funcionarios"
+      />
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Paper sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 3 }}>
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
         <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField name="nome" label="Nome" onChange={handleChange} required />
-            <TextField name="cpf" label="CPF" onChange={handleChange} required
-              helperText="Apenas números ou formato 000.000.000-00" />
-            
-            <TextField
-              name="id_cargo"
-              label="Cargo"
-              select
-              value={form.id_cargo}
-              onChange={handleChange}
-              required
-            >
-              {cargos.map(c => (
-                <MenuItem key={c.id_cargo} value={c.id_cargo}>
-                  {c.nome_cargo}
-                </MenuItem>
-              ))}
-            </TextField>
+          {/* === Seção: Dados pessoais === */}
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Dados pessoais
+          </Typography>
 
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-              Dados de Acesso ao Sistema
-            </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={7}>
+              <TextField
+                name="nome"
+                label="Nome *"
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={5}>
+              <TextField
+                name="cpf"
+                label="CPF *"
+                onChange={handleChange}
+                required
+                fullWidth
+                helperText="Apenas números ou formato 000.000.000-00"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="id_cargo"
+                label="Cargo *"
+                select
+                value={form.id_cargo}
+                onChange={handleChange}
+                required
+                fullWidth
+              >
+                {cargos.map(c => (
+                  <MenuItem key={c.id_cargo} value={c.id_cargo}>
+                    {c.nome_cargo}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
 
-            <TextField name="email" label="Email" type="email" onChange={handleChange} required />
-            <TextField name="senha" label="Senha" type="password" onChange={handleChange} required />
+          <Divider sx={{ my: 3 }} />
 
-            <TextField
-              name="access_level"
-              label="Nível de Acesso"
-              select
-              value={form.access_level}
-              onChange={handleChange}
-            >
-              <MenuItem value="CENTRAL">Central</MenuItem>
-              <MenuItem value="ALMOXARIFE">Almoxarife</MenuItem>
-              <MenuItem value="AUXILIAR">Auxiliar</MenuItem>
-              <MenuItem value="CONSULTA">Consulta</MenuItem>
-            </TextField>
+          {/* === Seção: Acesso ao sistema === */}
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Dados de acesso ao sistema
+          </Typography>
 
-            <Stack direction="row" spacing={2}>
-              <Button type="submit" variant="contained" disabled={saving}>
-                {saving ? "Salvando..." : "Salvar"}
-              </Button>
-              <Button variant="outlined" onClick={() => navigate(-1)}>Cancelar</Button>
-            </Stack>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="email"
+                label="Email *"
+                type="email"
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="senha"
+                label="Senha *"
+                type="password"
+                onChange={handleChange}
+                required
+                fullWidth
+                helperText="Mínimo 8 caracteres"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="access_level"
+                label="Nível de Acesso"
+                select
+                value={form.access_level}
+                onChange={handleChange}
+                fullWidth
+              >
+                <MenuItem value="CENTRAL">Central</MenuItem>
+                <MenuItem value="ALMOXARIFE">Almoxarife</MenuItem>
+                <MenuItem value="AUXILIAR">Auxiliar</MenuItem>
+                <MenuItem value="CONSULTA">Consulta</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
+
+          {/* === Ações === */}
+          <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
+            <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
           </Stack>
         </form>
       </Paper>

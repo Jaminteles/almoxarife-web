@@ -8,9 +8,13 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  MenuItem
+  MenuItem,
+  Grid,
+  Divider,
+  Box
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
+import FormPageHeader from "../../components/FormPageHeader";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -23,6 +27,7 @@ export default function FuncionarioEdit() {
     cpf: "",
     id_cargo: "",
     email: "",
+    senha: "",
     access_level: "CONSULTA"
   });
 
@@ -51,6 +56,7 @@ export default function FuncionarioEdit() {
             cpf: f.cpf,
             id_cargo: f.id_cargo,
             email: f.usuario?.email || "",
+            senha: "",
             access_level: f.usuario?.access_level || "CONSULTA"
           });
         } else {
@@ -95,71 +101,119 @@ export default function FuncionarioEdit() {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h5" mb={2}>Editar Funcionário</Typography>
+    <Container maxWidth="md">
+      <FormPageHeader
+        title="Editar Funcionário"
+        subtitle="Atualize as informações do funcionário."
+        backTo="/funcionarios"
+      />
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Paper sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 3 }}>
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
         <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField name="nome" label="Nome" value={form.nome} onChange={handleChange} required />
-            <TextField name="cpf" label="CPF" value={form.cpf} onChange={handleChange} required />
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Dados pessoais
+          </Typography>
 
-            <TextField
-              name="id_cargo"
-              label="Cargo"
-              select
-              value={form.id_cargo}
-              onChange={handleChange}
-              required
-            >
-              {cargos.map(c => (
-                <MenuItem key={c.id_cargo} value={c.id_cargo}>
-                  {c.nome_cargo}
-                </MenuItem>
-              ))}
-            </TextField>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={7}>
+              <TextField
+                name="nome"
+                label="Nome *"
+                value={form.nome}
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={5}>
+              <TextField
+                name="cpf"
+                label="CPF *"
+                value={form.cpf}
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="id_cargo"
+                label="Cargo *"
+                select
+                value={form.id_cargo}
+                onChange={handleChange}
+                required
+                fullWidth
+              >
+                {cargos.map(c => (
+                  <MenuItem key={c.id_cargo} value={c.id_cargo}>
+                    {c.nome_cargo}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
 
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-              Dados de Acesso ao Sistema
-            </Typography>
+          <Divider sx={{ my: 3 }} />
 
-            <TextField name="email" label="Email" type="email" value={form.email} onChange={handleChange} />
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Dados de acesso ao sistema
+          </Typography>
 
-            <TextField
-              name="senha"
-              label="Nova Senha (deixe vazio para não alterar)"
-              type="password"
-              onChange={handleChange}
-            />
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="email"
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="senha"
+                label="Nova Senha"
+                type="password"
+                onChange={handleChange}
+                fullWidth
+                helperText="Deixe vazio para não alterar"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="access_level"
+                label="Nível de Acesso"
+                select
+                value={form.access_level}
+                onChange={handleChange}
+                fullWidth
+              >
+                <MenuItem value="CENTRAL">Central</MenuItem>
+                <MenuItem value="ALMOXARIFE">Almoxarife</MenuItem>
+                <MenuItem value="AUXILIAR">Auxiliar</MenuItem>
+                <MenuItem value="CONSULTA">Consulta</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
 
-            <TextField
-              name="access_level"
-              label="Nível de Acesso"
-              select
-              value={form.access_level}
-              onChange={handleChange}
-            >
-              <MenuItem value="CENTRAL">Central</MenuItem>
-              <MenuItem value="ALMOXARIFE">Almoxarife</MenuItem>
-              <MenuItem value="AUXILIAR">Auxiliar</MenuItem>
-              <MenuItem value="CONSULTA">Consulta</MenuItem>
-            </TextField>
-
-            <Stack direction="row" spacing={2}>
-              <Button type="submit" variant="contained" disabled={saving}>
-                {saving ? "Salvando..." : "Salvar"}
-              </Button>
-              <Button variant="outlined" onClick={() => navigate(-1)}>Cancelar</Button>
-            </Stack>
+          <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
+            <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </Stack>
         </form>
       </Paper>

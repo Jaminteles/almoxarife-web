@@ -51,11 +51,11 @@ export default function FuncionariosList() {
       .then(result => {
         if (result.sucesso) {
           const formatado = result.dados.map(f => ({
-            id_funcionario: f.id_funcionario,
-            nome: f.nome,
-            cpf: formatarCpf(f.cpf),
-            cargo: f.cargo?.nome_cargo || "—",
-            email: f.usuario?.email || "—"
+            "Nome": f.nome,
+            "CPF": formatarCpf(f.cpf),
+            "Cargo": f.cargo?.nome_cargo || "—",
+            "Email": f.usuario?.email || "—",
+            __id__: f.id_funcionario
           }));
           setData(formatado);
         } else {
@@ -93,23 +93,19 @@ export default function FuncionariosList() {
   }
 
   function handleEdit(item) {
-    const original = data.find(d => d.nome === item.nome && d.cpf === item.cpf);
-    if (original) navigate(`/funcionarios/${original.id_funcionario}/editar`);
+    navigate(`/funcionarios/${item.__id__}/editar`);
   }
 
   function handleInactivateClick(item) {
-    const original = data.find(d => d.nome === item.nome && d.cpf === item.cpf);
-    if (original) {
-      setSelectedItem(original);
-      setOpenConfirm(true);
-    }
+    setSelectedItem(item);
+    setOpenConfirm(true);
   }
 
   function handleConfirmInactivate() {
     setInactivating(true);
     setError("");
 
-    fetch(`${API_URL}/funcionarios/${selectedItem.id_funcionario}`, {
+    fetch(`${API_URL}/funcionarios/${selectedItem.__id__}`, {
       method: "DELETE"
     })
       .then(res => res.json())
@@ -134,8 +130,8 @@ export default function FuncionariosList() {
     setSelectedItem(null);
   }
 
-  // Remove id_funcionario da exibição da tabela
-  const dataTabela = data.map(({ id_funcionario, ...rest }) => rest);
+  // Dados já têm __id__ incluído
+  const dataTabela = data;
 
   return (
     <Container maxWidth="lg">
