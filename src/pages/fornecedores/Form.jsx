@@ -119,19 +119,19 @@ export default function FornecedorForm() {
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={8}>
-              <TextField name="razao_social" label="Razão Social *" onChange={handleChange} required fullWidth />
+              <TextField name="razao_social" label="Razão Social" onChange={handleChange} required fullWidth />
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField name="nome_fantasia" label="Nome Fantasia" onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="cnpj" label="CNPJ *" onChange={handleChange} required fullWidth
+                name="cnpj" label="CNPJ" onChange={handleChange} required fullWidth
                 helperText="Apenas números ou formato 00.000.000/0000-00"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="email" label="Email *" type="email" onChange={handleChange} required fullWidth />
+              <TextField name="email" label="Email" type="email" onChange={handleChange} required fullWidth />
             </Grid>
           </Grid>
 

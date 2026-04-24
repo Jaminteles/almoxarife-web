@@ -25,6 +25,7 @@ export default function FuncionarioForm() {
     id_cargo: "",
     email: "",
     senha: "",
+    confirmarSenha: "",
     access_level: "CONSULTA"
   });
 
@@ -50,10 +51,18 @@ export default function FuncionarioForm() {
     setError("");
     setSaving(true);
 
+    if (form.senha !== form.confirmarSenha) {
+      setError("As senhas não coincidem");
+      setSaving(false);
+      return;
+    }
+
+    const { confirmarSenha, ...dadosParaEnviar } = form;
+
     fetch(`${API_URL}/funcionarios`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
+      body: JSON.stringify(dadosParaEnviar)
     })
       .then(res => res.json())
       .then(result => {
@@ -88,29 +97,29 @@ export default function FuncionarioForm() {
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={7}>
+            <Grid item xs={12} sm={8}>
               <TextField
                 name="nome"
-                label="Nome *"
+                label="Nome"
                 onChange={handleChange}
                 required
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={5}>
+            <Grid item xs={12} sm={8}>
               <TextField
                 name="cpf"
-                label="CPF *"
+                label="CPF"
                 onChange={handleChange}
                 required
                 fullWidth
                 helperText="Apenas números ou formato 000.000.000-00"
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={8}>
               <TextField
                 name="id_cargo"
-                label="Cargo *"
+                label="Cargo"
                 select
                 value={form.id_cargo}
                 onChange={handleChange}
@@ -137,7 +146,7 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={6}>
               <TextField
                 name="email"
-                label="Email *"
+                label="Email"
                 type="email"
                 onChange={handleChange}
                 required
@@ -147,12 +156,28 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={6}>
               <TextField
                 name="senha"
-                label="Senha *"
+                label="Senha"
                 type="password"
                 onChange={handleChange}
                 required
                 fullWidth
-                helperText="Mínimo 8 caracteres"
+                // Mostra erro visual se tiver entre 1 e 7 caracteres
+                error={form.senha.length > 0 && form.senha.length < 8}
+                helperText={
+                  form.senha.length > 0 && form.senha.length < 8 
+                  ? "A senha deve ter pelo menos 8 caracteres" 
+                  : "A senha deve ter pelo menos 8 caracteres"
+                }
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="confirmarSenha"
+                label="Confirmar Senha"
+                type="password"
+                onChange={handleChange}
+                required
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
