@@ -39,16 +39,16 @@ export default function EnderecoFields({ endereco, index, onChange, onRemove, di
         </Stack>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <TextField size="small" label="CEP"     value={endereco.cep}     onChange={handleField("cep")}     sx={{ width: { sm: "40%" } }} />
-          <TextField size="small" label="Estado"  value={endereco.estado}  onChange={handleField("estado")}  sx={{ width: { sm: "20%" } }} inputProps={{ maxLength: 2 }} />
-          <TextField size="small" label="Cidade"  value={endereco.cidade}  onChange={handleField("cidade")}  sx={{ width: { sm: "40%" } }} />
+          <TextField required size="small" label="CEP" value={endereco.cep} onChange={handleField("cep")} sx={{ width: { sm: "40%" } }} />
+          <TextField required size="small" label="Estado" value={endereco.estado} onChange={handleField("estado")} sx={{ width: { sm: "20%" } }} inputProps={{ maxLength: 2 }} />
+          <TextField required size="small" label="Cidade" value={endereco.cidade} onChange={handleField("cidade")} sx={{ width: { sm: "40%" } }} />
         </Stack>
 
-        <TextField size="small" label="Logradouro" value={endereco.logradouro} onChange={handleField("logradouro")} fullWidth />
+        <TextField required size="small" label="Logradouro" value={endereco.logradouro} onChange={handleField("logradouro")} fullWidth />
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <TextField size="small" label="Número" value={endereco.numero} onChange={handleField("numero")} sx={{ width: { sm: "30%" } }} />
-          <TextField size="small" label="Bairro" value={endereco.bairro} onChange={handleField("bairro")} sx={{ width: { sm: "70%" } }} />
+          <TextField required size="small" label="Número" value={endereco.numero} onChange={handleField("numero")} sx={{ width: { sm: "30%" } }} />
+          <TextField required size="small" label="Bairro" value={endereco.bairro} onChange={handleField("bairro")} sx={{ width: { sm: "70%" } }} />
         </Stack>
 
         <TextField size="small" label="Complemento" value={endereco.complemento} onChange={handleField("complemento")} fullWidth />

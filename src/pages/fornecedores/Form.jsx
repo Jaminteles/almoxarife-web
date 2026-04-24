@@ -155,6 +155,7 @@ export default function FornecedorForm() {
                   label={`Telefone ${i + 1}`}
                   value={tel}
                   onChange={(e) => handleTelefoneChange(i, e.target.value)}
+                  required
                 />
                 <IconButton color="error" onClick={() => removerTelefone(i)} disabled={telefones.length === 1}>
                   <RemoveCircleOutlineIcon />
