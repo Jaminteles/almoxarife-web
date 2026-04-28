@@ -1,3 +1,9 @@
+/**
+ * Define o modelo Sequelize para a tabela Funcionarios.
+ * O campo `email` armazena o contato do funcionário — distinto da credencial de login em Usuarios_Sistema.
+ * @param {import("sequelize").Sequelize} sequelize
+ * @param {import("sequelize").DataTypes} DataTypes
+ */
 export default (sequelize, DataTypes) => {
   const Funcionario = sequelize.define("Funcionario", {
     id_funcionario: {
@@ -18,6 +24,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false
     },
+    email: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+      unique: true
+    },
     is_active: {
       type: DataTypes.TINYINT(1),
       defaultValue: 1
@@ -27,7 +38,7 @@ export default (sequelize, DataTypes) => {
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
-    charset: 'utf8mb4'
+    charset: "utf8mb4"
   })
 
   return Funcionario

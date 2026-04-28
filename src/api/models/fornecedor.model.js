@@ -1,3 +1,8 @@
+/**
+ * Define o modelo Sequelize para a tabela Fornecedores.
+ * @param {import("sequelize").Sequelize} sequelize
+ * @param {import("sequelize").DataTypes} DataTypes
+ */
 export default (sequelize, DataTypes) => {
   const Fornecedor = sequelize.define("Fornecedor", {
     id_fornecedor: {

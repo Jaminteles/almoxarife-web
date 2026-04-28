@@ -1,10 +1,6 @@
 import * as fornecedorRepo from "../repositories/fornecedor.repository.js"
 import { validarEmail } from "../utils/validations/email.validation.js"
 
-// ──────────────────────────────────────────────────────────────
-// Validações (mantidas como estavam)
-// ──────────────────────────────────────────────────────────────
-
 const validarCamposObrigatorios = (dados) => {
   if (!dados.razao_social || !dados.cnpj || !dados.email) {
     throw new Error("Campos obrigatórios: razao_social, cnpj, email")
@@ -43,15 +39,9 @@ const validarEnderecos = (enderecos) => {
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Normalização dos filtros de busca
-// - remove espaços nas pontas
-// - para cnpj: remove pontos, barras, traços (banco guarda só dígitos)
-// - descarta chaves vazias (não deixa WHERE "" aparecer)
-// ──────────────────────────────────────────────────────────────
+/** Remove espaços e normaliza o CNPJ para somente dígitos nos filtros de busca. */
 const normalizarFiltros = (filtros = {}) => {
   const limpos = {}
-
   const trim = (v) => (typeof v === "string" ? v.trim() : v)
 
   if (trim(filtros.razao_social)) limpos.razao_social = trim(filtros.razao_social)
@@ -59,7 +49,6 @@ const normalizarFiltros = (filtros = {}) => {
   if (trim(filtros.email)) limpos.email = trim(filtros.email)
 
   if (trim(filtros.cnpj)) {
-    // Mantém só dígitos, pois é assim que está no banco (CHAR(14))
     const cnpjDigitos = trim(filtros.cnpj).replace(/[^\d]/g, "")
     if (cnpjDigitos.length > 0) limpos.cnpj = cnpjDigitos
   }
@@ -67,10 +56,10 @@ const normalizarFiltros = (filtros = {}) => {
   return limpos
 }
 
-// ──────────────────────────────────────────────────────────────
-// Regras de Negócio
-// ──────────────────────────────────────────────────────────────
-
+/**
+ * Cadastra um novo fornecedor com telefones e endereços opcionais.
+ * @param {{ razao_social: string, cnpj: string, email: string, nome_fantasia?: string, telefones?: string[], enderecos?: object[] }} dados
+ */
 export const cadastrarFornecedor = async (dados) => {
   validarCamposObrigatorios(dados)
 
@@ -107,12 +96,19 @@ export const cadastrarFornecedor = async (dados) => {
   return await fornecedorRepo.buscarPorId(fornecedor.id_fornecedor)
 }
 
-// Listar / Buscar — aceita filtros opcionais
+/**
+ * Lista fornecedores ativos com filtros opcionais normalizados.
+ * @param {{ razao_social?: string, nome_fantasia?: string, cnpj?: string, email?: string }} filtros
+ */
 export const listarFornecedores = async (filtros = {}) => {
   const filtrosLimpos = normalizarFiltros(filtros)
   return await fornecedorRepo.listarTodos(filtrosLimpos)
 }
 
+/**
+ * Busca um fornecedor pelo ID.
+ * @param {number} id
+ */
 export const buscarFornecedorPorId = async (id) => {
   const fornecedor = await fornecedorRepo.buscarPorId(id)
   if (!fornecedor) {
@@ -121,6 +117,11 @@ export const buscarFornecedorPorId = async (id) => {
   return fornecedor
 }
 
+/**
+ * Atualiza dados do fornecedor, substituindo telefones e endereços se fornecidos.
+ * @param {number} id
+ * @param {object} dados
+ */
 export const editarFornecedor = async (id, dados) => {
   const fornecedor = await fornecedorRepo.buscarPorId(id)
   if (!fornecedor) {
@@ -160,6 +161,10 @@ export const editarFornecedor = async (id, dados) => {
   return await fornecedorRepo.buscarPorId(id)
 }
 
+/**
+ * Inativa um fornecedor (soft delete).
+ * @param {number} id
+ */
 export const inativarFornecedor = async (id) => {
   const fornecedor = await fornecedorRepo.buscarPorId(id)
   if (!fornecedor) {

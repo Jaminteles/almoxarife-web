@@ -10,15 +10,13 @@ const includeAll = [
   { model: EnderecoFornecedor, as: "enderecos" }
 ]
 
-// ──────────────────────────────────────────────────────────────
-// Listar com filtros opcionais
-//   filtros = { razao_social?, nome_fantasia?, cnpj?, email? }
-// Se filtros for {} ou não for passado, retorna todos.
-// ──────────────────────────────────────────────────────────────
+/**
+ * Lista todos os fornecedores ativos com telefones e endereços.
+ * @param {{ razao_social?: string, nome_fantasia?: string, cnpj?: string, email?: string }} filtros
+ */
 export async function listarTodos(filtros = {}) {
-  const where = { ativo: 1 }; // Filtrar apenas registros ativos
+  const where = { ativo: 1 }
 
-  // Busca parcial (substring) — case-insensitive pela collation padrão do MySQL
   if (filtros.razao_social) {
     where.razao_social = { [Op.like]: `%${filtros.razao_social}%` }
   }
@@ -39,12 +37,18 @@ export async function listarTodos(filtros = {}) {
   })
 }
 
-// Buscar por ID
+/**
+ * Busca fornecedor pelo ID, incluindo telefones e endereços.
+ * @param {number} id
+ */
 export async function buscarPorId(id) {
   return await Fornecedor.findByPk(id, { include: includeAll })
 }
 
-// Buscar por CNPJ (exato — usado em validação de duplicidade)
+/**
+ * Busca fornecedor pelo CNPJ exato. Usado na validação de duplicidade.
+ * @param {string} cnpj CNPJ com 14 dígitos
+ */
 export async function buscarPorCnpj(cnpj) {
   return await Fornecedor.findOne({
     where: { cnpj },
@@ -52,12 +56,18 @@ export async function buscarPorCnpj(cnpj) {
   })
 }
 
-// Buscar por Email (exato — usado em validação de duplicidade)
+/**
+ * Busca fornecedor pelo email exato. Usado na validação de duplicidade.
+ * @param {string} email
+ */
 export async function buscarPorEmail(email) {
   return await Fornecedor.findOne({ where: { email } })
 }
 
-// Cadastrar fornecedor (com telefones e endereços)
+/**
+ * Cria um fornecedor com telefones e endereços via associações Sequelize.
+ * @param {object} dados Dados do fornecedor com arrays `telefones` e `enderecos`
+ */
 export async function criar(dados) {
   return await Fornecedor.create(dados, {
     include: [
@@ -67,13 +77,21 @@ export async function criar(dados) {
   })
 }
 
-// Atualizar fornecedor
+/**
+ * Atualiza os dados principais do fornecedor.
+ * @param {number} id
+ * @param {object} dados
+ */
 export async function atualizar(id, dados) {
   await Fornecedor.update(dados, { where: { id_fornecedor: id } })
   return await buscarPorId(id)
 }
 
-// Substituir telefones
+/**
+ * Substitui todos os telefones do fornecedor (destroy + bulkCreate).
+ * @param {number} idFornecedor
+ * @param {string[]} telefones
+ */
 export async function substituirTelefones(idFornecedor, telefones) {
   await TelefoneFornecedor.destroy({ where: { id_fornecedor: idFornecedor } })
   if (telefones && telefones.length > 0) {
@@ -85,7 +103,11 @@ export async function substituirTelefones(idFornecedor, telefones) {
   }
 }
 
-// Substituir endereços
+/**
+ * Substitui todos os endereços do fornecedor (destroy + bulkCreate).
+ * @param {number} idFornecedor
+ * @param {object[]} enderecos
+ */
 export async function substituirEnderecos(idFornecedor, enderecos) {
   await EnderecoFornecedor.destroy({ where: { id_fornecedor: idFornecedor } })
   if (enderecos && enderecos.length > 0) {
@@ -97,7 +119,10 @@ export async function substituirEnderecos(idFornecedor, enderecos) {
   }
 }
 
-// Inativar (soft delete)
+/**
+ * Inativa o fornecedor (soft delete: ativo = 0).
+ * @param {number} id
+ */
 export async function inativar(id) {
   const fornecedor = await Fornecedor.findByPk(id)
   if (fornecedor && fornecedor.ativo === 0) {

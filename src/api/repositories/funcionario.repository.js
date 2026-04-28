@@ -4,15 +4,12 @@ import { Op } from "sequelize"
 const Funcionario = db.Funcionario
 const UsuarioSistema = db.UsuarioSistema
 
-// ──────────────────────────────────────────────────────────────
-// Listar com filtros opcionais
-//   filtros = { nome?, cpf?, email?, cargo? }
-// - nome/cpf  → filtram na própria tabela Funcionarios (WHERE)
-// - email     → filtra na tabela Usuarios_Sistema  (JOIN)
-// - cargo     → filtra na tabela Cargos            (JOIN)
-// ──────────────────────────────────────────────────────────────
+/**
+ * Lista todos os funcionários ativos com joins de Cargo e UsuarioSistema.
+ * @param {{ nome?: string, cpf?: string, email?: string, cargo?: string }} filtros
+ */
 export async function listarTodos(filtros = {}) {
-  const where = { is_active: 1 }; // Filtrar apenas funcionários ativos
+  const where = { is_active: 1 }
 
   if (filtros.nome) {
     where.nome = { [Op.like]: `%${filtros.nome}%` }
@@ -20,26 +17,23 @@ export async function listarTodos(filtros = {}) {
   if (filtros.cpf) {
     where.cpf = { [Op.like]: `%${filtros.cpf}%` }
   }
+  if (filtros.email) {
+    where.email = { [Op.like]: `%${filtros.email}%` }
+  }
 
-  // Include do cargo — INNER JOIN apenas quando há filtro
   const includeCargo = {
     model: db.Cargo,
     as: "cargo"
   }
   if (filtros.cargo) {
     includeCargo.where = { nome_cargo: { [Op.like]: `%${filtros.cargo}%` } }
-    includeCargo.required = true // força INNER JOIN p/ filtrar
+    includeCargo.required = true
   }
 
-  // Include do usuário — INNER JOIN apenas quando há filtro por email
   const includeUsuario = {
     model: UsuarioSistema,
     as: "usuario",
     attributes: { exclude: ["password_hash"] }
-  }
-  if (filtros.email) {
-    includeUsuario.where = { email: { [Op.like]: `%${filtros.email}%` } }
-    includeUsuario.required = true // força INNER JOIN p/ filtrar
   }
 
   return await Funcionario.findAll({
@@ -49,7 +43,10 @@ export async function listarTodos(filtros = {}) {
   })
 }
 
-// Buscar por ID
+/**
+ * Busca funcionário pelo ID com joins de Cargo e UsuarioSistema.
+ * @param {string} id UUID do funcionário
+ */
 export async function buscarPorId(id) {
   return await Funcionario.findByPk(id, {
     include: [
@@ -59,7 +56,10 @@ export async function buscarPorId(id) {
   })
 }
 
-// Buscar por CPF
+/**
+ * Busca funcionário pelo CPF (somente dígitos).
+ * @param {string} cpf CPF com 11 dígitos
+ */
 export async function buscarPorCpf(cpf) {
   return await Funcionario.findOne({
     where: { cpf },
@@ -70,41 +70,67 @@ export async function buscarPorCpf(cpf) {
   })
 }
 
-// Criar funcionário
+/**
+ * Busca funcionário pelo email de contato. Usado para checar duplicidade.
+ * @param {string} email
+ */
+export async function buscarPorEmail(email) {
+  return await Funcionario.findOne({ where: { email } })
+}
+
+/**
+ * Cria um novo funcionário.
+ * @param {object} dados
+ */
 export async function criar(dados) {
   return await Funcionario.create(dados)
 }
 
-// Criar usuário do sistema vinculado ao funcionário
+/**
+ * Cria um usuário de sistema vinculado ao funcionário.
+ * @param {{ id_funcionario: string, email: string, password_hash: string, access_level: string }} dados
+ */
 export async function criarUsuario(dados) {
   return await UsuarioSistema.create(dados)
 }
 
-// Atualizar funcionário
-export async function atualizar(id, dados) {
-  await Funcionario.update(dados, { where: { id_funcionario: id } })
-  return await buscarPorId(id)
-}
-
-// Atualizar usuário do sistema
-export async function atualizarUsuario(idFuncionario, dados) {
-  await UsuarioSistema.update(dados, { where: { id_funcionario: idFuncionario } })
-  return await UsuarioSistema.findByPk(idFuncionario)
-}
-
-// Inativar (soft delete)
-export async function inativar(id) {
-  const funcionario = await Funcionario.findByPk(id)
-  if (funcionario && funcionario.is_active === 0) {
-    throw new Error("Funcionário já está inativo")
-  }
-  return await Funcionario.update({ is_active: 0 }, { where: { id_funcionario: id } })
-}
-
-// Buscar usuário por email
+/**
+ * Busca usuário de sistema pelo email de credencial.
+ * @param {string} email
+ */
 export async function buscarUsuarioPorEmail(email) {
-  return await UsuarioSistema.findOne({
-    where: { email },
-    include: [{ model: db.Funcionario, as: "funcionario" }]
+  return await UsuarioSistema.findOne({ where: { email } })
+}
+
+/**
+ * Atualiza dados do funcionário.
+ * @param {string} id UUID do funcionário
+ * @param {object} dados Campos a atualizar
+ */
+export async function atualizar(id, dados) {
+  return await Funcionario.update(dados, {
+    where: { id_funcionario: id }
   })
+}
+
+/**
+ * Atualiza dados do usuário de sistema vinculado ao funcionário.
+ * @param {string} id UUID do funcionário
+ * @param {{ password_hash?: string, access_level?: string }} dados
+ */
+export async function atualizarUsuario(id, dados) {
+  return await UsuarioSistema.update(dados, {
+    where: { id_funcionario: id }
+  })
+}
+
+/**
+ * Inativa o funcionário (soft delete: is_active = 0).
+ * @param {string} id UUID do funcionário
+ */
+export async function inativar(id) {
+  return await Funcionario.update(
+    { is_active: 0 },
+    { where: { id_funcionario: id } }
+  )
 }
