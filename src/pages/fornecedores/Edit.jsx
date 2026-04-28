@@ -163,16 +163,16 @@ export default function FornecedorEdit() {
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={8}>
-              <TextField name="razao_social" label="Razão Social *" value={form.razao_social} onChange={handleChange} required fullWidth />
+              <TextField name="razao_social" label="Razão Social" value={form.razao_social} onChange={handleChange} required fullWidth />
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField name="nome_fantasia" label="Nome Fantasia" value={form.nome_fantasia} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="cnpj" label="CNPJ *" value={form.cnpj} onChange={handleChange} required fullWidth />
+              <TextField name="cnpj" label="CNPJ" value={form.cnpj} onChange={handleChange} required fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="email" label="Email *" type="email" value={form.email} onChange={handleChange} required fullWidth />
+              <TextField name="email" label="Email" type="email" value={form.email} onChange={handleChange} required fullWidth />
             </Grid>
           </Grid>
 
@@ -196,6 +196,7 @@ export default function FornecedorEdit() {
                   label={`Telefone ${i + 1}`}
                   value={tel}
                   onChange={(e) => handleTelefoneChange(i, e.target.value)}
+                  required
                 />
                 <IconButton color="error" onClick={() => removerTelefone(i)} disabled={telefones.length === 1}>
                   <RemoveCircleOutlineIcon />

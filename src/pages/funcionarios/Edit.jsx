@@ -28,6 +28,7 @@ export default function FuncionarioEdit() {
     id_cargo: "",
     email: "",
     senha: "",
+    confirmarSenha: "",
     access_level: "CONSULTA"
   });
 
@@ -57,6 +58,7 @@ export default function FuncionarioEdit() {
             id_cargo: f.id_cargo,
             email: f.usuario?.email || "",
             senha: "",
+            confirmarSenha: "",
             access_level: f.usuario?.access_level || "CONSULTA"
           });
         } else {
@@ -77,12 +79,25 @@ export default function FuncionarioEdit() {
   function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
+    if (form.senha !== form.confirmarSenha) {
+      setError("As senhas não coincidem");
+      setSaving(false);
+      return;
+    }
+
+    if (form.senha.length > 0 && form.senha.length < 8) {
+    setError("A nova senha deve ter no mínimo 8 caracteres");
+    return;
+    }
+
     setSaving(true);
+    const { confirmarSenha, ...dadosParaEnviar } = form;
 
     fetch(`${API_URL}/funcionarios/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
+      body: JSON.stringify(dadosParaEnviar)
     })
       .then(res => res.json())
       .then(result => {
@@ -127,7 +142,7 @@ export default function FuncionarioEdit() {
             <Grid item xs={12} sm={7}>
               <TextField
                 name="nome"
-                label="Nome *"
+                label="Nome"
                 value={form.nome}
                 onChange={handleChange}
                 required
@@ -137,7 +152,7 @@ export default function FuncionarioEdit() {
             <Grid item xs={12} sm={5}>
               <TextField
                 name="cpf"
-                label="CPF *"
+                label="CPF"
                 value={form.cpf}
                 onChange={handleChange}
                 required
@@ -147,7 +162,7 @@ export default function FuncionarioEdit() {
             <Grid item xs={12}>
               <TextField
                 name="id_cargo"
-                label="Cargo *"
+                label="Cargo"
                 select
                 value={form.id_cargo}
                 onChange={handleChange}
@@ -181,13 +196,29 @@ export default function FuncionarioEdit() {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
+            <TextField
                 name="senha"
                 label="Nova Senha"
                 type="password"
+                value={form.senha}
                 onChange={handleChange}
                 fullWidth
-                helperText="Deixe vazio para não alterar"
+                // Mostra erro visual se tiver entre 1 e 7 caracteres
+                error={form.senha.length > 0 && form.senha.length < 8}
+                helperText={
+                  form.senha.length > 0 && form.senha.length < 8 
+                  ? "A senha deve ter pelo menos 8 caracteres" 
+                  : "Deixe vazio para não alterar"
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="confirmarSenha"
+                label="Confirmar Nova Senha"
+                type="password"
+                onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
