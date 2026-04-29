@@ -101,7 +101,7 @@ export default function FornecedorForm() {
   }
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="tg">
       <FormPageHeader
         title="Cadastrar Fornecedor"
         subtitle="Preencha os dados do novo fornecedor."

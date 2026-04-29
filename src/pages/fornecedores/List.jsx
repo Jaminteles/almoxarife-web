@@ -172,6 +172,8 @@ export default function FornecedoresList() {
         <DialogContent>
           <DialogContentText>
             Deseja inativar o fornecedor <strong>{selectedItem?.razao_social}</strong>?
+            <br />
+            Esta ação pode ser revertida pelo administrador.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

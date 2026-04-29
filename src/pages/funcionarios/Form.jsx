@@ -112,7 +112,7 @@ export default function FuncionarioForm() {
     form.confirmarSenha.length > 0 && form.senha !== form.confirmarSenha;
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg">
       <FormPageHeader
         title="Cadastrar Funcionário"
         subtitle="Preencha os dados do novo funcionário do sistema."
@@ -136,7 +136,7 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={7}>
               <TextField
                 name="nome"
-                label="Nome *"
+                label="Nome"
                 onChange={handleChange}
                 required
                 fullWidth
@@ -145,7 +145,7 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={5}>
               <TextField
                 name="cpf"
-                label="CPF *"
+                label="CPF"
                 onChange={handleChange}
                 required
                 fullWidth
@@ -156,7 +156,7 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={7}>
               <TextField
                 name="email"
-                label="Email *"
+                label="Email"
                 type="email"
                 onChange={handleChange}
                 required
@@ -167,17 +167,18 @@ export default function FuncionarioForm() {
             <Grid item xs={12} sm={5}>
               <TextField
                 name="id_cargo"
-                label="Cargo *"
+                label="Cargo"
                 select
                 value={form.id_cargo}
                 onChange={handleChange}
                 required
                 fullWidth
+                helperText="ㅤㅤㅤㅤㅤㅤㅤ"
               >
                 {cargos.map(c => (
                   <MenuItem key={c.id_cargo} value={c.id_cargo}>
                     {c.nome_cargo}
-                  </MenuItem>
+                  </MenuItem> 
                 ))}
               </TextField>
             </Grid>
@@ -247,7 +248,7 @@ export default function FuncionarioForm() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   name="senha"
-                  label="Senha *"
+                  label="Senha"
                   type="password"
                   value={form.senha}
                   onChange={handleChange}
@@ -265,7 +266,7 @@ export default function FuncionarioForm() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   name="confirmarSenha"
-                  label="Confirmar Senha *"
+                  label="Confirmar Senha"
                   type="password"
                   value={form.confirmarSenha}
                   onChange={handleChange}
@@ -283,7 +284,7 @@ export default function FuncionarioForm() {
               <Grid item xs={12}>
                 <TextField
                   name="access_level"
-                  label="Nível de Acesso *"
+                  label="Nível de Acesso"
                   select
                   value={form.access_level}
                   onChange={handleChange}
