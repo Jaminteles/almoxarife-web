@@ -20,14 +20,17 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       unique: true
     },
+ 
+    email: {
+      type: DataTypes.STRING(150),
+      allowNull: false,
+      unique: true
+    },
+    // ────────────────────────────────────────────────────────────
+ 
     id_cargo: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false
-    },
-    email: {
-      type: DataTypes.STRING(150),
-      allowNull: true,
-      unique: true
     },
     is_active: {
       type: DataTypes.TINYINT(1),
@@ -40,6 +43,7 @@ export default (sequelize, DataTypes) => {
     updatedAt: "updated_at",
     charset: "utf8mb4"
   })
-
+ 
   return Funcionario
 }
+

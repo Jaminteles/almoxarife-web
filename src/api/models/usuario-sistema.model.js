@@ -4,11 +4,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.CHAR(36),
       primaryKey: true
     },
-    email: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-      unique: true
-    },
     password_hash: {
       type: DataTypes.TEXT,
       allowNull: false
@@ -30,8 +25,8 @@ export default (sequelize, DataTypes) => {
   }, {
     tableName: "Usuarios_Sistema",
     timestamps: false,
-    charset: 'utf8mb4'
+    charset: "utf8mb4"
   })
-
+ 
   return UsuarioSistema
 }

@@ -14,7 +14,6 @@ export default function FuncionariosList() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Estado dos filtros de busca (controlled inputs)
   const [filtros, setFiltros] = useState({
     nome: "",
     cpf: "",
@@ -22,18 +21,15 @@ export default function FuncionariosList() {
     cargo: ""
   });
 
-  // Carrega tudo na primeira vez
   useEffect(() => {
     carregarFuncionarios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Função central de busca ──
   function carregarFuncionarios(filtrosBusca = {}) {
     setLoading(true);
     setError("");
 
-    // Monta a query string apenas com campos preenchidos
     const params = new URLSearchParams();
     Object.entries(filtrosBusca).forEach(([chave, valor]) => {
       if (valor && String(valor).trim() !== "") {
@@ -54,7 +50,8 @@ export default function FuncionariosList() {
             "Nome": f.nome,
             "CPF": formatarCpf(f.cpf),
             "Cargo": f.cargo?.nome_cargo || "—",
-            "Email": f.usuario?.email || "—",
+            // ⬇️ MUDANÇA AQUI: lê email direto do funcionario
+            "Email": f.email || "—",
             __id__: f.id_funcionario
           }));
           setData(formatado);
@@ -74,7 +71,6 @@ export default function FuncionariosList() {
     return `${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
   }
 
-  // ── Handlers dos filtros ──
   function handleFiltroChange(campo, valor) {
     setFiltros(prev => ({ ...prev, [campo]: valor }));
   }
@@ -111,7 +107,7 @@ export default function FuncionariosList() {
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) {
-          carregarFuncionarios(filtros); // recarrega mantendo os filtros atuais
+          carregarFuncionarios(filtros);
         } else {
           setError(result.erro || "Erro ao inativar funcionário");
         }
@@ -130,7 +126,6 @@ export default function FuncionariosList() {
     setSelectedItem(null);
   }
 
-  // Dados já têm __id__ incluído
   const dataTabela = data;
 
   return (

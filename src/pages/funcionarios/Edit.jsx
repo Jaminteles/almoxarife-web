@@ -38,7 +38,6 @@ export default function FuncionarioEdit() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Carregar cargos
     fetch(`${API_URL}/cargos`)
       .then(res => res.json())
       .then(result => {
@@ -46,7 +45,6 @@ export default function FuncionarioEdit() {
       })
       .catch(() => {});
 
-    // Carregar dados do funcionário
     fetch(`${API_URL}/funcionarios/${id}`)
       .then(res => res.json())
       .then(result => {
@@ -56,7 +54,7 @@ export default function FuncionarioEdit() {
             nome: f.nome,
             cpf: f.cpf,
             id_cargo: f.id_cargo,
-            email: f.usuario?.email || "",
+            email: f.email || "",
             senha: "",
             confirmarSenha: "",
             access_level: f.usuario?.access_level || "CONSULTA"
@@ -80,24 +78,34 @@ export default function FuncionarioEdit() {
     e.preventDefault();
     setError("");
 
+    // Se está mudando senha, valida confirmação
     if (form.senha !== form.confirmarSenha) {
       setError("As senhas não coincidem");
-      setSaving(false);
       return;
     }
 
     if (form.senha.length > 0 && form.senha.length < 8) {
-    setError("A nova senha deve ter no mínimo 8 caracteres");
-    return;
+      setError("A senha deve ter pelo menos 8 caracteres");
+      return;
     }
 
     setSaving(true);
-    const { confirmarSenha, ...dadosParaEnviar } = form;
+
+    // POR QUÊ não enviamos `confirmarSenha` no body?
+    //   É campo de UI — o backend não tem nada que fazer com ele.
+    const body = {
+      nome: form.nome,
+      cpf: form.cpf,
+      id_cargo: form.id_cargo,
+      email: form.email,
+      access_level: form.access_level,
+      ...(form.senha && { senha: form.senha })
+    };
 
     fetch(`${API_URL}/funcionarios/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dadosParaEnviar)
+      body: JSON.stringify(body)
     })
       .then(res => res.json())
       .then(result => {
@@ -159,7 +167,18 @@ export default function FuncionarioEdit() {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={7}>
+              <TextField
+                name="email"
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={5}>
               <TextField
                 name="id_cargo"
                 label="Cargo"
@@ -187,38 +206,38 @@ export default function FuncionarioEdit() {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="email"
-                label="Email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-            <TextField
                 name="senha"
                 label="Nova Senha"
                 type="password"
                 value={form.senha}
                 onChange={handleChange}
                 fullWidth
-                // Mostra erro visual se tiver entre 1 e 7 caracteres
                 error={form.senha.length > 0 && form.senha.length < 8}
                 helperText={
-                  form.senha.length > 0 && form.senha.length < 8 
-                  ? "A senha deve ter pelo menos 8 caracteres" 
-                  : "Deixe vazio para não alterar"
+                  form.senha.length > 0 && form.senha.length < 8
+                    ? "A senha deve ter pelo menos 8 caracteres"
+                    : "Deixe vazio para não alterar"
                 }
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 name="confirmarSenha"
                 label="Confirmar Nova Senha"
                 type="password"
+                value={form.confirmarSenha}
                 onChange={handleChange}
                 fullWidth
+                error={
+                  form.confirmarSenha.length > 0 &&
+                  form.senha !== form.confirmarSenha
+                }
+                helperText={
+                  form.confirmarSenha.length > 0 &&
+                  form.senha !== form.confirmarSenha
+                    ? "As senhas não coincidem"
+                    : ""
+                }
               />
             </Grid>
             <Grid item xs={12}>
