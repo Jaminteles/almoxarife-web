@@ -11,6 +11,7 @@ import ComingSoon from "./pages/ComingSoon";
 import FuncionariosList from "./pages/funcionarios/List";
 import FuncionarioForm from "./pages/funcionarios/Form";
 import FuncionarioEdit from "./pages/funcionarios/Edit";
+import FuncionarioDetalhes from "./pages/funcionarios/Detalhes";
 
 // Fornecedores (módulo real)
 import FornecedoresList from "./pages/fornecedores/List";
@@ -36,6 +37,7 @@ function App() {
             {/* Módulos implementados */}
             <Route path="/funcionarios" element={<FuncionariosList />} />
             <Route path="/funcionarios/cadastro" element={<FuncionarioForm />} />
+            <Route path="/funcionarios/:id" element={<FuncionarioDetalhes />} />
             <Route path="/funcionarios/:id/editar" element={<FuncionarioEdit />} />
 
             <Route path="/fornecedores" element={<FornecedoresList />} />

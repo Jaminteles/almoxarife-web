@@ -126,6 +126,10 @@ export default function FuncionariosList() {
     setSelectedItem(null);
   }
 
+  function handleRowClick(item) {
+    navigate(`/funcionarios/${item.__id__}`);
+  }
+
   const dataTabela = data;
 
   return (
@@ -139,6 +143,7 @@ export default function FuncionariosList() {
         loading={loading}
         onCreate={() => navigate("/funcionarios/cadastro")}
         onEdit={handleEdit}
+        onRowClick={handleRowClick}
         onInactivate={handleInactivateClick}
         onSearch={handleBuscar}
         onClear={handleLimpar}
