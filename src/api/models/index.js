@@ -7,22 +7,26 @@ import usuarioSistemaModel from "./usuario-sistema.model.js"
 import fornecedorModel from "./fornecedor.model.js"
 import telefoneFornecedorModel from "./telefone-fornecedor.model.js"
 import enderecoFornecedorModel from "./endereco-fornecedor.model.js"
-//import produtoModel from "./produto.model.js"
+import produtoModel from "./produto.model.js"
 //import produtoFornecedorModel from "./produto-fornecedor.model.js"
 import enderecoAlmoxarifadoModel from "./endereco-almoxarifado.model.js"
 import telefoneAlmoxarifadoModel from "./telefone-almoxarifado.model.js"
 import almoxarifadoModel from "./almoxarifado.model.js"
 //import gestaoAlmoxarifadoModel from "./gestao-almoxarifado.model.js"
-//import estoqueModel from "./estoque.model.js"
-//import saidaModel from "./saida.model.js"
-//import saidaItemModel from "./saida-item.model.js"
+import estoqueModel from "./estoque.model.js"
+import saidaModel from "./saida.model.js"
+import saidaItemModel from "./saida-item.model.js"
 //import compraModel from "./compra.model.js"
 //import itemCompraModel from "./item-compra.model.js"
 
 // ── Conexão com o banco ──
 // ALTERAR PARAMETROS conforme seu ambiente
-const sequelize = new Sequelize("bd_almoxarifado", "root", "desus", {
-  host: "localhost",
+const sequelize = new Sequelize(
+  process.env.DB_NAME || "bd_almoxarifado",
+  process.env.DB_USER || "root",
+  process.env.DB_PASSWORD || "desus",
+  {
+  host: process.env.DB_HOST || "localhost",
   dialect: "mysql",
   logging: false
 })
@@ -35,15 +39,15 @@ const db = {
   Fornecedor: fornecedorModel(sequelize, DataTypes),
   TelefoneFornecedor: telefoneFornecedorModel(sequelize, DataTypes),
   EnderecoFornecedor: enderecoFornecedorModel(sequelize, DataTypes),
-  //Produto: produtoModel(sequelize, DataTypes),
+  Produto: produtoModel(sequelize, DataTypes),
   //ProdutoFornecedor: produtoFornecedorModel(sequelize, DataTypes),
   EnderecoAlmoxarifado: enderecoAlmoxarifadoModel(sequelize, DataTypes),
   TelefoneAlmoxarifado: telefoneAlmoxarifadoModel(sequelize, DataTypes),
   Almoxarifado: almoxarifadoModel(sequelize, DataTypes),
   //GestaoAlmoxarifado: gestaoAlmoxarifadoModel(sequelize, DataTypes),
-  //Estoque: estoqueModel(sequelize, DataTypes),
-  //Saida: saidaModel(sequelize, DataTypes),
-  //SaidaItem: saidaItemModel(sequelize, DataTypes),
+  Estoque: estoqueModel(sequelize, DataTypes),
+  Saida: saidaModel(sequelize, DataTypes),
+  SaidaItem: saidaItemModel(sequelize, DataTypes),
   //Compra: compraModel(sequelize, DataTypes),
   //ItemCompra: itemCompraModel(sequelize, DataTypes)
 }
@@ -115,18 +119,21 @@ db.TelefoneAlmoxarifado.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifa
 //  as: "produtos_estoque"
 //})
 // Acesso direto ao Estoque
-//db.Estoque.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
-//db.Estoque.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "almoxarifado" })
+db.Produto.hasMany(db.Estoque, { foreignKey: "id_produto", as: "estoques" })
+db.Estoque.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+db.Almoxarifado.hasMany(db.Estoque, { foreignKey: "cod_almoxarifado", as: "estoques" })
+db.Estoque.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "almoxarifado" })
 
 // Saída
-//db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_origem", as: "origem" })
-//db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", as: "destino" })
-//db.Saida.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", as: "responsavel" })
+db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_origem", as: "almoxarifadoOrigem" })
+db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", as: "almoxarifadoDestino" })
+db.Saida.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", as: "responsavel" })
 
 // Saída ↔ Itens
-//db.Saida.hasMany(db.SaidaItem, { foreignKey: "id_saida", as: "itens", onDelete: "CASCADE" })
-//db.SaidaItem.belongsTo(db.Saida, { foreignKey: "id_saida", as: "saida" })
-//db.SaidaItem.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+db.Saida.hasMany(db.SaidaItem, { foreignKey: "id_saida", as: "itens", onDelete: "CASCADE" })
+db.SaidaItem.belongsTo(db.Saida, { foreignKey: "id_saida", as: "saida" })
+db.SaidaItem.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+db.Produto.hasMany(db.SaidaItem, { foreignKey: "id_produto", as: "itensSaida" })
 
 // Compra
 //db.Compra.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })

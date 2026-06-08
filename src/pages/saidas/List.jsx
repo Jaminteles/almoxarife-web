@@ -17,7 +17,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ListTemplate from "../../components/ListTemplate";
 
 const API_URL = "http://localhost:5000/api";
-const filtrosVazios = { responsavel: "", tipo: "" };
+const filtrosVazios = { data: "", destino: "", responsavel: "", produto: "" };
 
 export default function SaidasList() {
   const navigate = useNavigate();
@@ -27,6 +27,9 @@ export default function SaidasList() {
   const [error, setError] = useState("");
 
   const [filtros, setFiltros] = useState({ ...filtrosVazios });
+  const [almoxarifados, setAlmoxarifados] = useState([]);
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [produtos, setProdutos] = useState([]);
 
   // Estado do dialogo de confirmacao (Inativar/Excluir).
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -36,8 +39,25 @@ export default function SaidasList() {
   // Carrega ao montar a tela.
   useEffect(() => {
     carregarSaidas({});
+    carregarOpcoesFiltros();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function carregarOpcoesFiltros() {
+    Promise.all([
+      fetch(`${API_URL}/almoxarifados`).then((res) => res.json()),
+      fetch(`${API_URL}/funcionarios`).then((res) => res.json()),
+      fetch(`${API_URL}/produtos`).then((res) => res.json())
+    ])
+      .then(([resAlmoxarifados, resFuncionarios, resProdutos]) => {
+        if (resAlmoxarifados.sucesso) setAlmoxarifados(resAlmoxarifados.dados);
+        if (resFuncionarios.sucesso) setFuncionarios(resFuncionarios.dados);
+        if (resProdutos.sucesso) setProdutos(resProdutos.dados);
+      })
+      .catch(() => {
+        // A listagem principal ainda mostra seu proprio erro se a API falhar.
+      });
+  }
 
   /**
    * Formata o timestamp do banco para dd/mm/aaaa (pt-BR).
@@ -60,8 +80,10 @@ export default function SaidasList() {
 
     // Monta a querystring so com os filtros preenchidos.
     const params = new URLSearchParams();
+    if (filtrosAtuais.data) params.append("data", filtrosAtuais.data);
+    if (filtrosAtuais.destino) params.append("destino", filtrosAtuais.destino);
     if (filtrosAtuais.responsavel) params.append("responsavel", filtrosAtuais.responsavel);
-    if (filtrosAtuais.tipo) params.append("tipo", filtrosAtuais.tipo);
+    if (filtrosAtuais.produto) params.append("produto", filtrosAtuais.produto);
     const query = params.toString() ? `?${params.toString()}` : "";
 
     fetch(`${API_URL}/saidas${query}`)
@@ -79,7 +101,7 @@ export default function SaidasList() {
                 ? s.almoxarifadoDestino?.nome || "—"
                 : "—",
             "Responsável": s.responsavel?.nome || "—",
-            "Itens": `${s.itens?.length || 0} item(ns)`,
+            "Produtos": s.itens?.map((item) => item.produto?.nome || `Produto ${item.id_produto}`).join(", ") || "—",
             // Campo "oculto" para recuperar o id nos handlers (mesmo truque do almoxarifado).
             __id__: s.id_saida
           }));
@@ -168,7 +190,7 @@ export default function SaidasList() {
 
       <ListTemplate
         title="Saídas"
-        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Itens"]}
+        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Produtos"]}
         data={data}
         loading={loading}
         onCreate={() => navigate("/saidas/cadastro")}
@@ -185,23 +207,64 @@ export default function SaidasList() {
         filters={
           <>
             <TextField
-              label="Responsável"
+              label="Data"
+              type="date"
               size="small"
-              value={filtros.responsavel}
-              onChange={(e) => handleFiltroChange("responsavel", e.target.value)}
+              value={filtros.data}
+              onChange={(e) => handleFiltroChange("data", e.target.value)}
+              InputLabelProps={{ shrink: true }}
               onKeyDown={handleKeyDown}
             />
             <TextField
               select
-              label="Tipo"
+              label="Destino"
               size="small"
-              value={filtros.tipo}
-              onChange={(e) => handleFiltroChange("tipo", e.target.value)}
-              sx={{ minWidth: 160 }}
+              value={filtros.destino}
+              onChange={(e) => handleFiltroChange("destino", e.target.value)}
+              sx={{ minWidth: 180 }}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="CONSUMO">Consumo</MenuItem>
-              <MenuItem value="TRANSFERENCIA">Transferência</MenuItem>
+              {almoxarifados.map((almoxarifado) => (
+                <MenuItem
+                  key={almoxarifado.cod_almoxarifado}
+                  value={almoxarifado.cod_almoxarifado}
+                >
+                  {almoxarifado.nome}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Responsável"
+              size="small"
+              value={filtros.responsavel}
+              onChange={(e) => handleFiltroChange("responsavel", e.target.value)}
+              sx={{ minWidth: 190 }}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {funcionarios.map((funcionario) => (
+                <MenuItem
+                  key={funcionario.id_funcionario}
+                  value={funcionario.id_funcionario}
+                >
+                  {funcionario.nome}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Produto"
+              size="small"
+              value={filtros.produto}
+              onChange={(e) => handleFiltroChange("produto", e.target.value)}
+              sx={{ minWidth: 190 }}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {produtos.map((produto) => (
+                <MenuItem key={produto.id_produto} value={produto.id_produto}>
+                  {produto.nome}
+                </MenuItem>
+              ))}
             </TextField>
           </>
         }

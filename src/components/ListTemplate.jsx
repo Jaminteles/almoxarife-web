@@ -16,6 +16,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
+import ClearIcon from "@mui/icons-material/Clear";
 
 export default function ListTemplate({
   title,
@@ -26,7 +27,10 @@ export default function ListTemplate({
   onEdit,
   onInactivate,
   onSearch,
+  onClear,
   onRowClick, // opcional: ativa clique na linha
+  loading = false,
+  emptyMessage = "Nenhum registro encontrado.",
   // Customização opcional do botão destrutivo (padrão = Inativar):
   actionLabel = "Inativar",
   actionIcon = <BlockIcon fontSize="small" />,
@@ -83,6 +87,16 @@ export default function ListTemplate({
         >
           Buscar
         </Button>
+        {onClear && (
+          <Button
+            variant="text"
+            startIcon={<ClearIcon />}
+            onClick={onClear}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Limpar
+          </Button>
+        )}
       </Stack>
 
       {/* Tabela */}
@@ -102,7 +116,13 @@ export default function ListTemplate({
           </TableHead>
 
           <TableBody>
-            {data?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                  Carregando registros...
+                </TableCell>
+              </TableRow>
+            ) : data?.length ? (
               data.map((item, i) => (
                 <TableRow
                   key={i}
@@ -152,7 +172,7 @@ export default function ListTemplate({
               // Mensagem quando não há dados — melhor UX que tabela vazia
               <TableRow>
                 <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6, color: "text.secondary" }}>
-                  Nenhum registro encontrado.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             )}
