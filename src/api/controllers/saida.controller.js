@@ -2,8 +2,8 @@ import * as saidaService from "../services/saida.service.js"
 
 export const listar = async (req, res) => {
   try {
-    const { data, destino, responsavel, produto } = req.query
-    const dados = await saidaService.listarSaidas({ data, destino, responsavel, produto })
+    const { data, destino, responsavel, produtos } = req.query
+    const dados = await saidaService.listarSaidas({ data, destino, responsavel, produtos })
 
     res.json({
       sucesso: true,

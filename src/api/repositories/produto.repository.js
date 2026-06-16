@@ -1,7 +1,7 @@
 import db from "../models/index.js"
 import { Op } from "sequelize"
 
-const Produto = db.Produto
+const Produtos = db.Produtos
 
 export async function listarTodos(filtros = {}) {
   const where = { ativo: 1 }
@@ -10,12 +10,12 @@ export async function listarTodos(filtros = {}) {
     where.nome = { [Op.like]: `%${filtros.nome}%` }
   }
 
-  return await Produto.findAll({
+  return await Produtos.findAll({
     where,
     order: [["nome", "ASC"]]
   })
 }
 
 export async function buscarPorId(id) {
-  return await Produto.findByPk(id)
+  return await Produtos.findByPk(id)
 }

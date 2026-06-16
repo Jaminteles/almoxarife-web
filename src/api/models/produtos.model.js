@@ -8,7 +8,7 @@
  * @param {import("sequelize").DataTypes} DataTypes
  */
 export default (sequelize, DataTypes) => {
-  const Produto = sequelize.define("Produto", {
+  const Produtos = sequelize.define("Produtos", {
     id_produto: {
       type: DataTypes.INTEGER.UNSIGNED,
       primaryKey: true,
@@ -47,12 +47,12 @@ export default (sequelize, DataTypes) => {
       defaultValue: 1
     }
   }, {
-    tableName: "Produto",
+    tableName: "Produtos",
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
     charset: "utf8mb4"
   })
 
-  return Produto
+  return Produtos
 }

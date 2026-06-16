@@ -69,10 +69,9 @@ function App() {
               e também deixa pronto para quando a equipe for implementar.
             */}
 
-              {/*<Route path="/compras" element={<ListCompras />} />
-              <Route path="/compras/novo" element={<FormCompras />} />
-              <Route path="/compras/editar/:id" element={<FormCompras />} />
-              */}
+           <Route path="/compras" element={<ListCompras />} />
+           <Route path="/compras/novo" element={<FormCompras />} />
+           <Route path="/compras/editar/:id" element={<FormCompras />} />  
 
             <Route path="/produtos"       element={<ComingSoon title="Produtos / Itens" />} />
             <Route path="/entradas"       element={<ComingSoon title="Entradas" />} />

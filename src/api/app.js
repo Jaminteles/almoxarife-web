@@ -4,7 +4,7 @@ import funcionarioRoutes from "./routes/funcionario.routes.js"
 import fornecedorRoutes from "./routes/fornecedor.routes.js"
 import cargoRoutes from "./routes/cargo.routes.js"
 import almoxarifadoRoutes from "./routes/almoxarifado.routes.js"
-import produtoRoutes from "./routes/produto.routes.js"
+import produtosRoutes from "./routes/produtos.routes.js"
 import saidaRoutes from "./routes/saida.routes.js"
 import compraRoutes from "./routes/compra.routes.js"
 
@@ -18,7 +18,7 @@ app.use("/api/funcionarios", funcionarioRoutes)
 app.use("/api/fornecedores", fornecedorRoutes)
 app.use("/api/cargos", cargoRoutes)
 app.use("/api/almoxarifados", almoxarifadoRoutes)
-app.use("/api/produtos", produtoRoutes)
+app.use("/api/produtos", produtosRoutes)
 app.use("/api/saidas", saidaRoutes)
 app.use("/api/compras", compraRoutes)
 

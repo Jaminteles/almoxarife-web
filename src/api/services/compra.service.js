@@ -10,7 +10,7 @@ const normalizarFiltros = (filtros = {}) => {
   if (trim(filtros.status)) limpos.status = trim(filtros.status)
   if (trim(filtros.numero_nota_fiscal)) limpos.numero_nota_fiscal = trim(filtros.numero_nota_fiscal)
   if (trim(filtros.fornecedor)) limpos.fornecedor = trim(filtros.fornecedor)
-  if (trim(filtros.produto)) limpos.produto = trim(filtros.produto)
+  if (trim(filtros.produtos)) limpos.produtos = trim(filtros.produtos)
 
   if (trim(filtros.data)) {
     const inicio = new Date(`${trim(filtros.data)}T00:00:00`)

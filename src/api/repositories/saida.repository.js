@@ -5,7 +5,7 @@ const Saida = db.Saida
 const SaidaItem = db.SaidaItem
 const Almoxarifado = db.Almoxarifado
 const Funcionario = db.Funcionario
-const Produto = db.Produto
+const Produtos = db.Produtos 
 const Estoque = db.Estoque
 
 const includeCompleto = [
@@ -15,7 +15,7 @@ const includeCompleto = [
   {
     model: SaidaItem,
     as: "itens",
-    include: [{ model: Produto, as: "produto" }]
+    include: [{ model: Produtos, as: "produtos" }]
   }
 ]
 
@@ -29,7 +29,7 @@ export async function listarTodos(filtros = {}) {
   const includeItens = {
     model: SaidaItem,
     as: "itens",
-    include: [{ model: Produto, as: "produto" }]
+    include: [{ model: Produtos, as: "produtos" }]
   }
 
   if (filtros.data) {
@@ -125,7 +125,7 @@ export async function buscarFuncionario(id) {
 }
 
 export async function buscarProduto(id) {
-  return await Produto.findByPk(id)
+  return await Produtos.findByPk(id)
 }
 
 export async function buscarEstoque(idProduto, codAlmoxarifado, transaction) {

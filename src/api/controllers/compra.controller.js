@@ -8,7 +8,7 @@ export const listar = async (req, res) => {
       data_fim, 
       numero_nota_fiscal, 
       fornecedor, 
-      produto, 
+      produtos, 
       status 
     } = req.query;
 
@@ -17,7 +17,7 @@ export const listar = async (req, res) => {
       status,
       numero_nota_fiscal,
       fornecedor,
-      produto,
+      produtos,
       // Se o usuário informar as duas datas, montamos o objeto esperado pelo repository
       data: (data_inicio && data_fim) ? { inicio: data_inicio, fim: data_fim } : null
     };

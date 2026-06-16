@@ -5,7 +5,7 @@ const Compra = db.Compra
 const ItemCompra = db.ItemCompra
 const Fornecedor = db.Fornecedor
 const Almoxarifado = db.Almoxarifado
-const Produto = db.Produto
+const Produtos = db.Produtos
 
 const includeCompleto = [
   { model: Fornecedor, as: "fornecedor" },
@@ -13,7 +13,7 @@ const includeCompleto = [
   {
     model: ItemCompra,
     as: "itens",
-    include: [{ model: Produto, as: "produto" }]
+    include: [{ model: Produtos, as: "produtos" }]
   }
 ]
 
@@ -27,7 +27,7 @@ export async function listarTodos(filtros = {}) {
   const includeItens = {
     model: ItemCompra,
     as: "itens",
-    include: [{ model: Produto, as: "produto" }]
+    include: [{ model: Produtos, as: "produtos" }]
   }
 
   if (filtros.status) {
@@ -134,5 +134,5 @@ export async function buscarAlmoxarifado(id) {
 }
 
 export async function buscarProduto(id) {
-  return await Produto.findByPk(id)
+  return await Produtos.findByPk(id)
 }

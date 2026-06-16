@@ -1,4 +1,4 @@
-import * as produtoRepo from "../repositories/produto.repository.js"
+import * as produtosRepo from "../repositories/produto.repository.js"
 
 const normalizarFiltros = (filtros = {}) => {
   const limpos = {}
@@ -10,11 +10,11 @@ const normalizarFiltros = (filtros = {}) => {
 }
 
 export const listarProdutos = async (filtros = {}) => {
-  return await produtoRepo.listarTodos(normalizarFiltros(filtros))
+  return await produtosRepo.listarTodos(normalizarFiltros(filtros))
 }
 
 export const buscarProdutoPorId = async (id) => {
-  const produto = await produtoRepo.buscarPorId(id)
+  const produto = await produtosRepo.buscarPorId(id)
 
   if (!produto) {
     throw new Error("Produto não encontrado")

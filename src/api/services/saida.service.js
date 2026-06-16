@@ -8,7 +8,7 @@ const normalizarFiltros = (filtros = {}) => {
 
   if (trim(filtros.destino)) limpos.destino = trim(filtros.destino)
   if (trim(filtros.responsavel)) limpos.responsavel = trim(filtros.responsavel)
-  if (trim(filtros.produto)) limpos.produto = trim(filtros.produto)
+  if (trim(filtros.produtos)) limpos.produtos = trim(filtros.produtos)
 
   if (trim(filtros.data)) {
     const inicio = new Date(`${trim(filtros.data)}T00:00:00`)

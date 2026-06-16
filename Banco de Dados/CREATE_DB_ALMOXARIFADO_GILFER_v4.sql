@@ -84,8 +84,6 @@ CREATE TABLE Funcionarios (
     id_funcionario CHAR(36) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     cpf CHAR(11) UNIQUE NOT NULL,
-    -- [v3][CORRECAO] e-mail de CONTATO do funcionario (usado tambem como
-    -- login). Distinto da credencial em Usuarios_Sistema.
     email VARCHAR(150) UNIQUE NOT NULL,
     id_cargo INT UNSIGNED NOT NULL,
 
@@ -105,9 +103,6 @@ DROP TABLE IF EXISTS Usuarios_Sistema;
 CREATE TABLE Usuarios_Sistema (
     -- ID do funcionário UUID
     id_funcionario CHAR(36) PRIMARY KEY,
-    -- [v3][CORRECAO] `email` REMOVIDO daqui: a identificacao do usuario vem
-    -- do email em Funcionarios (1:1 via id_funcionario). Esta tabela guarda
-    -- apenas a credencial e o controle de acesso.
     password_hash TEXT NOT NULL,
     access_level ENUM('CENTRAL', 'ALMOXARIFE', 'AUXILIAR', 'CONSULTA') NOT NULL DEFAULT 'CONSULTA',
 

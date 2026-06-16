@@ -7,7 +7,7 @@ import usuarioSistemaModel from "./usuario-sistema.model.js"
 import fornecedorModel from "./fornecedor.model.js"
 import telefoneFornecedorModel from "./telefone-fornecedor.model.js"
 import enderecoFornecedorModel from "./endereco-fornecedor.model.js"
-import produtoModel from "./produto.model.js"
+import produtosModel from "./produtos.model.js"
 //import produtoFornecedorModel from "./produto-fornecedor.model.js"
 import enderecoAlmoxarifadoModel from "./endereco-almoxarifado.model.js"
 import telefoneAlmoxarifadoModel from "./telefone-almoxarifado.model.js"
@@ -24,7 +24,7 @@ import itemCompraModel from "./item-compra.model.js"
 const sequelize = new Sequelize(
   process.env.DB_NAME || "bd_almoxarifado",
   process.env.DB_USER || "root",
-  process.env.DB_PASSWORD || "admin",
+  process.env.DB_PASSWORD || "250725HrBM@",
   {
   host: process.env.DB_HOST || "localhost",
   dialect: "mysql",
@@ -39,7 +39,7 @@ const db = {
   Fornecedor: fornecedorModel(sequelize, DataTypes),
   TelefoneFornecedor: telefoneFornecedorModel(sequelize, DataTypes),
   EnderecoFornecedor: enderecoFornecedorModel(sequelize, DataTypes),
-  Produto: produtoModel(sequelize, DataTypes),
+  Produtos: produtosModel(sequelize, DataTypes),
   //ProdutoFornecedor: produtoFornecedorModel(sequelize, DataTypes),
   EnderecoAlmoxarifado: enderecoAlmoxarifadoModel(sequelize, DataTypes),
   TelefoneAlmoxarifado: telefoneAlmoxarifadoModel(sequelize, DataTypes),
@@ -71,13 +71,13 @@ db.Fornecedor.hasMany(db.EnderecoFornecedor, { foreignKey: "id_fornecedor", as: 
 db.EnderecoFornecedor.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
 
 // Produto ↔ Fornecedor (N:M via Produto_Fornecedor)
-//db.Produto.belongsToMany(db.Fornecedor, {
+//db.Produtos.belongsToMany(db.Fornecedor, {
 //  through: db.ProdutoFornecedor,
 //  foreignKey: "id_produto",
 //  otherKey: "id_fornecedor",
 //  as: "fornecedores"
 //})
-//db.Fornecedor.belongsToMany(db.Produto, {
+//db.Fornecedor.belongsToMany(db.Produtos, {
 //  through: db.ProdutoFornecedor,
 //  foreignKey: "id_fornecedor",
 //  otherKey: "id_produto",
@@ -106,21 +106,21 @@ db.TelefoneAlmoxarifado.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifa
 //})
 
 // Estoque (Produto ↔ Almoxarifado)
-//db.Produto.belongsToMany(db.Almoxarifado, {
+//db.Produtos.belongsToMany(db.Almoxarifado, {
 //  through: db.Estoque,
 //  foreignKey: "id_produto",
 //  otherKey: "cod_almoxarifado",
 //  as: "almoxarifados_estoque"
 //})
-//db.Almoxarifado.belongsToMany(db.Produto, {
+//db.Almoxarifado.belongsToMany(db.Produtos, {
 //  through: db.Estoque,
 //  foreignKey: "cod_almoxarifado",
 //  otherKey: "id_produto",
 //  as: "produtos_estoque"
 //})
 // Acesso direto ao Estoque
-db.Produto.hasMany(db.Estoque, { foreignKey: "id_produto", as: "estoques" })
-db.Estoque.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+db.Produtos.hasMany(db.Estoque, { foreignKey: "id_produto", as: "estoques" })
+db.Estoque.belongsTo(db.Produtos, { foreignKey: "id_produto", as: "produtos" })
 db.Almoxarifado.hasMany(db.Estoque, { foreignKey: "cod_almoxarifado", as: "estoques" })
 db.Estoque.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "almoxarifado" })
 
@@ -132,8 +132,8 @@ db.Saida.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", a
 // Saída ↔ Itens
 db.Saida.hasMany(db.SaidaItem, { foreignKey: "id_saida", as: "itens", onDelete: "CASCADE" })
 db.SaidaItem.belongsTo(db.Saida, { foreignKey: "id_saida", as: "saida" })
-db.SaidaItem.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
-db.Produto.hasMany(db.SaidaItem, { foreignKey: "id_produto", as: "itensSaida" })
+db.SaidaItem.belongsTo(db.Produtos, { foreignKey: "id_produto", as: "produtos" })
+db.Produtos.hasMany(db.SaidaItem, { foreignKey: "id_produto", as: "itensSaida" })
 
 // Compra
 db.Compra.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
@@ -143,7 +143,7 @@ db.Compra.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", a
 // Compra ↔ Itens
 db.Compra.hasMany(db.ItemCompra, { foreignKey: "id_compra", as: "itens", onDelete: "CASCADE" })
 db.ItemCompra.belongsTo(db.Compra, { foreignKey: "id_compra", as: "compra" })
-db.ItemCompra.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+db.ItemCompra.belongsTo(db.Produtos, { foreignKey: "id_produto", as: "produtos " })
 
 // ── Exportar ──
 db.Sequelize = Sequelize
