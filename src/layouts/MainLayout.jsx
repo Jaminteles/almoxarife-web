@@ -1,3 +1,5 @@
+//import AssessmentIcon from "@mui/icons-material/Assessment";
+import * as Icons from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import {
   Drawer,
@@ -28,7 +30,6 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
-import AssessmentIcon from "@mui/icons-material/Assessment";
 import SettingsIcon from "@mui/icons-material/Settings";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -51,6 +52,7 @@ const menuItems = [
   { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true  },
   { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true  },
   { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true  },
+  { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",      enabled: true  },
   { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",    enabled: false },
   { label: "Entradas",      icon: <DownloadIcon />,    path: "/entradas",      enabled: false },
   { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true },

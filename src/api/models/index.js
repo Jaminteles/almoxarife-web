@@ -138,7 +138,7 @@ db.Produto.hasMany(db.SaidaItem, { foreignKey: "id_produto", as: "itensSaida" })
 // Compra
 db.Compra.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
 //db.Compra.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_comprador", as: "comprador" })
-db.Compra.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", as: "almoxarifado_destino" })
+db.Compra.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", as: "almoxarifadoDestino" })
 
 // Compra ↔ Itens
 db.Compra.hasMany(db.ItemCompra, { foreignKey: "id_compra", as: "itens", onDelete: "CASCADE" })

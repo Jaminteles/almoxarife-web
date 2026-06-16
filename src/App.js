@@ -28,6 +28,10 @@ import SaidasList from "./pages/saidas/List";
 import SaidaForm from "./pages/saidas/Form";
 import SaidaEdit from "./pages/saidas/Edit";
 
+// Compras
+import ListCompras from './pages/compras/List';
+import FormCompras from './pages/compras/Form';
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -64,6 +68,12 @@ function App() {
               reservada. Isso evita 404 quando o usuário clica no menu lateral
               e também deixa pronto para quando a equipe for implementar.
             */}
+
+              {/*<Route path="/compras" element={<ListCompras />} />
+              <Route path="/compras/novo" element={<FormCompras />} />
+              <Route path="/compras/editar/:id" element={<FormCompras />} />
+              */}
+
             <Route path="/produtos"       element={<ComingSoon title="Produtos / Itens" />} />
             <Route path="/entradas"       element={<ComingSoon title="Entradas" />} />
             <Route path="/movimentacoes"  element={<ComingSoon title="Movimentações" />} />

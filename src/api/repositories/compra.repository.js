@@ -17,9 +17,9 @@ const includeCompleto = [
   }
 ]
 
-export function iniciarTransacao() {
-  return db.sequelize.transaction()
-}
+//export function iniciarTransacao() {
+//  return db.sequelize.transaction()
+//}
 
 export async function listarTodos(filtros = {}) {
   const where = {}

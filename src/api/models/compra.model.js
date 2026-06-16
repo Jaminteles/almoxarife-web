@@ -33,6 +33,12 @@ export default (sequelize, DataTypes) => {
       defaultValue: "PENDENTE",
       field: "status_pedido" // Traduz 'status' em JS para 'status_pedido' no MySQL
     },
+    // Adicione este campo dentro do const Compra = sequelize.define(...)
+    numero_nota_fiscal: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      field: "numero_nota_fiscal"
+    },
     valor_total: {
       type: DataTypes.DECIMAL(12, 4),
       defaultValue: 0.0000,

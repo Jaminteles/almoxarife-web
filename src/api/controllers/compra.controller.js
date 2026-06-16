@@ -2,18 +2,44 @@ import * as compraService from "../services/compra.service.js"
 
 export const listar = async (req, res) => {
   try {
-    const { data, numero_nota_fiscal, fornecedor, produto, status } = req.query
-    const dados = await compraService.listarCompras({ data, numero_nota_fiscal, fornecedor, produto, status })
+    // 1. Extraímos tudo que vem da URL
+    const { 
+      data_inicio, 
+      data_fim, 
+      numero_nota_fiscal, 
+      fornecedor, 
+      produto, 
+      status 
+    } = req.query;
 
-    res.json({
+    // 2. Montamos o objeto de filtros seguindo a estrutura que o seu repository espera
+    const filtros = {
+      status,
+      numero_nota_fiscal,
+      fornecedor,
+      produto,
+      // Se o usuário informar as duas datas, montamos o objeto esperado pelo repository
+      data: (data_inicio && data_fim) ? { inicio: data_inicio, fim: data_fim } : null
+    };
+
+    // 3. Chamamos o service passando o objeto filtros
+    const dados = await compraService.listarCompras(filtros);
+
+    // 4. Retornamos a resposta
+    return res.status(200).json({
       sucesso: true,
-      dados,
-      total: dados.length
-    })
+      total: dados.length,
+      dados
+    });
+
   } catch (erro) {
-    res.status(400).json({ sucesso: false, erro: erro.message })
+    console.error("Erro ao listar compras:", erro);
+    return res.status(400).json({ 
+      sucesso: false, 
+      erro: erro.message 
+    });
   }
-}
+};
 
 export const buscarPorId = async (req, res) => {
   try {
@@ -25,6 +51,7 @@ export const buscarPorId = async (req, res) => {
 }
 
 export const cadastrar = async (req, res) => {
+  console.log("DADOS RECEBIDOS:", req.body);
   try {
     const dados = await compraService.cadastrarCompra(req.body)
     res.status(201).json({

@@ -20,7 +20,8 @@ export default (sequelize, DataTypes) => {
     },
     valor_unitario: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
+      allowNull: false,
+      field: "preco_unitario_acordado"
     }
   }, {
     tableName: "Item_Compra",

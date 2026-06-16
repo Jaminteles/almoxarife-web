@@ -1,6 +1,7 @@
 import * as compraRepo from "../repositories/compra.repository.js"
+import db from "../models/index.js"
 
-const STATUS_VALIDOS = ["PENDENTE", "APROVADO", "CONCLUIDO"]
+const STATUS_VALIDOS = ["PENDENTE", "RECEBIDO", "CANCELADO"]
 
 const normalizarFiltros = (filtros = {}) => {
   const limpos = {}
@@ -60,28 +61,32 @@ const normalizarItens = (itens = []) => {
 }
 
 const montarDadosCompra = (dados) => {
+  // Agora validamos também o id_funcionario_comprador que é obrigatório no banco
   if (
     !dados.id_fornecedor || 
     !dados.cod_almoxarifado_destino || 
     !dados.numero_nota_fiscal || 
-    !dados.data_compra
+    !dados.data_compra ||
+    !dados.id_funcionario_comprador
   ) {
-    throw new Error("Por favor, preencha todos os campos obrigatórios antes de prosseguir.")
+    throw new Error("Por favor, preencha todos os campos obrigatórios antes de prosseguir.");
   }
 
-  const dataCompra = new Date(dados.data_compra)
+  const dataCompra = new Date(dados.data_compra);
   if (Number.isNaN(dataCompra.getTime())) {
-    throw new Error("Formato de dado inválido. Corrija as informações e tente novamente.")
+    throw new Error("Formato de dado inválido. Corrija as informações e tente novamente.");
   }
 
+  // O retorno abaixo garante que o campo chegue ao Sequelize/Banco
   return {
     id_fornecedor: Number(dados.id_fornecedor),
+    id_funcionario_comprador: String(dados.id_funcionario_comprador).trim(),
     cod_almoxarifado_destino: Number(dados.cod_almoxarifado_destino),
     numero_nota_fiscal: String(dados.numero_nota_fiscal).trim(),
     data_compra: dataCompra,
     status: dados.status || "PENDENTE",
     observacao: dados.observacao || null
-  }
+  };
 }
 
 const garantirReferencias = async (dados, itens) => {
@@ -111,7 +116,8 @@ const verificarDuplicidadeNota = async (numeroNota, idFornecedor, idCompraIgnora
 }
 
 export const listarCompras = async (filtros = {}) => {
-  return await compraRepo.listarTodos(normalizarFiltros(filtros))
+  return await compraRepo.listarTodos(filtros);
+  //return await compraRepo.listarTodos(normalizarFiltros(filtros))
 }
 
 export const buscarCompraPorId = async (id) => {
@@ -123,53 +129,62 @@ export const buscarCompraPorId = async (id) => {
 }
 
 export const cadastrarCompra = async (dados) => {
-  const dadosCompra = montarDadosCompra(dados)
-  dadosCompra.status = "PENDENTE" // Definido automaticamente conforme RF021
+  const dadosCompra = montarDadosCompra(dados);
+  dadosCompra.status = "PENDENTE";
 
-  const itens = normalizarItens(dados.itens)
-  await garantirReferencias(dadosCompra, itens)
-  await verificarDuplicidadeNota(dadosCompra.numero_nota_fiscal, dadosCompra.id_fornecedor)
+  const itens = normalizarItens(dados.itens);
+  await garantirReferencias(dadosCompra, itens);
+  await verificarDuplicidadeNota(dadosCompra.numero_nota_fiscal, dadosCompra.id_fornecedor);
 
-  const transaction = await compraRepo.iniciarTransacao()
-  try {
-    const novaCompra = await compraRepo.criar(dadosCompra, itens, transaction)
-    await transaction.commit()
-    return await compraRepo.buscarPorId(novaCompra.id_compra)
-  } catch (erro) {
-    await transaction.rollback()
-    throw erro
-  }
-}
+  // O Sequelize gerencia o commit/rollback automaticamente
+  return await db.sequelize.transaction(async (t) => {
+    const novaCompra = await compraRepo.criar(dadosCompra, itens, t);
+    return await compraRepo.buscarPorId(novaCompra.id_compra, t);
+  });
+};
 
 export const editarCompra = async (id, dados) => {
-  const compraAtual = await compraRepo.buscarPorId(id)
+  const compraAtual = await compraRepo.buscarPorId(id);
   if (!compraAtual) {
-    throw new Error("Nenhum pedido encontrado com os parâmetros informados.")
+    throw new Error("Nenhum pedido encontrado com os parâmetros informados.");
   }
 
   if (compraAtual.status !== "PENDENTE") {
-    throw new Error("O pedido deve estar registrado e com status “Pendente”.")
+    throw new Error("Apenas pedidos com status 'PENDENTE' podem ser editados.");
   }
 
-  const dadosCompra = montarDadosCompra(dados)
+  // Mesclagem de dados (mantém o valor original se o novo não for enviado)
+  const dadosParaAtualizar = {
+    id_fornecedor: dados.id_fornecedor || compraAtual.id_fornecedor,
+    cod_almoxarifado_destino: dados.cod_almoxarifado_destino || compraAtual.cod_almoxarifado_destino,
+    numero_nota_fiscal: dados.numero_nota_fiscal || compraAtual.numero_nota_fiscal,
+    data_compra: dados.data_compra || compraAtual.data_compra,
+    status: dados.status || compraAtual.status,
+    observacao: dados.observacao !== undefined ? dados.observacao : compraAtual.observacao
+  };
+
   if (dados.status && !STATUS_VALIDOS.includes(dados.status)) {
-    throw new Error("Formato de dado inválido. Corrija as informações e tente novamente.")
+    throw new Error("Status inválido. Use: PENDENTE, RECEBIDO ou CANCELADO.");
   }
 
-  const itens = normalizarItens(dados.itens)
-  await garantirReferencias(dadosCompra, itens)
-  await verificarDuplicidadeNota(dadosCompra.numero_nota_fiscal, dadosCompra.id_fornecedor, Number(id))
-
-  const transaction = await compraRepo.iniciarTransacao()
-  try {
-    await compraRepo.atualizar(id, dadosCompra, itens, transaction)
-    await transaction.commit()
-    return await compraRepo.buscarPorId(id)
-  } catch (erro) {
-    await transaction.rollback()
-    throw erro
+  // Limpeza dos itens (garante que apenas campos necessários sejam enviados ao banco)
+  let itens;
+  if (dados.itens) {
+    itens = normalizarItens(dados.itens);
+  } else {
+    itens = compraAtual.itens.map(item => ({
+      id_produto: item.id_produto,
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario
+    }));
   }
-}
+
+  // Transação Gerenciada
+  return await db.sequelize.transaction(async (t) => {
+    await compraRepo.atualizar(id, dadosParaAtualizar, itens, t);
+    return await compraRepo.buscarPorId(id, t);
+  });
+};
 
 export const excluirCompra = async (id) => {
   const compra = await compraRepo.buscarPorId(id)
@@ -177,6 +192,7 @@ export const excluirCompra = async (id) => {
     throw new Error("Nenhum pedido encontrado com os parâmetros informados.")
   }
 
+  // Validações de Status
   if (compra.status === "APROVADO") {
     throw new Error("Não é possível excluir um pedido de compra aprovado.")
   }
@@ -187,12 +203,9 @@ export const excluirCompra = async (id) => {
     throw new Error("O pedido de compra deve estar cadastrado e com status “Pendente”.")
   }
 
-  const transaction = await compraRepo.iniciarTransacao()
-  try {
-    await compraRepo.excluir(id, transaction)
-    await transaction.commit()
-  } catch (erro) {
-    await transaction.rollback()
-    throw erro
-  }
+  // Uso da transação gerenciada (Managed Transaction)
+  return await db.sequelize.transaction(async (t) => {
+    return await compraRepo.excluir(id, t);
+  });
 }
+
