@@ -31,9 +31,11 @@ export const listarTodos = async () => {
         
         let statusEstoque = "REGULAR";
 
-        if (prodJSON.estoqueMinimo && quantidadeAtual <= prodJSON.estoqueMinimo) {
+        // Os campos do model são snake_case (estoque_minimo/_maximo).
+        // Antes liam camelCase (undefined), então o status era sempre REGULAR.
+        if (prodJSON.estoque_minimo && quantidadeAtual <= prodJSON.estoque_minimo) {
           statusEstoque = "CRITICO";
-        } else if (prodJSON.estoqueMaximo && quantidadeAtual >= prodJSON.estoqueMaximo) {
+        } else if (prodJSON.estoque_maximo && quantidadeAtual >= prodJSON.estoque_maximo) {
           statusEstoque = "EXCESSO";
         }
 
@@ -53,21 +55,23 @@ export const buscarPorId = async (id) => {
 };
 
 export const criar = async (dadosProduto) => {
-// 1. Validação de campos obrigatórios [RF001 - 5.1.1]
-  // Certifique-se de que estes nomes batem com o que vem do Front/Postman
-  const camposObrigatorios = ['nome', 'preco_custo', 'estoque_minimo', 'estoque_maximo'];
-  
+  // 1. Validação de campos obrigatórios [RF001 - 5.1.1]
+  // unidade_medida entrou aqui porque é NOT NULL no banco (sem default).
+  const camposObrigatorios = ['nome', 'preco_custo', 'unidade_medida', 'estoque_minimo', 'estoque_maximo'];
+
   for (const campo of camposObrigatorios) {
-    // Usando dadosProduto[campo] para acessar a propriedade corretamente
-    if (!dadosProduto[campo] || dadosProduto[campo].toString().trim() === "") {
+    const valor = dadosProduto[campo];
+    // Aceita 0 como valor válido (estoque_minimo pode ser 0); só barra
+    // valores ausentes ou string vazia. O `!valor` anterior rejeitava 0.
+    if (valor === undefined || valor === null || valor.toString().trim() === "") {
       throw new Error("Por favor, preencha todos os campos obrigatórios antes de prosseguir.");
     }
   }
 
   // 2. Validação de formato numérico [RF001 - 5.3.1]
   if (
-    isNaN(parseFloat(dadosProduto.preco_custo)) || 
-    isNaN(parseFloat(dadosProduto.estoque_minimo)) || 
+    isNaN(parseFloat(dadosProduto.preco_custo)) ||
+    isNaN(parseFloat(dadosProduto.estoque_minimo)) ||
     isNaN(parseFloat(dadosProduto.estoque_maximo))
   ) {
     throw new Error("Formato de dado inválido. Corrija as informações e tente novamente.");
@@ -84,26 +88,37 @@ export const criar = async (dadosProduto) => {
     throw new Error("O estoque mínimo não pode ser maior ou igual ao estoque máximo.");
   }
 
-  const dadosParaSalvar = {
-    ...dadosProduto,
-    preco_custo: parseFloat(dadosProduto.preco_custo),
-    estoque_minimo: parseFloat(dadosProduto.estoque_minimo),
-    estoque_maximo: parseFloat(dadosProduto.estoque_maximo)
-  };
-
-  // Novo: Validar se fornecedores foram enviados
+  // 5. Validação: pelo menos um fornecedor
   if (!dadosProduto.fornecedores || dadosProduto.fornecedores.length === 0) {
     throw new Error("Pelo menos um fornecedor é obrigatório.");
   }
 
-  // Criar o produto
-  const produto = await produtoRepo.criar(dadosProduto);
+  // Escrita multi-tabela (Produtos + Produto_Fornecedor) dentro de uma
+  // transação: se qualquer passo falhar, nada é gravado (atomicidade).
+  return await db.sequelize.transaction(async (t) => {
+    const produto = await db.Produto.create(
+      {
+        nome: dadosProduto.nome,
+        descricao: dadosProduto.descricao || null,
+        preco_custo: parseFloat(dadosProduto.preco_custo),
+        unidade_medida: dadosProduto.unidade_medida,
+        estoque_minimo: parseFloat(dadosProduto.estoque_minimo),
+        estoque_maximo: parseFloat(dadosProduto.estoque_maximo)
+      },
+      { transaction: t }
+    );
 
-  // Criar a associação na tabela intermediária
-  // O Sequelize cria métodos mágicos como setFornecedores
-  await produto.setFornecedores(dadosProduto.fornecedores);
-  
-  return produto;
+    // A tabela Produto_Fornecedor exige preco_negociado (NOT NULL).
+    // Nesta versão usamos o preço de custo como preço negociado padrão
+    // para todos os fornecedores. O `through` aplica esse valor a cada
+    // vínculo criado pelo setFornecedores.
+    await produto.setFornecedores(dadosProduto.fornecedores, {
+      through: { preco_negociado: parseFloat(dadosProduto.preco_custo) },
+      transaction: t
+    });
+
+    return produto;
+  });
 };
 
 export const atualizar = async (id, dadosProduto) => {
@@ -135,4 +150,3 @@ export const excluir = async (id) => {
 
   return await produtoRepo.atualizar(id, { ativo: 0 });
 };
-

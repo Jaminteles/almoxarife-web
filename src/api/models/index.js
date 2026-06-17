@@ -8,7 +8,7 @@ import fornecedorModel from "./fornecedor.model.js"
 import telefoneFornecedorModel from "./telefone-fornecedor.model.js"
 import enderecoFornecedorModel from "./endereco-fornecedor.model.js"
 import produtoModel from "./produto.model.js"
-//import produtoFornecedorModel from "./produto-fornecedor.model.js"
+import produtoFornecedorModel from "./produto-fornecedor.model.js"
 import enderecoAlmoxarifadoModel from "./endereco-almoxarifado.model.js"
 import telefoneAlmoxarifadoModel from "./telefone-almoxarifado.model.js"
 import almoxarifadoModel from "./almoxarifado.model.js"
@@ -24,7 +24,7 @@ import itemCompraModel from "./item-compra.model.js"
 const sequelize = new Sequelize(
   process.env.DB_NAME || "bd_almoxarifado",
   process.env.DB_USER || "root",
-  process.env.DB_PASSWORD || "admin",
+  process.env.DB_PASSWORD || "desus",
   {
   host: process.env.DB_HOST || "localhost",
   dialect: "mysql",
@@ -40,7 +40,7 @@ const db = {
   TelefoneFornecedor: telefoneFornecedorModel(sequelize, DataTypes),
   EnderecoFornecedor: enderecoFornecedorModel(sequelize, DataTypes),
   Produto: produtoModel(sequelize, DataTypes),
-  //ProdutoFornecedor: produtoFornecedorModel(sequelize, DataTypes),
+  ProdutoFornecedor: produtoFornecedorModel(sequelize, DataTypes),
   EnderecoAlmoxarifado: enderecoAlmoxarifadoModel(sequelize, DataTypes),
   TelefoneAlmoxarifado: telefoneAlmoxarifadoModel(sequelize, DataTypes),
   Almoxarifado: almoxarifadoModel(sequelize, DataTypes),
@@ -71,18 +71,18 @@ db.Fornecedor.hasMany(db.EnderecoFornecedor, { foreignKey: "id_fornecedor", as: 
 db.EnderecoFornecedor.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
 
 // Produto ↔ Fornecedor (N:M via Produto_Fornecedor)
-//db.Produto.belongsToMany(db.Fornecedor, {
-//  through: db.ProdutoFornecedor,
-//  foreignKey: "id_produto",
-//  otherKey: "id_fornecedor",
-//  as: "fornecedores"
-//})
-//db.Fornecedor.belongsToMany(db.Produto, {
-//  through: db.ProdutoFornecedor,
-//  foreignKey: "id_fornecedor",
-//  otherKey: "id_produto",
-//  as: "produtos"
-//})
+db.Produto.belongsToMany(db.Fornecedor, {
+  through: db.ProdutoFornecedor,
+  foreignKey: "id_produto",
+  otherKey: "id_fornecedor",
+  as: "fornecedores"
+})
+db.Fornecedor.belongsToMany(db.Produto, {
+  through: db.ProdutoFornecedor,
+  foreignKey: "id_fornecedor",
+  otherKey: "id_produto",
+  as: "produtos"
+})
 
 // Endereço/Telefone Almoxarifado ↔ Almoxarifado
 db.Almoxarifado.belongsTo(db.EnderecoAlmoxarifado, { foreignKey: "id_endereco", as: "endereco" })
@@ -105,35 +105,19 @@ db.TelefoneAlmoxarifado.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifa
 //  as: "gestores"
 //})
 
-// 1. Associação: Produto ↔ Almoxarifado (Tabela: Estoque)
-db.Produto.belongsToMany(db.Almoxarifado, { 
-  through: db.Estoque, 
-  as: "almoxarifados_estoque", 
-  foreignKey: "id_produto",
-  otherKey: "cod_almoxarifado"
-});
-
-db.Almoxarifado.belongsToMany(db.Produto, { 
-  through: db.Estoque, 
-  as: "produtos_estoque", 
+// Estoque (Produto ↔ Almoxarifado)
+db.Produto.belongsToMany(db.Almoxarifado, {
+  through: db.Estoque,
+ foreignKey: "id_produto",
+  otherKey: "cod_almoxarifado",
+ as: "almoxarifados_estoque"
+})
+db.Almoxarifado.belongsToMany(db.Produto, {
+  through: db.Estoque,
   foreignKey: "cod_almoxarifado",
-  otherKey: "id_produto"
-});
-
-// 2. Associação: Produto ↔ Fornecedor (Tabela: ProdutoFornecedor)
-db.Produto.belongsToMany(db.Fornecedor, { 
-  through: 'ProdutoFornecedor', 
-  as: 'fornecedores', 
-  foreignKey: 'id_produto',
-  otherKey: 'id_fornecedor' // Sempre bom especificar a outra chave também
-});
-
-db.Fornecedor.belongsToMany(db.Produto, { 
-  through: 'ProdutoFornecedor', 
-  as: 'produtos', 
-  foreignKey: 'id_fornecedor',
-  otherKey: 'id_produto'
-});
+  otherKey: "id_produto",
+  as: "produtos_estoque"
+})
 
 // Acesso direto ao Estoque
 db.Produto.hasMany(db.Estoque, { foreignKey: "id_produto", as: "estoques" })
