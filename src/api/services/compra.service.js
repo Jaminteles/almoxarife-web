@@ -97,7 +97,6 @@ const montarDadosCompra = (dados) => {
     numero_nota_fiscal: String(dados.numero_nota_fiscal).trim(),
     data_compra: dataCompra,
     status: dados.status || "PENDENTE",
-    observacao: dados.observacao || null,
   };
 };
 
@@ -138,6 +137,37 @@ const verificarDuplicidadeNota = async (
   }
 };
 
+// Aplica a entrada de estoque da compra (incrementa o destino).
+const aplicarEntradaCompra = async (codAlmoxarifadoDestino, itens, transaction) => {
+  for (const item of itens) {
+    await processarMovimentacao(
+      {
+        tipo: "COMPRA",
+        cod_produto: item.id_produto,
+        cod_almoxarifado_destino: codAlmoxarifadoDestino,
+        quantidade: Number(item.quantidade),
+      },
+      transaction,
+    );
+  }
+};
+
+// Reverte a entrada de estoque de uma compra (decrementa o destino). Reusa o
+// fluxo SAIDA_CONSUMO, que valida se ainda há saldo suficiente para reverter.
+const reverterEntradaCompra = async (compra, transaction) => {
+  for (const item of compra.itens || []) {
+    await processarMovimentacao(
+      {
+        tipo: "SAIDA_CONSUMO",
+        cod_produto: item.id_produto,
+        cod_almoxarifado_origem: compra.cod_almoxarifado_destino,
+        quantidade: Number(item.quantidade),
+      },
+      transaction,
+    );
+  }
+};
+
 export const listarCompras = async (filtros = {}) => {
   return await compraRepo.listarTodos(filtros);
 };
@@ -152,7 +182,10 @@ export const buscarCompraPorId = async (id) => {
 
 export const cadastrarCompra = async (dados) => {
   const dadosCompra = montarDadosCompra(dados);
-  dadosCompra.status = "PENDENTE";
+  // Ao registrar a compra, ela já entra como RECEBIDO para dar entrada no
+  // estoque do almoxarifado de destino (a movimentação roda logo abaixo).
+  // Assim o produto comprado passa a aparecer no estoque daquele almoxarifado.
+  dadosCompra.status = "RECEBIDO";
 
   const itens = normalizarItens(dados.itens);
   await garantirReferencias(dadosCompra, itens);
@@ -164,19 +197,8 @@ export const cadastrarCompra = async (dados) => {
   return await db.sequelize.transaction(async (t) => {
     const novaCompra = await compraRepo.criar(dadosCompra, itens, t);
 
-    if (dadosCompra.status === "RECEBIDO") {
-      for (const item of itens) {
-        await processarMovimentacao(
-          {
-            tipo: "COMPRA",
-            cod_produto: item.id_produto,
-            cod_almoxarifado_destino: dadosCompra.cod_almoxarifado_destino,
-            quantidade: item.quantidade,
-          },
-          t,
-        );
-      }
-    }
+    // A compra dá entrada no estoque do almoxarifado de destino.
+    await aplicarEntradaCompra(dadosCompra.cod_almoxarifado_destino, itens, t);
 
     return await compraRepo.buscarPorId(novaCompra.id_compra, t);
   });
@@ -188,10 +210,6 @@ export const editarCompra = async (id, dados) => {
     throw new Error("Nenhum pedido encontrado com os parâmetros informados.");
   }
 
-  if (compraAtual.status !== "PENDENTE") {
-    throw new Error("Apenas pedidos com status 'PENDENTE' podem ser editados.");
-  }
-
   const dadosParaAtualizar = {
     id_fornecedor: dados.id_fornecedor || compraAtual.id_fornecedor,
     cod_almoxarifado_destino:
@@ -199,16 +217,9 @@ export const editarCompra = async (id, dados) => {
     numero_nota_fiscal:
       dados.numero_nota_fiscal || compraAtual.numero_nota_fiscal,
     data_compra: dados.data_compra || compraAtual.data_compra,
-    status: dados.status || compraAtual.status,
-    observacao:
-      dados.observacao !== undefined
-        ? dados.observacao
-        : compraAtual.observacao,
+    // A compra sempre reflete entrada de estoque, então mantém-se RECEBIDO.
+    status: "RECEBIDO",
   };
-
-  if (dados.status && !STATUS_VALIDOS.includes(dados.status)) {
-    throw new Error("Status inválido. Use: PENDENTE, RECEBIDO ou CANCELADO.");
-  }
 
   let itens;
   if (dados.itens) {
@@ -222,25 +233,11 @@ export const editarCompra = async (id, dados) => {
   }
 
   return await db.sequelize.transaction(async (t) => {
+    // Reverte a entrada antiga e reaplica a nova, mantendo o estoque coerente
+    // (mesma lógica da saída): desfaz o efeito anterior e aplica os itens novos.
+    await reverterEntradaCompra(compraAtual, t);
     await compraRepo.atualizar(id, dadosParaAtualizar, itens, t);
-
-    if (
-      compraAtual.status === "PENDENTE" &&
-      dadosParaAtualizar.status === "RECEBIDO"
-    ) {
-      for (const item of itens) {
-        await processarMovimentacao(
-          {
-            tipo: "COMPRA",
-            cod_produto: item.id_produto,
-            cod_almoxarifado_destino:
-              dadosParaAtualizar.cod_almoxarifado_destino,
-            quantidade: item.quantidade,
-          },
-          t,
-        );
-      }
-    }
+    await aplicarEntradaCompra(dadosParaAtualizar.cod_almoxarifado_destino, itens, t);
 
     return await compraRepo.buscarPorId(id, t);
   });
@@ -252,21 +249,11 @@ export const excluirCompra = async (id) => {
     throw new Error("Nenhum pedido encontrado com os parâmetros informados.");
   }
 
-  if (compra.status === "APROVADO") {
-    throw new Error("Não é possível excluir um pedido de compra aprovado.");
-  }
-  if (compra.status === "RECEBIDO") {
-    throw new Error(
-      "Exclusão não permitida: pedido já vinculado a uma entrada de estoque.",
-    );
-  }
-  if (compra.status !== "PENDENTE") {
-    throw new Error(
-      "O pedido de compra deve estar cadastrado e com status “Pendente”.",
-    );
-  }
-
+  // Excluir a compra REVERTE a entrada de estoque que ela gerou (decrementa o
+  // saldo do almoxarifado de destino). Se o saldo já tiver sido consumido, a
+  // reversão falha com "Saldo insuficiente" — protegendo a integridade.
   return await db.sequelize.transaction(async (t) => {
+    await reverterEntradaCompra(compra, t);
     return await compraRepo.excluir(id, t);
   });
 };

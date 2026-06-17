@@ -74,6 +74,9 @@ export default function ComprasList() {
               c.fornecedor?.razao_social ||
               c.fornecedor?.nome_fantasia ||
               "—",
+            "Produtos":
+              c.itens?.map((i) => i.produto?.nome || `Produto ${i.id_produto}`).join(", ") ||
+              "—",
             "Data": formatarData(c.data_compra),
             "Status": c.status,
             __id__: c.id_compra
@@ -153,7 +156,7 @@ export default function ComprasList() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth={false} disableGutters>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -162,7 +165,7 @@ export default function ComprasList() {
 
       <ListTemplate
         title="Compras"
-        columns={["Nota Fiscal", "Fornecedor", "Data", "Status"]}
+        columns={["Nota Fiscal", "Fornecedor", "Produtos", "Data", "Status"]}
         data={data}
         loading={loading}
         onCreate={() => navigate("/compras/cadastro")}

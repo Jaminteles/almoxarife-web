@@ -9,7 +9,7 @@ import {
   Paper,
   Alert,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box,
   CircularProgress
 } from "@mui/material";

@@ -2,8 +2,44 @@ import db from "../models/index.js";
 import * as produtoRepo from "../repositories/produto.repository.js";
 import { Op } from "sequelize";
 
-export const listarTodos = async () => {
+export const listarTodos = async (filtros = {}) => {
+  // Monta o WHERE dinamicamente a partir dos filtros recebidos da query.
+  // Por padrão lista só produtos ATIVOS — inativados (ativo=0) não devem
+  // aparecer na lista nem nos selects de outros módulos.
+  // Filtros do RF002: ID, nome, preço de custo, fornecedor, estoque mín/máx.
+  const where = { ativo: 1 };
+
+  const limpar = (v) => (v === undefined || v === null ? "" : String(v).trim());
+
+  if (limpar(filtros.id_produto)) where.id_produto = limpar(filtros.id_produto);
+  if (limpar(filtros.nome)) where.nome = { [Op.like]: `%${limpar(filtros.nome)}%` };
+  if (limpar(filtros.preco_custo)) where.preco_custo = limpar(filtros.preco_custo);
+  if (limpar(filtros.estoque_minimo)) where.estoque_minimo = limpar(filtros.estoque_minimo);
+  if (limpar(filtros.estoque_maximo)) where.estoque_maximo = limpar(filtros.estoque_maximo);
+  if (limpar(filtros.unidade_medida)) where.unidade_medida = limpar(filtros.unidade_medida);
+
+  // Filtro por fornecedor (razão social): descobre os IDs de produto que têm
+  // algum fornecedor cuja razão social bate, e restringe a busca a eles.
+  // Mantém a lista COMPLETA de fornecedores de cada produto no resultado.
+  if (limpar(filtros.fornecedor)) {
+    const fornecedores = await db.Fornecedor.findAll({
+      where: { razao_social: { [Op.like]: `%${limpar(filtros.fornecedor)}%` } },
+      include: [
+        {
+          model: db.Produto,
+          as: "produtos",
+          attributes: ["id_produto"],
+          through: { attributes: [] }
+        }
+      ]
+    });
+    const ids = fornecedores.flatMap((f) => (f.produtos || []).map((p) => p.id_produto));
+    // Se nenhum fornecedor casou, força resultado vazio com um ID impossível.
+    where.id_produto = { [Op.in]: ids.length ? [...new Set(ids)] : [0] };
+  }
+
   const produtos = await db.Produto.findAll({
+    where,
     include: [
       {
         model: db.Almoxarifado,
@@ -56,8 +92,10 @@ export const buscarPorId = async (id) => {
 
 export const criar = async (dadosProduto) => {
   // 1. Validação de campos obrigatórios [RF001 - 5.1.1]
-  // unidade_medida entrou aqui porque é NOT NULL no banco (sem default).
-  const camposObrigatorios = ['nome', 'preco_custo', 'unidade_medida', 'estoque_minimo', 'estoque_maximo'];
+  // unidade_medida entra por ser NOT NULL no banco (sem default).
+  // estoque_maximo NÃO é obrigatório: o formulário o trata como opcional
+  // (envia null quando vazio) e o model tem default.
+  const camposObrigatorios = ['nome', 'preco_custo', 'unidade_medida', 'estoque_minimo'];
 
   for (const campo of camposObrigatorios) {
     const valor = dadosProduto[campo];
@@ -68,23 +106,36 @@ export const criar = async (dadosProduto) => {
     }
   }
 
+  // estoque_maximo é opcional, mas quando informado precisa ser numérico.
+  const temEstoqueMaximo =
+    dadosProduto.estoque_maximo !== undefined &&
+    dadosProduto.estoque_maximo !== null &&
+    dadosProduto.estoque_maximo.toString().trim() !== "";
+
   // 2. Validação de formato numérico [RF001 - 5.3.1]
   if (
     isNaN(parseFloat(dadosProduto.preco_custo)) ||
     isNaN(parseFloat(dadosProduto.estoque_minimo)) ||
-    isNaN(parseFloat(dadosProduto.estoque_maximo))
+    (temEstoqueMaximo && isNaN(parseFloat(dadosProduto.estoque_maximo)))
   ) {
     throw new Error("Formato de dado inválido. Corrija as informações e tente novamente.");
   }
 
   // 3. Validação: Duplicidade de nome [RF001 - 5.2.1]
-  const duplicado = await db.Produto.findOne({ where: { nome: dadosProduto.nome } });
+  // Considera apenas produtos ATIVOS: um produto inativado (ativo=0) não deve
+  // bloquear o cadastro de um novo com o mesmo nome. O trim evita falso
+  // "duplicado" por espaços nas pontas.
+  const nomeNormalizado = dadosProduto.nome.trim();
+  const duplicado = await db.Produto.findOne({
+    where: { nome: nomeNormalizado, ativo: 1 }
+  });
   if (duplicado) {
     throw new Error("O registro informado já existe no sistema. Verifique antes de continuar.");
   }
 
   // 4. Validação: Estoque [RF001 - Fluxo de Exceção]
-  if (Number(dadosProduto.estoque_minimo) >= Number(dadosProduto.estoque_maximo)) {
+  // Só compara mínimo x máximo quando o máximo foi informado.
+  if (temEstoqueMaximo && Number(dadosProduto.estoque_minimo) >= Number(dadosProduto.estoque_maximo)) {
     throw new Error("O estoque mínimo não pode ser maior ou igual ao estoque máximo.");
   }
 
@@ -98,12 +149,14 @@ export const criar = async (dadosProduto) => {
   return await db.sequelize.transaction(async (t) => {
     const produto = await db.Produto.create(
       {
-        nome: dadosProduto.nome,
+        nome: nomeNormalizado,
         descricao: dadosProduto.descricao || null,
         preco_custo: parseFloat(dadosProduto.preco_custo),
         unidade_medida: dadosProduto.unidade_medida,
         estoque_minimo: parseFloat(dadosProduto.estoque_minimo),
-        estoque_maximo: parseFloat(dadosProduto.estoque_maximo)
+        // Quando o máximo não é informado, deixa o default do model (0) agir
+        // em vez de gravar NaN/null numa coluna NOT NULL.
+        ...(temEstoqueMaximo ? { estoque_maximo: parseFloat(dadosProduto.estoque_maximo) } : {})
       },
       { transaction: t }
     );
@@ -122,13 +175,24 @@ export const criar = async (dadosProduto) => {
 };
 
 export const atualizar = async (id, dadosProduto) => {
-  // Validação: Duplicidade (ignorando o próprio ID) [RF003 - 5.2.1]
-  const duplicado = await db.Produto.findOne({ 
-    where: { nome: dadosProduto.nome, id_produto: { [Op.ne]: id } } 
-  });
-  if (duplicado) throw new Error("O registro informado já existe no sistema.");
+  // Validação: Duplicidade (ignorando o próprio ID e inativos) [RF003 - 5.2.1]
+  if (dadosProduto.nome) {
+    const duplicado = await db.Produto.findOne({
+      where: { nome: dadosProduto.nome.trim(), ativo: 1, id_produto: { [Op.ne]: id } }
+    });
+    if (duplicado) throw new Error("O registro informado já existe no sistema.");
+  }
 
-  if (Number(dadosProduto.estoqueMinimo) >= Number(dadosProduto.estoqueMaximo)) {
+  // Campos em snake_case (iguais ao model). estoque_maximo é opcional.
+  const temEstoqueMaximo =
+    dadosProduto.estoque_maximo !== undefined &&
+    dadosProduto.estoque_maximo !== null &&
+    dadosProduto.estoque_maximo.toString().trim() !== "";
+
+  if (
+    temEstoqueMaximo &&
+    Number(dadosProduto.estoque_minimo) >= Number(dadosProduto.estoque_maximo)
+  ) {
     throw new Error("O estoque mínimo não pode ser maior ou igual ao estoque máximo.");
   }
   return await produtoRepo.atualizar(id, dadosProduto);

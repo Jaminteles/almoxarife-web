@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Container,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   Typography,
   Stack,
   TextField,
@@ -45,28 +45,6 @@ import SummaryCard from "../../components/SummaryCard";
 
 const API_URL = "http://localhost:5000/api";
 
-// MOCK do estoque por almoxarifado — permanece ate o modulo Estoque existir.
-// No SQL real isso vira da tabela Estoque (junção com Produtos e Compra).
-const MOCK_ESTOQUE = {
-  1: [
-    { id: 101, produto: "Cimento CP-II 50kg", fornecedor: "Votorantim",   nota_fiscal: "NF-2025/0451", qtd: 320, qtd_minima: 100, valor_unit: 38.50, data_atualizacao: "2026-05-26" },
-    { id: 102, produto: "Areia média m³",      fornecedor: "Mineração XYZ", nota_fiscal: "NF-2025/0452", qtd:  45, qtd_minima:  20, valor_unit: 85.00, data_atualizacao: "2026-05-24" },
-    { id: 103, produto: "Brita 1 m³",          fornecedor: "Mineração XYZ", nota_fiscal: "NF-2025/0452", qtd:  18, qtd_minima:  25, valor_unit: 92.00, data_atualizacao: "2026-05-24" },
-    { id: 104, produto: "Vergalhão 10mm 12m", fornecedor: "Gerdau",         nota_fiscal: "NF-2025/0455", qtd: 210, qtd_minima:  50, valor_unit: 48.20, data_atualizacao: "2026-05-22" },
-    { id: 105, produto: "Tijolo Cerâmico",     fornecedor: "Cerâmica Sul",  nota_fiscal: "NF-2025/0460", qtd: 1500, qtd_minima: 500, valor_unit: 0.85, data_atualizacao: "2026-05-26" }
-  ],
-  2: [
-    { id: 201, produto: "Cimento CP-II 50kg", fornecedor: "Votorantim",   nota_fiscal: "NF-2025/0501", qtd: 80,  qtd_minima: 100, valor_unit: 38.50, data_atualizacao: "2026-05-25" },
-    { id: 202, produto: "Cal Hidratada 20kg",  fornecedor: "Itaú Cal",       nota_fiscal: "NF-2025/0502", qtd: 60,  qtd_minima:  30, valor_unit: 22.00, data_atualizacao: "2026-05-21" },
-    { id: 203, produto: "Telha Fibrocimento",  fornecedor: "Brasilit",       nota_fiscal: "NF-2025/0503", qtd: 120, qtd_minima:  40, valor_unit: 65.50, data_atualizacao: "2026-05-19" }
-  ],
-  3: [
-    { id: 301, produto: "Óleo Hidráulico 20L", fornecedor: "Petrobras",      nota_fiscal: "NF-2025/0601", qtd: 12,  qtd_minima:   5, valor_unit: 285.00, data_atualizacao: "2026-05-18" },
-    { id: 302, produto: "Filtro de Ar",         fornecedor: "Mann Filter",    nota_fiscal: "NF-2025/0602", qtd:  8,  qtd_minima:  10, valor_unit:  95.00, data_atualizacao: "2026-05-20" },
-    { id: 303, produto: "Graxa Industrial 1kg", fornecedor: "Lubrax",          nota_fiscal: "NF-2025/0603", qtd: 24,  qtd_minima:   8, valor_unit:  42.00, data_atualizacao: "2026-05-15" }
-  ]
-};
-
 export default function AlmoxarifadoDetalhes() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -76,11 +54,10 @@ export default function AlmoxarifadoDetalhes() {
   const [estoqueFiltrado, setEstoqueFiltrado] = useState([]);
   const [error, setError] = useState("");
 
-  // Filtros conforme RF014: produto, fornecedor, nota fiscal, data.
+  // Filtros conforme RF014: produto, fornecedor, data.
   const [filtros, setFiltros] = useState({
     produto: "",
     fornecedor: "",
-    nota_fiscal: "",
     data: ""
   });
 
@@ -100,10 +77,15 @@ export default function AlmoxarifadoDetalhes() {
       })
       .catch(err => setError("Erro ao carregar: " + err.message));
 
-    // BLOCOS 2 e 3 — estoque AINDA mock (modulo Estoque nao existe no backend).
-    const itens = MOCK_ESTOQUE[id] || [];
-    setEstoque(itens);
-    setEstoqueFiltrado(itens);
+    // BLOCOS 2 e 3 — estoque REAL via GET /almoxarifados/:id/estoque.
+    fetch(`${API_URL}/almoxarifados/${id}/estoque`)
+      .then(res => res.json())
+      .then(result => {
+        const itens = result.sucesso && Array.isArray(result.dados) ? result.dados : [];
+        setEstoque(itens);
+        setEstoqueFiltrado(itens);
+      })
+      .catch(err => setError("Erro ao carregar estoque: " + err.message));
   }, [id]);
 
   // ── Handlers dos filtros do estoque (filtragem LOCAL no mock) ──
@@ -115,15 +97,15 @@ export default function AlmoxarifadoDetalhes() {
     const filtrados = estoque.filter(item => {
       if (filtros.produto && !item.produto.toLowerCase().includes(filtros.produto.toLowerCase())) return false;
       if (filtros.fornecedor && !item.fornecedor.toLowerCase().includes(filtros.fornecedor.toLowerCase())) return false;
-      if (filtros.nota_fiscal && !item.nota_fiscal.toLowerCase().includes(filtros.nota_fiscal.toLowerCase())) return false;
-      if (filtros.data && item.data_atualizacao !== filtros.data) return false;
+      // Compara apenas a parte AAAA-MM-DD (o backend devolve timestamp ISO).
+      if (filtros.data && String(item.data_atualizacao).slice(0, 10) !== filtros.data) return false;
       return true;
     });
     setEstoqueFiltrado(filtrados);
   }
 
   function handleLimpar() {
-    setFiltros({ produto: "", fornecedor: "", nota_fiscal: "", data: "" });
+    setFiltros({ produto: "", fornecedor: "", data: "" });
     setEstoqueFiltrado(estoque);
   }
 
@@ -289,13 +271,6 @@ export default function AlmoxarifadoDetalhes() {
             onKeyDown={handleKeyDown}
           />
           <TextField
-            label="Nota Fiscal"
-            size="small"
-            value={filtros.nota_fiscal}
-            onChange={(e) => handleFiltroChange("nota_fiscal", e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <TextField
             label="Data de Atualização"
             type="date"
             size="small"
@@ -325,7 +300,6 @@ export default function AlmoxarifadoDetalhes() {
               <TableRow>
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Produto</TableCell>
                 <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Fornecedor</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: 600 }}>Nota Fiscal</TableCell>
                 <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Qtd. Atual</TableCell>
                 <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Qtd. Mín.</TableCell>
                 <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Valor Unit.</TableCell>
@@ -341,7 +315,6 @@ export default function AlmoxarifadoDetalhes() {
                     <TableRow key={item.id} hover>
                       <TableCell>{item.produto}</TableCell>
                       <TableCell>{item.fornecedor}</TableCell>
-                      <TableCell>{item.nota_fiscal}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
                           <span>{item.qtd.toLocaleString("pt-BR")}</span>
@@ -364,7 +337,7 @@ export default function AlmoxarifadoDetalhes() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary" }}>
                     Nenhum item encontrado com os filtros informados.
                   </TableCell>
                 </TableRow>

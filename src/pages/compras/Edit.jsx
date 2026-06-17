@@ -9,7 +9,7 @@ import {
   Paper,
   Alert,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box,
   CircularProgress
 } from "@mui/material";
@@ -27,8 +27,7 @@ const formVazio = {
   cod_almoxarifado_destino: "",
   numero_nota_fiscal: "",
   data_compra: "",
-  status: "PENDENTE",
-  observacao: ""
+  status: "PENDENTE"
 };
 
 const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "" };
@@ -92,8 +91,7 @@ export default function CompraEdit() {
             cod_almoxarifado_destino: c.cod_almoxarifado_destino ?? "",
             numero_nota_fiscal: c.numero_nota_fiscal ?? "",
             data_compra: toInputDate(c.data_compra),
-            status: c.status ?? "PENDENTE",
-            observacao: c.observacao ?? ""
+            status: c.status ?? "PENDENTE"
           });
           // itens vem como [{ id_produto, quantidade, valor_unitario }].
           // Garante ao menos 1 linha.
@@ -123,14 +121,36 @@ export default function CompraEdit() {
 
   function handleChange(e) {
     const { name, value } = e.target;
+    // Trocar o fornecedor muda os produtos disponíveis — zera os itens.
+    if (name === "id_fornecedor") {
+      setForm((prev) => ({ ...prev, id_fornecedor: value }));
+      setItens([{ ...itemVazio }]);
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
+
+  // Só produtos vinculados ao fornecedor selecionado.
+  const produtosDoFornecedor = form.id_fornecedor
+    ? produtos.filter((p) =>
+        (p.fornecedores || []).some(
+          (f) => Number(f.id_fornecedor) === Number(form.id_fornecedor)
+        )
+      )
+    : [];
 
   // === Itens ===
   function handleItemChange(index, campo, valor) {
     setItens((prev) => {
       const novos = [...prev];
       novos[index] = { ...novos[index], [campo]: valor };
+      // Valor unitário é automático: preço de custo do produto selecionado.
+      if (campo === "id_produto") {
+        const produto = produtos.find(
+          (p) => Number(p.id_produto) === Number(valor)
+        );
+        novos[index].valor_unitario = produto ? Number(produto.preco_custo) : "";
+      }
       return novos;
     });
   }
@@ -295,34 +315,6 @@ export default function CompraEdit() {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-
-            {/* Status só editável na edição — valores do ENUM do schema. */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="status"
-                label="Status"
-                value={form.status}
-                onChange={handleChange}
-                fullWidth
-              >
-                <MenuItem value="PENDENTE">Pendente</MenuItem>
-                <MenuItem value="RECEBIDO">Recebido</MenuItem>
-                <MenuItem value="CANCELADO">Cancelado</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                name="observacao"
-                label="Observação"
-                value={form.observacao}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                minRows={2}
-              />
-            </Grid>
           </Grid>
 
           <Divider sx={{ my: 3 }} />
@@ -348,16 +340,23 @@ export default function CompraEdit() {
             </Button>
           </Box>
 
+          {!form.id_fornecedor && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Selecione um fornecedor para listar os produtos disponíveis.
+            </Typography>
+          )}
+
           <Stack spacing={1.5}>
             {itens.map((item, i) => (
               <ItemCompraRow
                 key={i}
                 item={item}
                 index={i}
-                produtos={produtos}
+                produtos={produtosDoFornecedor}
                 onChange={handleItemChange}
                 onRemove={removerItem}
                 disableRemove={itens.length === 1}
+                valorReadOnly
               />
             ))}
           </Stack>

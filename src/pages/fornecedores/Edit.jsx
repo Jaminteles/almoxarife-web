@@ -10,7 +10,7 @@ import {
   Alert,
   IconButton,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";

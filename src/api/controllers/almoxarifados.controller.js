@@ -88,6 +88,19 @@ export const editar = async (req, res) => {
   }
 }
 
+// Estoque do almoxarifado [RF014]
+export const estoque = async (req, res) => {
+  try {
+    const dados = await almoxarifadoService.listarEstoque(req.params.id)
+    res.json({ sucesso: true, dados, total: dados.length })
+  } catch (erro) {
+    if (erro.message === "Almoxarifado não encontrado") {
+      return res.status(404).json({ sucesso: false, erro: erro.message })
+    }
+    res.status(400).json({ sucesso: false, erro: erro.message })
+  }
+}
+
 // Inativar
 export const inativar = async (req, res) => {
   try {

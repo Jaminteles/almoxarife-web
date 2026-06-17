@@ -9,7 +9,7 @@ import {
   Alert,
   IconButton,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -101,7 +101,7 @@ export default function FornecedorForm() {
   }
 
   return (
-    <Container maxWidth="tg">
+    <Container maxWidth="md">
       <FormPageHeader
         title="Cadastrar Fornecedor"
         subtitle="Preencha os dados do novo fornecedor."

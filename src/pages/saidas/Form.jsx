@@ -9,7 +9,7 @@ import {
   Paper,
   Alert,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box,
   CircularProgress
 } from "@mui/material";
@@ -39,24 +39,22 @@ export default function SaidaForm() {
   // Listas dos selects.
   const [almoxarifados, setAlmoxarifados] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
-  const [produtos, setProdutos] = useState([]);
+  // Produtos disponíveis = estoque do almoxarifado de ORIGEM selecionado.
+  const [estoqueOrigem, setEstoqueOrigem] = useState([]);
 
   const [loading, setLoading] = useState(true); // carregando as listas
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Carrega as 3 listas EM PARALELO (Promise.all) ao montar a tela.
-  // Mais rapido que encadear: as 3 requisicoes saem ao mesmo tempo.
+  // Carrega as listas fixas EM PARALELO ao montar a tela.
   useEffect(() => {
     Promise.all([
       fetch(`${API_URL}/almoxarifados`).then((r) => r.json()),
-      fetch(`${API_URL}/funcionarios`).then((r) => r.json()),
-      fetch(`${API_URL}/produtos`).then((r) => r.json()).catch(() => ({ sucesso: false }))
+      fetch(`${API_URL}/funcionarios`).then((r) => r.json())
     ])
-      .then(([resAlm, resFunc, resProd]) => {
+      .then(([resAlm, resFunc]) => {
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
-        if (resProd.sucesso) setProdutos(resProd.dados);
         setLoading(false);
       })
       .catch((err) => {
@@ -65,8 +63,38 @@ export default function SaidaForm() {
       });
   }, []);
 
+  // Quando o almoxarifado de origem muda, busca o estoque dele para listar
+  // só os produtos que existem nesse almoxarifado (com a qtd. disponível).
+  useEffect(() => {
+    if (!form.cod_almoxarifado_origem) {
+      setEstoqueOrigem([]);
+      return;
+    }
+    fetch(`${API_URL}/almoxarifados/${form.cod_almoxarifado_origem}/estoque`)
+      .then((r) => r.json())
+      .then((result) => {
+        setEstoqueOrigem(result.sucesso && Array.isArray(result.dados) ? result.dados : []);
+      })
+      .catch(() => setEstoqueOrigem([]));
+  }, [form.cod_almoxarifado_origem]);
+
+  // Produtos disponíveis no formato esperado pelo ItemSaidaRow, com a
+  // quantidade em estoque (para limitar a quantidade da saída).
+  const produtosDisponiveis = estoqueOrigem.map((e) => ({
+    id_produto: e.id_produto,
+    nome: e.produto,
+    disponivel: Number(e.qtd) || 0
+  }));
+
   function handleChange(e) {
     const { name, value } = e.target;
+
+    // Ao trocar a origem, os produtos disponíveis mudam — zera os itens.
+    if (name === "cod_almoxarifado_origem") {
+      setForm((prev) => ({ ...prev, cod_almoxarifado_origem: value }));
+      setItens([{ ...itemVazio }]);
+      return;
+    }
 
     // Ao voltar para CONSUMO, zera o destino (consumo nao tem destino).
     if (name === "tipo_saida" && value === "CONSUMO") {
@@ -114,6 +142,23 @@ export default function SaidaForm() {
     if (itensValidos.length === 0) {
       setError("Adicione ao menos um produto com quantidade maior que zero.");
       return;
+    }
+
+    // A quantidade de saída não pode ultrapassar o saldo do almoxarifado.
+    for (const it of itensValidos) {
+      const disp = produtosDisponiveis.find(
+        (p) => Number(p.id_produto) === Number(it.id_produto)
+      );
+      if (!disp) {
+        setError("Há um produto que não existe no almoxarifado de origem.");
+        return;
+      }
+      if (Number(it.quantidade) > disp.disponivel) {
+        setError(
+          `Quantidade da saída (${it.quantidade}) maior que o disponível para "${disp.nome}" (${disp.disponivel}).`
+        );
+        return;
+      }
     }
 
     setSaving(true);
@@ -298,13 +343,19 @@ export default function SaidaForm() {
             </Button>
           </Box>
 
+          {!form.cod_almoxarifado_origem && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Selecione o almoxarifado de origem para listar os produtos disponíveis.
+            </Typography>
+          )}
+
           <Stack spacing={1.5}>
             {itens.map((item, i) => (
               <ItemSaidaRow
                 key={i}
                 item={item}
                 index={i}
-                produtos={produtos}
+                produtos={produtosDisponiveis}
                 onChange={handleItemChange}
                 onRemove={removerItem}
                 disableRemove={itens.length === 1}

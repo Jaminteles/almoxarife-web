@@ -133,7 +133,7 @@ export default function FornecedoresList() {
   const dataTabela = data;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth={false} disableGutters>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate

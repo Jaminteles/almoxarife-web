@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Drawer,
   List,
@@ -11,7 +11,6 @@ import {
   IconButton,
   AppBar,
   Avatar,
-  Badge,
   Tooltip,
   Divider
 } from "@mui/material";
@@ -25,15 +24,13 @@ import PeopleIcon from "@mui/icons-material/People";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
-import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
-import SettingsIcon from "@mui/icons-material/Settings";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import AssessmentIcon from "@mui/icons-material/Assessment";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
+
+import ColorModeContext from "../ColorModeContext";
 
 const drawerWidth = 240;
 
@@ -48,22 +45,19 @@ const drawerWidth = 240;
  * ComingSoon e visualmente opaco).
  */
 const menuItems = [
-  { label: "Início",        icon: <HomeIcon />,        path: "/",              enabled: true  },
-  { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true  },
-  { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true  },
-  { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true  },
-  { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",      enabled: true  },
-  { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",    enabled: false },
-  { label: "Entradas",      icon: <DownloadIcon />,    path: "/entradas",      enabled: false },
-  { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true },
-  { label: "Movimentações", icon: <SwapHorizIcon />,   path: "/movimentacoes", enabled: false },
-  { label: "Relatórios",    icon: <AssessmentIcon />,  path: "/relatorios",    enabled: false },
-  { label: "Configurações", icon: <SettingsIcon />,    path: "/configuracoes", enabled: false }
+  { label: "Início",        icon: <HomeIcon />,        path: "/",              enabled: true },
+  { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true },
+  { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true },
+  { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",   enabled: true },
+  { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true },
+  { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",       enabled: true },
+  { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true }
 ];
 
 export default function MainLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mode, toggle } = useContext(ColorModeContext);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [now, setNow] = useState(new Date());
 
@@ -178,7 +172,11 @@ export default function MainLayout({ children }) {
         sx={{
           zIndex: (t) => t.zIndex.drawer + 1,
           bgcolor: "background.paper",
-          borderBottom: "1px solid rgba(255,255,255,0.06)"
+          // Sem isso o AppBar usa texto branco (cor "primary"), que some no
+          // tema claro. Herdamos a cor de texto do tema atual.
+          color: "text.primary",
+          borderBottom: "1px solid",
+          borderColor: "divider"
         }}
       >
         <Toolbar>
@@ -207,14 +205,11 @@ export default function MainLayout({ children }) {
 
           {/* Ações do topo direito */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton color="inherit" size="small">
-              <DarkModeIcon />
-            </IconButton>
-            <IconButton color="inherit" size="small">
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
+            <Tooltip title={mode === "dark" ? "Tema claro" : "Tema escuro"}>
+              <IconButton color="inherit" size="small" onClick={toggle}>
+                {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 1 }}>
               <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>JS</Avatar>

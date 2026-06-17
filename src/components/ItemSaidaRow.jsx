@@ -1,5 +1,6 @@
 import { Stack, TextField, MenuItem, IconButton } from "@mui/material";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { passoQuantidade, ehUnidadeInteira } from "../utils/quantidade";
 
 /**
  * Uma linha de item da saida: seletor de Produto + Quantidade + botao remover.
@@ -24,8 +25,16 @@ export default function ItemSaidaRow({
   onRemove,
   disableRemove
 }) {
+  // Produto selecionado nesta linha (para saber o saldo disponível).
+  const selecionado = produtos.find(
+    (p) => Number(p.id_produto) === Number(item.id_produto)
+  );
+  const disponivel = selecionado?.disponivel;
+  const unidade = selecionado?.unidade_medida;
+  const passo = passoQuantidade(unidade);
+
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center">
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="flex-start">
       <TextField
         select
         size="small"
@@ -41,6 +50,7 @@ export default function ItemSaidaRow({
         {produtos.map((p) => (
           <MenuItem key={p.id_produto} value={p.id_produto}>
             {p.nome}
+            {p.disponivel !== undefined ? ` (disp.: ${p.disponivel})` : ""}
           </MenuItem>
         ))}
       </TextField>
@@ -52,8 +62,17 @@ export default function ItemSaidaRow({
         value={item.quantidade}
         onChange={(e) => onChange(index, "quantidade", e.target.value)}
         required
-        // DECIMAL(10,3) no banco => permite ate 3 casas decimais e impede negativo.
-        inputProps={{ min: 0, step: "1" }}
+        // O passo depende da unidade do produto: inteiro (UN/PC/CX/SC) ou
+        // fracionado (KG/LT/M...). O máximo é o saldo disponível na origem.
+        inputProps={{ min: 0, step: passo, max: disponivel }}
+        error={disponivel !== undefined && Number(item.quantidade) > disponivel}
+        helperText={
+          disponivel !== undefined
+            ? `Disponível: ${disponivel}${unidade ? ` ${unidade}` : ""}${
+                ehUnidadeInteira(unidade) ? " (inteiro)" : ""
+              }`
+            : undefined
+        }
         sx={{ width: { xs: "100%", sm: "30%" } }}
       />
 

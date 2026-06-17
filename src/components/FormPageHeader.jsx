@@ -17,15 +17,15 @@ import { useNavigate } from "react-router-dom";
  * Props:
  *   - title: título principal (ex.: "Cadastrar Funcionário")
  *   - subtitle: texto auxiliar abaixo (ex.: "Preencha os dados do novo funcionário")
- *   - backTo: rota para onde voltar (se não passar, usa navigate(-1) = página anterior)
+ *
+ * O botão Voltar sempre retorna para a ÚLTIMA tela visitada (histórico do
+ * navegador), e não para uma rota fixa — assim, se você veio da Inicial,
+ * volta para a Inicial.
  */
-export default function FormPageHeader({ title, subtitle, backTo }) {
+export default function FormPageHeader({ title, subtitle }) {
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    if (backTo) navigate(backTo);
-    else navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 3 }}>

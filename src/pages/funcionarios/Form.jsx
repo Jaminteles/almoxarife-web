@@ -8,7 +8,7 @@ import {
   Paper,
   Alert,
   MenuItem,
-  Grid,
+  GridLegacy as Grid,
   Divider,
   FormControlLabel,
   Switch,
@@ -112,7 +112,7 @@ export default function FuncionarioForm() {
     form.confirmarSenha.length > 0 && form.senha !== form.confirmarSenha;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <FormPageHeader
         title="Cadastrar Funcionário"
         subtitle="Preencha os dados do novo funcionário do sistema."

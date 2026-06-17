@@ -1,4 +1,5 @@
 import * as almoxarifadoRepo from "../repositories/almoxarifado.repository.js"
+import db from "../models/index.js"
 
 // ──────────────────────────────────────────────────────────────
 // Validacao de campos obrigatorios.
@@ -145,6 +146,63 @@ export const editarAlmoxarifado = async (id, dados) => {
   await almoxarifadoRepo.substituirTelefones(id, normalizarTelefones(dados.telefones))
 
   return await almoxarifadoRepo.buscarPorId(id)
+}
+
+// ──────────────────────────────────────────────────────────────
+// Estoque de um almoxarifado [RF014 - Consultar Almoxarifado].
+// Lê a tabela Estoque (saldo por produto) e junta com Produto para obter
+// nome, estoque mínimo (qtd. mínima) e preço de custo (valor unitário).
+// O fornecedor é derivado do primeiro fornecedor vinculado ao produto.
+// Nota fiscal não é armazenada no Estoque (vem do histórico de compras),
+// então retorna "—" por enquanto.
+// ──────────────────────────────────────────────────────────────
+export const listarEstoque = async (id) => {
+  const almoxarifado = await almoxarifadoRepo.buscarPorId(id)
+  if (!almoxarifado) {
+    throw new Error("Almoxarifado não encontrado")
+  }
+
+  const itens = await db.Estoque.findAll({
+    where: { cod_almoxarifado: id },
+    include: [
+      {
+        model: db.Produto,
+        as: "produto",
+        where: { ativo: 1 }, // não lista saldo de produtos inativados
+        include: [
+          {
+            model: db.Fornecedor,
+            as: "fornecedores",
+            through: { attributes: [] }
+          }
+        ]
+      }
+    ]
+  })
+
+  // Normaliza para o formato que a tela de Detalhes espera (campos numéricos
+  // como Number — o DECIMAL do Sequelize vem como string).
+  return itens.map((registro) => {
+    const item = registro.toJSON()
+    const produto = item.produto || {}
+    const primeiroFornecedor =
+      Array.isArray(produto.fornecedores) && produto.fornecedores.length > 0
+        ? produto.fornecedores[0].razao_social
+        : "—"
+
+    return {
+      id: `${item.cod_almoxarifado}-${item.id_produto}`,
+      id_produto: item.id_produto,
+      produto: produto.nome || `Produto ${item.id_produto}`,
+      unidade_medida: produto.unidade_medida || null,
+      fornecedor: primeiroFornecedor,
+      nota_fiscal: "—",
+      qtd: Number(item.quantidade) || 0,
+      qtd_minima: Number(produto.estoque_minimo) || 0,
+      valor_unit: Number(produto.preco_custo) || 0,
+      data_atualizacao: item.ultima_atualizacao
+    }
+  })
 }
 
 export const inativarAlmoxarifado = async (id) => {

@@ -1,11 +1,12 @@
+import { useMemo, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
-import theme from "./theme";
+import { getTheme } from "./theme";
+import ColorModeContext from "./ColorModeContext";
 import MainLayout from "./layouts/MainLayout";
 
 import Home from "./pages";
-import ComingSoon from "./pages/ComingSoon";
 
 // Funcionários
 import FuncionariosList from "./pages/funcionarios/List";
@@ -40,7 +41,28 @@ import ProdutoForm from "./pages/produtos/Form"
 import ProdutoEdit from "./pages/produtos/Edit"
 
 function App() {
+  // Modo do tema, persistido no navegador (mantém a escolha ao recarregar).
+  const [mode, setMode] = useState(
+    () => localStorage.getItem("colorMode") || "dark"
+  );
+
+  const colorMode = useMemo(
+    () => ({
+      mode,
+      toggle: () =>
+        setMode((anterior) => {
+          const novo = anterior === "dark" ? "light" : "dark";
+          localStorage.setItem("colorMode", novo);
+          return novo;
+        })
+    }),
+    [mode]
+  );
+
+  const theme = useMemo(() => getTheme(mode), [mode]);
+
   return (
+    <ColorModeContext.Provider value={colorMode}>
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
@@ -70,12 +92,6 @@ function App() {
             <Route path="/saidas/cadastro" element={<SaidaForm />} />
             <Route path="/saidas/:id/editar" element={<SaidaEdit />} />
 
-            {/*
-              Módulos "fantasma" — ainda não implementados, mas já têm rota
-              reservada. Isso evita 404 quando o usuário clica no menu lateral
-              e também deixa pronto para quando a equipe for implementar.
-            */}
-
             {/*Rotas Compras*/}
             <Route path="/compras" element={<ListCompras />} />
             <Route path="/compras/cadastro" element={<FormCompras />} />
@@ -85,17 +101,11 @@ function App() {
             <Route path="/produtos" element={<ProdutosList />} />
             <Route path="/produtos/novo" element={<ProdutoForm />} />
             <Route path="/produtos/editar/:id" element={<ProdutoEdit />} />
-
-
-            <Route path="/entradas"       element={<ComingSoon title="Entradas" />} />
-            <Route path="/movimentacoes"  element={<ComingSoon title="Movimentações" />} />
-            <Route path="/relatorios"     element={<ComingSoon title="Relatórios" />} />
-            <Route path="/configuracoes"  element={<ComingSoon title="Configurações" />} />
-            
           </Routes>
         </MainLayout>
       </BrowserRouter>
     </ThemeProvider>
+    </ColorModeContext.Provider>
   );
 }
 

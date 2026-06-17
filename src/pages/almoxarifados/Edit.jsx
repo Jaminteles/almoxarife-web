@@ -9,7 +9,7 @@ import {
   Alert,
   IconButton,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box,
   CircularProgress
 } from "@mui/material";
@@ -152,7 +152,7 @@ export default function AlmoxarifadoEdit() {
   // Loading state — evita mostrar o form vazio enquanto os dados nao chegaram.
   if (loading) {
     return (
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
           <CircularProgress />
         </Box>
@@ -161,7 +161,7 @@ export default function AlmoxarifadoEdit() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <FormPageHeader
         title="Editar Almoxarifado"
         subtitle="Atualize os dados do almoxarifado."

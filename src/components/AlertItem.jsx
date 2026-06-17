@@ -8,6 +8,7 @@ import { Box, Typography, Button } from "@mui/material";
  * component": fácil de testar, fácil de reusar.
  */
 export default function AlertItem({ icon, color = "#ef4444", title, description, actionLabel = "Ver itens", onAction }) {
+  // Só mostra o botão de ação quando existe um handler — evita botão "morto".
   return (
     <Box
       sx={{
@@ -39,14 +40,16 @@ export default function AlertItem({ icon, color = "#ef4444", title, description,
         <Typography variant="body2" fontWeight={600}>{title}</Typography>
         <Typography variant="caption" color="text.secondary">{description}</Typography>
       </Box>
-      <Button
-        size="small"
-        variant="outlined"
-        sx={{ color, borderColor: color, flexShrink: 0, "&:hover": { borderColor: color, bgcolor: `${color}11` } }}
-        onClick={onAction}
-      >
-        {actionLabel}
-      </Button>
+      {onAction && (
+        <Button
+          size="small"
+          variant="outlined"
+          sx={{ color, borderColor: color, flexShrink: 0, "&:hover": { borderColor: color, bgcolor: `${color}11` } }}
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      )}
     </Box>
   );
 }

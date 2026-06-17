@@ -9,7 +9,7 @@ import {
   Paper,
   Alert,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box,
   CircularProgress
 } from "@mui/material";
@@ -28,8 +28,7 @@ const formVazio = {
   id_funcionario_comprador: "",
   cod_almoxarifado_destino: "",
   numero_nota_fiscal: "",
-  data_compra: "",
-  observacao: ""
+  data_compra: ""
 };
 
 const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "" };
@@ -76,14 +75,38 @@ export default function CompraForm() {
 
   function handleChange(e) {
     const { name, value } = e.target;
+    // Ao trocar o fornecedor, os produtos disponíveis mudam — zera os itens
+    // para não deixar produto de outro fornecedor selecionado.
+    if (name === "id_fornecedor") {
+      setForm((prev) => ({ ...prev, id_fornecedor: value }));
+      setItens([{ ...itemVazio }]);
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
+
+  // Só os produtos vinculados ao fornecedor selecionado podem ser comprados.
+  const produtosDoFornecedor = form.id_fornecedor
+    ? produtos.filter((p) =>
+        (p.fornecedores || []).some(
+          (f) => Number(f.id_fornecedor) === Number(form.id_fornecedor)
+        )
+      )
+    : [];
 
   // === Itens ===
   function handleItemChange(index, campo, valor) {
     setItens((prev) => {
       const novos = [...prev];
       novos[index] = { ...novos[index], [campo]: valor };
+      // Ao escolher o produto, preenche o valor unitário automaticamente com o
+      // preço de custo do produto (o usuário não define o valor manualmente).
+      if (campo === "id_produto") {
+        const produto = produtos.find(
+          (p) => Number(p.id_produto) === Number(valor)
+        );
+        novos[index].valor_unitario = produto ? Number(produto.preco_custo) : "";
+      }
       return novos;
     });
   }
@@ -249,18 +272,6 @@ export default function CompraForm() {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                name="observacao"
-                label="Observação"
-                value={form.observacao}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                minRows={2}
-              />
-            </Grid>
           </Grid>
 
           <Divider sx={{ my: 3 }} />
@@ -286,16 +297,23 @@ export default function CompraForm() {
             </Button>
           </Box>
 
+          {!form.id_fornecedor && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Selecione um fornecedor para listar os produtos disponíveis.
+            </Typography>
+          )}
+
           <Stack spacing={1.5}>
             {itens.map((item, i) => (
               <ItemCompraRow
                 key={i}
                 item={item}
                 index={i}
-                produtos={produtos}
+                produtos={produtosDoFornecedor}
                 onChange={handleItemChange}
                 onRemove={removerItem}
                 disableRemove={itens.length === 1}
+                valorReadOnly
               />
             ))}
           </Stack>

@@ -17,7 +17,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ListTemplate from "../../components/ListTemplate";
 
 const API_URL = "http://localhost:5000/api";
-const filtrosVazios = { data: "", destino: "", responsavel: "", produto: "" };
+const filtrosVazios = { data: "", destino: "", responsavel: "", produto: "", tipo: "" };
 
 export default function SaidasList() {
   const navigate = useNavigate();
@@ -84,6 +84,7 @@ export default function SaidasList() {
     if (filtrosAtuais.destino) params.append("destino", filtrosAtuais.destino);
     if (filtrosAtuais.responsavel) params.append("responsavel", filtrosAtuais.responsavel);
     if (filtrosAtuais.produto) params.append("produto", filtrosAtuais.produto);
+    if (filtrosAtuais.tipo) params.append("tipo", filtrosAtuais.tipo);
     const query = params.toString() ? `?${params.toString()}` : "";
 
     fetch(`${API_URL}/saidas${query}`)
@@ -102,6 +103,7 @@ export default function SaidasList() {
                 : "—",
             "Responsável": s.responsavel?.nome || "—",
             "Produtos": s.itens?.map((item) => item.produto?.nome || `Produto ${item.id_produto}`).join(", ") || "—",
+            "Observação": s.observacao || "—",
             // Campo "oculto" para recuperar o id nos handlers (mesmo truque do almoxarifado).
             __id__: s.id_saida
           }));
@@ -181,7 +183,7 @@ export default function SaidasList() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth={false} disableGutters>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -190,7 +192,7 @@ export default function SaidasList() {
 
       <ListTemplate
         title="Saídas"
-        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Produtos"]}
+        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Produtos", "Observação"]}
         data={data}
         loading={loading}
         onCreate={() => navigate("/saidas/cadastro")}
@@ -215,6 +217,18 @@ export default function SaidasList() {
               InputLabelProps={{ shrink: true }}
               onKeyDown={handleKeyDown}
             />
+            <TextField
+              select
+              label="Tipo"
+              size="small"
+              value={filtros.tipo}
+              onChange={(e) => handleFiltroChange("tipo", e.target.value)}
+              sx={{ minWidth: 160 }}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="CONSUMO">Consumo</MenuItem>
+              <MenuItem value="TRANSFERENCIA">Transferência</MenuItem>
+            </TextField>
             <TextField
               select
               label="Destino"

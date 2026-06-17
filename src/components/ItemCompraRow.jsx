@@ -1,6 +1,7 @@
 // src/components/ItemCompraRow.jsx
 import { Stack, TextField, MenuItem, IconButton } from "@mui/material";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { passoQuantidade, ehUnidadeInteira } from "../utils/quantidade";
 
 /**
  * Uma linha de item da compra: seletor de Produto + Quantidade + Valor unitário
@@ -24,8 +25,15 @@ export default function ItemCompraRow({
   produtos,
   onChange,
   onRemove,
-  disableRemove
+  disableRemove,
+  valorReadOnly = false
 }) {
+  const selecionado = produtos.find(
+    (p) => Number(p.id_produto) === Number(item.id_produto)
+  );
+  const unidade = selecionado?.unidade_medida;
+  const passo = passoQuantidade(unidade);
+
   return (
     <Stack
       direction={{ xs: "column", sm: "row" }}
@@ -58,8 +66,14 @@ export default function ItemCompraRow({
         value={item.quantidade}
         onChange={(e) => onChange(index, "quantidade", e.target.value)}
         required
-        // DECIMAL(10,3) no banco => até 3 casas decimais; impede negativo.
-        inputProps={{ min: 0, step: "0.001" }}
+        // O passo depende da unidade do produto: inteiro (UN/PC/CX/SC) ou
+        // fracionado (KG/LT/M...).
+        inputProps={{ min: 0, step: passo }}
+        helperText={
+          unidade
+            ? `${unidade}${ehUnidadeInteira(unidade) ? " (inteiro)" : ""}`
+            : undefined
+        }
         sx={{ width: { xs: "100%", sm: "25%" } }}
       />
 
@@ -70,6 +84,11 @@ export default function ItemCompraRow({
         value={item.valor_unitario}
         onChange={(e) => onChange(index, "valor_unitario", e.target.value)}
         required
+        // Quando valorReadOnly, o valor é calculado automaticamente (preço de
+        // custo do produto) e o usuário não pode editá-lo.
+        InputProps={{ readOnly: valorReadOnly }}
+        disabled={valorReadOnly}
+        helperText={valorReadOnly ? "Automático" : undefined}
         // Enviado como valor_unitario; o model mapeia p/ preco_unitario_acordado.
         inputProps={{ min: 0, step: "0.01" }}
         sx={{ width: { xs: "100%", sm: "25%" } }}

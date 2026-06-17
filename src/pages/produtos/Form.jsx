@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Box, Button, Grid, TextField, Paper, Alert, MenuItem, Chip } from "@mui/material"
+import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Chip, Container } from "@mui/material"
 import FormPageHeader from "../../components/FormPageHeader"
 import BackButton from "../../components/BackButton"
 
@@ -126,7 +126,7 @@ const ProdutoForm = () => {
     }
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Container maxWidth="md" sx={{ py: 3 }}>
             <FormPageHeader title="Novo Produto" />
             <Paper sx={{ p: 3, mt: 3 }}>
                 {erro && (
@@ -274,7 +274,7 @@ const ProdutoForm = () => {
                     </Grid>
                 </form>
             </Paper>
-        </Box>
+        </Container>
     )
 }
 

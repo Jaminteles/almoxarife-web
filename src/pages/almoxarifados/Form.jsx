@@ -9,7 +9,7 @@ import {
   Alert,
   IconButton,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Box
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -112,7 +112,7 @@ export default function AlmoxarifadoForm() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <FormPageHeader
         title="Cadastrar Almoxarifado"
         subtitle="Preencha os dados do novo almoxarifado."

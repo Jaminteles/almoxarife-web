@@ -2,12 +2,13 @@ import * as produtoService from "../services/produto.service.js"
 
 export const listar = async (req, res) => {
     try {
-        const produtos = await produtoService.listarTodos()
-        res.status(200).json(produtos)
+        const produtos = await produtoService.listarTodos(req.query)
+        // Mesmo formato dos demais módulos: { sucesso, dados, total }.
+        res.status(200).json({ sucesso: true, dados: produtos, total: produtos.length })
     } catch (error) {
         res
             .status(500)
-            .json({ erro: "Erro ao listar produtos.", detalhe: error.message })
+            .json({ sucesso: false, erro: "Erro ao listar produtos.", detalhe: error.message })
     }
 }
 
@@ -16,13 +17,13 @@ export const buscarPorId = async (req, res) => {
         const { id } = req.params
         const produto = await produtoService.buscarPorId(id)
         if (!produto) {
-            return res.status(404).json({ erro: "Produto não encontrado." })
+            return res.status(404).json({ sucesso: false, erro: "Produto não encontrado." })
         }
-        res.status(200).json(produto)
+        res.status(200).json({ sucesso: true, dados: produto })
     } catch (error) {
         res
             .status(500)
-            .json({ erro: "Erro ao buscar produto.", detalhe: error.message })
+            .json({ sucesso: false, erro: "Erro ao buscar produto.", detalhe: error.message })
     }
 }
 
