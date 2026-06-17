@@ -33,6 +33,12 @@ import ListCompras from './pages/compras/List';
 import FormCompras from './pages/compras/Form';
 import EditCompras from './pages/compras/Edit';
 
+// Produtos
+
+import ProdutosList from "./pages/produtos/List"
+import ProdutoForm from "./pages/produtos/Form"
+import ProdutoEdit from "./pages/produtos/Edit"
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -75,11 +81,17 @@ function App() {
             <Route path="/compras/cadastro" element={<FormCompras />} />
             <Route path="/compras/:id/editar" element={<EditCompras />} />
 
-            <Route path="/produtos"       element={<ComingSoon title="Produtos / Itens" />} />
+            {/*Rotas Produtos*/}
+            <Route path="/produtos" element={<ProdutosList />} />
+            <Route path="/produtos/novo" element={<ProdutoForm />} />
+            <Route path="/produtos/editar/:id" element={<ProdutoEdit />} />
+
+
             <Route path="/entradas"       element={<ComingSoon title="Entradas" />} />
             <Route path="/movimentacoes"  element={<ComingSoon title="Movimentações" />} />
             <Route path="/relatorios"     element={<ComingSoon title="Relatórios" />} />
             <Route path="/configuracoes"  element={<ComingSoon title="Configurações" />} />
+            
           </Routes>
         </MainLayout>
       </BrowserRouter>

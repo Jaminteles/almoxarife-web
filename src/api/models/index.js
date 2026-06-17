@@ -24,7 +24,7 @@ import itemCompraModel from "./item-compra.model.js"
 const sequelize = new Sequelize(
   process.env.DB_NAME || "bd_almoxarifado",
   process.env.DB_USER || "root",
-  process.env.DB_PASSWORD || "desus",
+  process.env.DB_PASSWORD || "250725HrBM@",
   {
   host: process.env.DB_HOST || "localhost",
   dialect: "mysql",
@@ -106,18 +106,19 @@ db.TelefoneAlmoxarifado.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifa
 //})
 
 // Estoque (Produto ↔ Almoxarifado)
-//db.Produto.belongsToMany(db.Almoxarifado, {
-//  through: db.Estoque,
-//  foreignKey: "id_produto",
-//  otherKey: "cod_almoxarifado",
-//  as: "almoxarifados_estoque"
-//})
-//db.Almoxarifado.belongsToMany(db.Produto, {
-//  through: db.Estoque,
-//  foreignKey: "cod_almoxarifado",
-//  otherKey: "id_produto",
-//  as: "produtos_estoque"
-//})
+db.Produto.belongsToMany(db.Almoxarifado, {
+  through: db.Estoque,
+ foreignKey: "id_produto",
+  otherKey: "cod_almoxarifado",
+ as: "almoxarifados_estoque"
+})
+db.Almoxarifado.belongsToMany(db.Produto, {
+  through: db.Estoque,
+  foreignKey: "cod_almoxarifado",
+  otherKey: "id_produto",
+  as: "produtos_estoque"
+})
+
 // Acesso direto ao Estoque
 db.Produto.hasMany(db.Estoque, { foreignKey: "id_produto", as: "estoques" })
 db.Estoque.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
