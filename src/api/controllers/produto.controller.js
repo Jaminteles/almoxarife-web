@@ -27,15 +27,14 @@ export const buscarPorId = async (req, res) => {
 }
 
 export const criar = async (req, res) => {
-    try {
-        const novoProduto = await produtoService.criar(req.body)
-        res.status(201).json(novoProduto)
-    } catch (error) {
-        res
-            .status(400)
-            .json({ erro: "Erro ao criar produto.", detalhe: error.message })
-    }
-}
+  try {
+    const novoProduto = await produtoService.criar(req.body);
+    res.status(201).json({ mensagem: "Produto cadastrado com sucesso!", data: novoProduto });
+  } catch (error) {
+    // [RF001 - 5.1.1 / 5.2.1]
+    res.status(400).json({ erro: error.message });
+  }
+};
 
 export const atualizar = async (req, res) => {
     try {
@@ -55,18 +54,13 @@ export const atualizar = async (req, res) => {
 }
 
 export const excluir = async (req, res) => {
-    try {
-        const { id } = req.params
-        const deletado = await produtoService.excluir(id)
-        if (!deletado) {
-            return res
-                .status(404)
-                .json({ erro: "Produto não encontrado para exclusão." })
-        }
-        res.status(204).send()
-    } catch (error) {
-        res
-            .status(500)
-            .json({ erro: "Erro ao excluir produto.", detalhe: error.message })
-    }
-}
+  try {
+    const { id } = req.params;
+    const sucesso = await produtoService.excluir(id);
+    if (!sucesso) return res.status(404).json({ erro: "Produto não encontrado." });
+    
+    res.status(200).json({ mensagem: "Produto inativado com sucesso!" });
+  } catch (error) {
+    res.status(400).json({ erro: error.message });
+  }
+};
