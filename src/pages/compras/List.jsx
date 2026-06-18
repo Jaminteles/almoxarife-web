@@ -34,7 +34,9 @@ export default function ComprasList() {
   // (entre outros) via query string.
   const [filtros, setFiltros] = useState({
     numero_nota_fiscal: "",
-    status: ""
+    status: "",
+    produto: "",
+    fornecedor: ""
   });
 
   useEffect(() => {
@@ -107,7 +109,7 @@ export default function ComprasList() {
     carregarCompras(filtros);
   }
   function handleLimpar() {
-    setFiltros({ numero_nota_fiscal: "", status: "" });
+    setFiltros({ numero_nota_fiscal: "", status: "", produto: "", fornecedor: "" });
     carregarCompras({});
   }
   function handleKeyDown(e) {
@@ -190,6 +192,24 @@ export default function ComprasList() {
               }
               onKeyDown={handleKeyDown}
             />
+            <TextField
+              label="Produto"
+              size="small"
+              value={filtros.produto}
+              onChange={(e) =>
+                handleFiltroChange("produto", e.target.value)
+              }
+              onKeyDown={handleKeyDown}
+            />
+            <TextField
+              label="Fornecedor"
+              size="small"
+              value={filtros.fornecedor}
+              onChange={(e) =>
+                handleFiltroChange("fornecedor", e.target.value)
+              }
+              onKeyDown={handleKeyDown}
+            />            
             <TextField
               select
               label="Status"
