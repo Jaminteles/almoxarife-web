@@ -154,9 +154,9 @@ export const criar = async (dadosProduto) => {
         preco_custo: parseFloat(dadosProduto.preco_custo),
         unidade_medida: dadosProduto.unidade_medida,
         estoque_minimo: parseFloat(dadosProduto.estoque_minimo),
-        // Quando o máximo não é informado, deixa o default do model (0) agir
-        // em vez de gravar NaN/null numa coluna NOT NULL.
-        ...(temEstoqueMaximo ? { estoque_maximo: parseFloat(dadosProduto.estoque_maximo) } : {})
+        // estoque_maximo é NULLABLE no banco: sem máximo informado = null,
+        // não um valor numérico "sentinela".
+        estoque_maximo: temEstoqueMaximo ? parseFloat(dadosProduto.estoque_maximo) : null
       },
       { transaction: t }
     );
@@ -195,7 +195,15 @@ export const atualizar = async (id, dadosProduto) => {
   ) {
     throw new Error("O estoque mínimo não pode ser maior ou igual ao estoque máximo.");
   }
-  return await produtoRepo.atualizar(id, dadosProduto);
+
+  // estoque_maximo agora é NULLABLE no banco: quando não informado, manda
+  // null mesmo (em vez de inventar um 0 pra representar "sem máximo").
+  const dadosNormalizados = {
+    ...dadosProduto,
+    estoque_maximo: temEstoqueMaximo ? parseFloat(dadosProduto.estoque_maximo) : null
+  };
+
+  return await produtoRepo.atualizar(id, dadosNormalizados);
 };
 
 export const excluir = async (id) => {

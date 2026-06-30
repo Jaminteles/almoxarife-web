@@ -130,9 +130,10 @@ CREATE TABLE Produtos (
     preco_custo DECIMAL(12, 4) UNSIGNED NOT NULL DEFAULT 0.0000,
     unidade_medida VARCHAR(10) NOT NULL, -- Ex: UN, KG, LT, PC
 
-    -- Estoque minimo/maximo exigidos pelo RF001 e usados no alerta de estoque baixo.
+    -- Estoque minimo exigido pelo RF001; usado no alerta de estoque baixo.
     estoque_minimo DECIMAL(10, 3) NOT NULL DEFAULT 0.000,
-    estoque_maximo DECIMAL(10, 3) NOT NULL DEFAULT 0.000,
+    -- estoque_maximo e OPCIONAL (RF001/RF003): NULL = sem maximo definido.
+    estoque_maximo DECIMAL(10, 3) NULL DEFAULT NULL,
 
     -- Auditoria e Controle
     ativo TINYINT(1) DEFAULT 1,

@@ -36,10 +36,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0.000
     },
+    // Opcional: NULL = "sem máximo definido". Diferente de estoque_minimo,
+    // não tem defaultValue — um produto sem máximo cadastrado deve ficar
+    // realmente NULL no banco, não com um 0 "mágico" representando ausência.
     estoque_maximo: {
       type: DataTypes.DECIMAL(10, 3),
-      allowNull: false,
-      defaultValue: 0.000
+      allowNull: true
     },
     ativo: {
       type: DataTypes.TINYINT(1),
