@@ -1,10 +1,17 @@
 import { useMemo, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import { getTheme } from "./theme";
 import ColorModeContext from "./ColorModeContext";
 import MainLayout from "./layouts/MainLayout";
+
+import { AuthProvider } from "./auth/AuthContext";
+import { ProtectedRoute, RequireModule, RequireCentral } from "./auth/ProtectedRoute";
+import Login from "./pages/Login";
+import SolicitarCadastro from "./pages/SolicitarCadastro";
+import SemPermissao from "./pages/SemPermissao";
+import SolicitacoesList from "./pages/solicitacoes/List";
 
 import Home from "./pages";
 
@@ -13,7 +20,7 @@ import FuncionariosList from "./pages/funcionarios/List";
 import FuncionarioForm from "./pages/funcionarios/Form";
 import FuncionarioEdit from "./pages/funcionarios/Edit";
 
-// Fornecedores 
+// Fornecedores
 import FornecedoresList from "./pages/fornecedores/List";
 import FornecedorForm from "./pages/fornecedores/Form";
 import FornecedorEdit from "./pages/fornecedores/Edit";
@@ -24,7 +31,7 @@ import AlmoxarifadoDetalhes from "./pages/almoxarifados/Detalhes";
 import AlmoxarifadoForm from "./pages/almoxarifados/Form";
 import AlmoxarifadoEdit from "./pages/almoxarifados/Edit";
 
-// Saidas 
+// Saidas
 import SaidasList from "./pages/saidas/List";
 import SaidaForm from "./pages/saidas/Form";
 import SaidaEdit from "./pages/saidas/Edit";
@@ -67,42 +74,62 @@ function App() {
       <CssBaseline />
 
       <BrowserRouter>
-        <MainLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Home />} />
+            {/* Rotas públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/solicitar-cadastro" element={<SolicitarCadastro />} />
 
-            {/*Rotas Funcionarios*/}
-            <Route path="/funcionarios" element={<FuncionariosList />} />
-            <Route path="/funcionarios/cadastro" element={<FuncionarioForm />} />
-            <Route path="/funcionarios/:id/editar" element={<FuncionarioEdit />} />
+            {/* Área autenticada: MainLayout com <Outlet/>, protegida por login */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Home />} />
+              <Route path="/sem-permissao" element={<SemPermissao />} />
 
-            {/*Rotas Fornecedores*/}
-            <Route path="/fornecedores" element={<FornecedoresList />} />
-            <Route path="/fornecedores/cadastro" element={<FornecedorForm />} />
-            <Route path="/fornecedores/:id/editar" element={<FornecedorEdit />} />
+              {/* Solicitações de cadastro (somente CENTRAL) */}
+              <Route path="/solicitacoes" element={<RequireCentral><SolicitacoesList /></RequireCentral>} />
 
-            {/*Rotas Almoxarifado*/}
-            <Route path="/almoxarifados" element={<AlmoxarifadosList />} />
-            <Route path="/almoxarifados/cadastro" element={<AlmoxarifadoForm />} />
-            <Route path="/almoxarifados/:id/editar" element={<AlmoxarifadoEdit />} />
-            <Route path="/almoxarifados/:id" element={<AlmoxarifadoDetalhes />} />
+              {/*Rotas Funcionarios*/}
+              <Route path="/funcionarios" element={<RequireModule modulo="funcionarios"><FuncionariosList /></RequireModule>} />
+              <Route path="/funcionarios/cadastro" element={<RequireModule modulo="funcionarios" acao="editar"><FuncionarioForm /></RequireModule>} />
+              <Route path="/funcionarios/:id/editar" element={<RequireModule modulo="funcionarios" acao="editar"><FuncionarioEdit /></RequireModule>} />
 
-            {/*Rotas Saidas*/}
-            <Route path="/saidas" element={<SaidasList />} />
-            <Route path="/saidas/cadastro" element={<SaidaForm />} />
-            <Route path="/saidas/:id/editar" element={<SaidaEdit />} />
+              {/*Rotas Fornecedores*/}
+              <Route path="/fornecedores" element={<RequireModule modulo="fornecedores"><FornecedoresList /></RequireModule>} />
+              <Route path="/fornecedores/cadastro" element={<RequireModule modulo="fornecedores" acao="editar"><FornecedorForm /></RequireModule>} />
+              <Route path="/fornecedores/:id/editar" element={<RequireModule modulo="fornecedores" acao="editar"><FornecedorEdit /></RequireModule>} />
 
-            {/*Rotas Compras*/}
-            <Route path="/compras" element={<ListCompras />} />
-            <Route path="/compras/cadastro" element={<FormCompras />} />
-            <Route path="/compras/:id/editar" element={<EditCompras />} />
+              {/*Rotas Almoxarifado*/}
+              <Route path="/almoxarifados" element={<RequireModule modulo="almoxarifados"><AlmoxarifadosList /></RequireModule>} />
+              <Route path="/almoxarifados/cadastro" element={<RequireModule modulo="almoxarifados" acao="editar"><AlmoxarifadoForm /></RequireModule>} />
+              <Route path="/almoxarifados/:id/editar" element={<RequireModule modulo="almoxarifados" acao="editar"><AlmoxarifadoEdit /></RequireModule>} />
+              <Route path="/almoxarifados/:id" element={<RequireModule modulo="almoxarifados"><AlmoxarifadoDetalhes /></RequireModule>} />
 
-            {/*Rotas Produtos*/}
-            <Route path="/produtos" element={<ProdutosList />} />
-            <Route path="/produtos/novo" element={<ProdutoForm />} />
-            <Route path="/produtos/editar/:id" element={<ProdutoEdit />} />
+              {/*Rotas Saidas*/}
+              <Route path="/saidas" element={<RequireModule modulo="saidas"><SaidasList /></RequireModule>} />
+              <Route path="/saidas/cadastro" element={<RequireModule modulo="saidas" acao="editar"><SaidaForm /></RequireModule>} />
+              <Route path="/saidas/:id/editar" element={<RequireModule modulo="saidas" acao="editar"><SaidaEdit /></RequireModule>} />
+
+              {/*Rotas Compras*/}
+              <Route path="/compras" element={<RequireModule modulo="compras"><ListCompras /></RequireModule>} />
+              <Route path="/compras/cadastro" element={<RequireModule modulo="compras" acao="editar"><FormCompras /></RequireModule>} />
+              <Route path="/compras/:id/editar" element={<RequireModule modulo="compras" acao="editar"><EditCompras /></RequireModule>} />
+
+              {/*Rotas Produtos*/}
+              <Route path="/produtos" element={<RequireModule modulo="produtos"><ProdutosList /></RequireModule>} />
+              <Route path="/produtos/novo" element={<RequireModule modulo="produtos" acao="editar"><ProdutoForm /></RequireModule>} />
+              <Route path="/produtos/editar/:id" element={<RequireModule modulo="produtos" acao="editar"><ProdutoEdit /></RequireModule>} />
+            </Route>
+
+            {/* Qualquer outra rota → início (ou login, se não autenticado) */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </MainLayout>
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
     </ColorModeContext.Provider>

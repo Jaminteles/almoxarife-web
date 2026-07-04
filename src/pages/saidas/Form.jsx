@@ -18,6 +18,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemSaidaRow from "../../components/ItemSaidaRow";
+import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = "http://localhost:5000/api";
 const formVazio = {
@@ -32,6 +33,13 @@ const itemVazio = { id_produto: "", quantidade: "" };
 
 export default function SaidaForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Usuário restrito: a ORIGEM é fixa no seu almoxarifado.
+  const origemTravada =
+    user && user.access_level !== "CENTRAL" && user.cod_almoxarifado
+      ? user.cod_almoxarifado
+      : null;
 
   const [form, setForm] = useState({ ...formVazio });
   const [itens, setItens] = useState([{ ...itemVazio }]);
@@ -49,18 +57,25 @@ export default function SaidaForm() {
   // Carrega as listas fixas EM PARALELO ao montar a tela.
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/almoxarifados`).then((r) => r.json()),
-      fetch(`${API_URL}/funcionarios`).then((r) => r.json())
+      // Lookup: TODOS os almoxarifados (necessário para o destino de transferência).
+      fetch(`${API_URL}/lookups/almoxarifados`).then((r) => r.json()),
+      // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
+      fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json())
     ])
       .then(([resAlm, resFunc]) => {
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
+        // Fixa a origem no almoxarifado do usuário restrito.
+        if (origemTravada) {
+          setForm((prev) => ({ ...prev, cod_almoxarifado_origem: origemTravada }));
+        }
         setLoading(false);
       })
       .catch((err) => {
         setError("Erro ao carregar os dados do formulário: " + err.message);
         setLoading(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Quando o almoxarifado de origem muda, busca o estoque dele para listar
@@ -238,7 +253,9 @@ export default function SaidaForm() {
                 onChange={handleChange}
                 required
                 fullWidth
+                disabled={!!origemTravada}
                 SelectProps={{ displayEmpty: true }}
+                helperText={origemTravada ? "Fixo no seu almoxarifado." : undefined}
               >
                 {/* Opcao-placeholder com o nome do campo: aparece por padrao
                     (displayEmpty), deixa a caixa "estendida" e e disabled,

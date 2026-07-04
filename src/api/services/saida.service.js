@@ -1,6 +1,7 @@
 import * as saidaRepo from "../repositories/saida.repository.js";
 import db from "../models/index.js";
 import { processarMovimentacao } from "../utils/estoqueHelper.js";
+import { assertAcessoAlmoxarifado } from "../utils/escopo.js";
 
 const TIPOS_VALIDOS = ["CONSUMO", "TRANSFERENCIA"];
 
@@ -176,22 +177,28 @@ const garantirEditavel = (saida) => {
   }
 };
 
-export const listarSaidas = async (filtros = {}) => {
-  return await saidaRepo.listarTodos(normalizarFiltros(filtros));
+export const listarSaidas = async (filtros = {}, escopo = null) => {
+  const limpos = normalizarFiltros(filtros);
+  // Usuário restrito só vê saídas cuja ORIGEM é o seu almoxarifado.
+  if (escopo != null) limpos.origem = escopo;
+  return await saidaRepo.listarTodos(limpos);
 };
 
-export const buscarSaidaPorId = async (id) => {
+export const buscarSaidaPorId = async (id, escopo = null) => {
   const saida = await saidaRepo.buscarPorId(id);
 
   if (!saida) {
     throw new Error("Saída não encontrada");
   }
 
+  assertAcessoAlmoxarifado(escopo, saida.cod_almoxarifado_origem);
   return saida;
 };
 
-export const cadastrarSaida = async (dados) => {
-  const dadosSaida = montarDadosSaida(dados);
+export const cadastrarSaida = async (dados, escopo = null) => {
+  // Usuário restrito: a origem é SEMPRE o seu almoxarifado (ignora o enviado).
+  const entrada = escopo != null ? { ...dados, cod_almoxarifado_origem: escopo } : dados;
+  const dadosSaida = montarDadosSaida(entrada);
   const itens = normalizarItens(dados.itens);
 
   await garantirReferencias(dadosSaida, itens);
@@ -204,14 +211,17 @@ export const cadastrarSaida = async (dados) => {
   });
 };
 
-export const editarSaida = async (id, dados) => {
+export const editarSaida = async (id, dados, escopo = null) => {
   const saidaAtual = await saidaRepo.buscarPorId(id);
   if (!saidaAtual) {
     throw new Error("Saída não encontrada");
   }
+  // A saída existente precisa pertencer ao almoxarifado do usuário restrito.
+  assertAcessoAlmoxarifado(escopo, saidaAtual.cod_almoxarifado_origem);
   garantirEditavel(saidaAtual);
 
-  const dadosSaida = montarDadosSaida(dados);
+  const entrada = escopo != null ? { ...dados, cod_almoxarifado_origem: escopo } : dados;
+  const dadosSaida = montarDadosSaida(entrada);
   const itens = normalizarItens(dados.itens);
 
   await garantirReferencias(dadosSaida, itens);
@@ -225,11 +235,12 @@ export const editarSaida = async (id, dados) => {
   });
 };
 
-export const excluirSaida = async (id) => {
+export const excluirSaida = async (id, escopo = null) => {
   const saida = await saidaRepo.buscarPorId(id);
   if (!saida) {
     throw new Error("Saída não encontrada");
   }
+  assertAcessoAlmoxarifado(escopo, saida.cod_almoxarifado_origem);
   garantirEditavel(saida);
 
   return await db.sequelize.transaction(async (t) => {

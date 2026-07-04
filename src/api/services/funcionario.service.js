@@ -133,6 +133,11 @@ export const listarFuncionarios = async (filtros = {}) => {
   return await funcionarioRepo.listarTodos(filtrosLimpos)
 }
 
+// Lista enxuta (id + nome) para selects de outros módulos. Ver repository.
+export const listarFuncionariosParaSelecao = async () => {
+  return await funcionarioRepo.listarParaSelecao()
+}
+
 export const buscarFuncionarioPorId = async (id) => {
   const funcionario = await funcionarioRepo.buscarPorId(id)
   if (!funcionario) {

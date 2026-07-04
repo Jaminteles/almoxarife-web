@@ -137,6 +137,7 @@ export default function FornecedoresList() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate
+        modulo="fornecedores"
         title="Fornecedores"
         columns={["Razão Social", "CNPJ", "Email", "Telefone"]}
         data={dataTabela}

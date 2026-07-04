@@ -46,7 +46,8 @@ export default function SaidasList() {
   function carregarOpcoesFiltros() {
     Promise.all([
       fetch(`${API_URL}/almoxarifados`).then((res) => res.json()),
-      fetch(`${API_URL}/funcionarios`).then((res) => res.json()),
+      // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
+      fetch(`${API_URL}/lookups/funcionarios`).then((res) => res.json()),
       fetch(`${API_URL}/produtos`).then((r) => r.json()).catch(() => ({ sucesso: false }))
     ])
       .then(([resAlmoxarifados, resFuncionarios, resProdutos]) => {
@@ -191,6 +192,7 @@ export default function SaidasList() {
       )}
 
       <ListTemplate
+        modulo="saidas"
         title="Saídas"
         columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Produtos", "Observação"]}
         data={data}

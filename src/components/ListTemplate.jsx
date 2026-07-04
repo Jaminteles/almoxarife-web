@@ -17,6 +17,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAuth } from "../auth/AuthContext";
 
 export default function ListTemplate({
   title,
@@ -29,13 +30,27 @@ export default function ListTemplate({
   onSearch,
   onClear,
   onRowClick, // opcional: ativa clique na linha
+  // Ações extras por linha, renderizadas ANTES de Editar/Excluir. Recebe o
+  // item e devolve um ReactNode (ex.: botão "Confirmar recebimento"). Só
+  // aparecem quando o usuário tem permissão de escrita (canEdit).
+  rowActions,
   loading = false,
   emptyMessage = "Nenhum registro encontrado.",
+  // Nome do módulo para checar permissão de escrita. Quando informado e o
+  // usuário for somente-leitura, esconde "Novo", "Editar", "Inativar" e a
+  // coluna Ações. Se omitido, mantém tudo visível (retrocompatível).
+  modulo,
+  // Permite esconder só o botão "Novo" mantendo as demais ações (ex.: usuário
+  // restrito a um almoxarifado, que pode editar o seu mas não criar outros).
+  canCreate = true,
   // Customização opcional do botão destrutivo (padrão = Inativar):
   actionLabel = "Inativar",
   actionIcon = <BlockIcon fontSize="small" />,
   actionColor = "warning.main"
 }) {
+  const { podeEditar } = useAuth();
+  const canEdit = modulo ? podeEditar(modulo) : true;
+
   return (
     <Paper sx={{ p: 3, borderRadius: 3 }}>
       {/* Cabeçalho: título (esquerda) + botão "+ Novo" (direita) */}
@@ -60,14 +75,16 @@ export default function ListTemplate({
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={onCreate}
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          Novo
-        </Button>
+        {canEdit && canCreate && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onCreate}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Novo
+          </Button>
+        )}
       </Box>
 
       {/* Linha de filtros — campos vêm via prop `filters`, botão Buscar fica à direita */}
@@ -109,16 +126,18 @@ export default function ListTemplate({
                   {col}
                 </TableCell>
               ))}
-              <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>
-                Ações
-              </TableCell>
+              {canEdit && (
+                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  Ações
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                <TableCell colSpan={columns.length + (canEdit ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
                   Carregando registros...
                 </TableCell>
               </TableRow>
@@ -134,44 +153,47 @@ export default function ListTemplate({
                   {columns.map((col, j) => (
                     <TableCell key={j}>{item[col]}</TableCell>
                   ))}
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                      <Tooltip title="Editar">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            // CRÍTICO: impede que o clique no botão "vaze"
-                            // para o onClick da TableRow (event bubbling).
-                            // Sem isso, clicar em "Editar" abriria os
-                            // detalhes E iria para edição ao mesmo tempo.
-                            e.stopPropagation();
-                            onEdit && onEdit(item);
-                          }}
-                          sx={{ color: "primary.main" }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={actionLabel}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onInactivate && onInactivate(item);
-                          }}
-                          sx={{ color: actionColor }}
-                        >
-                          {actionIcon}
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
+                  {canEdit && (
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        {rowActions && rowActions(item)}
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              // CRÍTICO: impede que o clique no botão "vaze"
+                              // para o onClick da TableRow (event bubbling).
+                              // Sem isso, clicar em "Editar" abriria os
+                              // detalhes E iria para edição ao mesmo tempo.
+                              e.stopPropagation();
+                              onEdit && onEdit(item);
+                            }}
+                            sx={{ color: "primary.main" }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={actionLabel}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onInactivate && onInactivate(item);
+                            }}
+                            sx={{ color: actionColor }}
+                          >
+                            {actionIcon}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             ) : (
               // Mensagem quando não há dados — melhor UX que tabela vazia
               <TableRow>
-                <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                <TableCell colSpan={columns.length + (canEdit ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
                   {emptyMessage}
                 </TableCell>
               </TableRow>

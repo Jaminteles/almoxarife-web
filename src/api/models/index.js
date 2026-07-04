@@ -18,6 +18,7 @@ import saidaModel from "./saida.model.js"
 import saidaItemModel from "./saida-item.model.js"
 import compraModel from "./compra.model.js"
 import itemCompraModel from "./item-compra.model.js"
+import solicitacaoCadastroModel from "./solicitacao-cadastro.model.js"
 
 // ── Conexão com o banco ──
 // ALTERAR PARAMETROS conforme seu ambiente
@@ -49,7 +50,8 @@ const db = {
   Saida: saidaModel(sequelize, DataTypes),
   SaidaItem: saidaItemModel(sequelize, DataTypes),
   Compra: compraModel(sequelize, DataTypes),
-  ItemCompra: itemCompraModel(sequelize, DataTypes)
+  ItemCompra: itemCompraModel(sequelize, DataTypes),
+  SolicitacaoCadastro: solicitacaoCadastroModel(sequelize, DataTypes)
 }
 
 // ── Associações ──
@@ -61,6 +63,9 @@ db.Funcionario.belongsTo(db.Cargo, { foreignKey: "id_cargo", as: "cargo" })
 // Funcionário ↔ Usuário do Sistema (1:1)
 db.Funcionario.hasOne(db.UsuarioSistema, { foreignKey: "id_funcionario", as: "usuario" })
 db.UsuarioSistema.belongsTo(db.Funcionario, { foreignKey: "id_funcionario", as: "funcionario" })
+
+// Funcionário ↔ Almoxarifado ao qual está restrito (N:1, opcional)
+db.Funcionario.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "almoxarifado" })
 
 // Fornecedor ↔ Telefones (1:N)
 db.Fornecedor.hasMany(db.TelefoneFornecedor, { foreignKey: "id_fornecedor", as: "telefones", onDelete: "CASCADE" })

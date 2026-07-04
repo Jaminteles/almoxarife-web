@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
+import { useAuth } from "../../auth/AuthContext";
 
 /**
  * Tela de Listagem de Almoxarifados (RF014 — Consultar Almoxarifado).
@@ -25,6 +26,9 @@ const API_URL = "http://localhost:5000/api";
 
 export default function AlmoxarifadosList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Usuário restrito a um almoxarifado não pode criar novos.
+  const restrito = !!(user && user.access_level !== "CENTRAL" && user.cod_almoxarifado);
   const [data, setData] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -163,6 +167,8 @@ export default function AlmoxarifadosList() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate
+        modulo="almoxarifados"
+        canCreate={!restrito}
         title="Almoxarifados"
         columns={["Nome", "Cidade", "Telefone", "Email"]}
         data={data}

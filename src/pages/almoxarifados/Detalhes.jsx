@@ -27,6 +27,7 @@ import SearchIcon from "@mui/icons-material/Search";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import SummaryCard from "../../components/SummaryCard";
+import { useAuth } from "../../auth/AuthContext";
 
 /**
  * Tela de Detalhes de um Almoxarifado especifico.
@@ -48,6 +49,9 @@ const API_URL = "http://localhost:5000/api";
 export default function AlmoxarifadoDetalhes() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { podeEditar } = useAuth();
+  // Só quem pode escrever no módulo (CENTRAL/ALMOXARIFE) vê o botão Editar.
+  const podeEditarAlmox = podeEditar("almoxarifados");
 
   const [almoxarifado, setAlmoxarifado] = useState(null);
   const [estoque, setEstoque] = useState([]);
@@ -171,14 +175,16 @@ export default function AlmoxarifadoDetalhes() {
               color={almoxarifado.ativo === 1 ? "success" : "default"}
               size="small"
             />
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<EditIcon />}
-              onClick={() => navigate(`/almoxarifados/${id}/editar`)}
-            >
-              Editar
-            </Button>
+            {podeEditarAlmox && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/almoxarifados/${id}/editar`)}
+              >
+                Editar
+              </Button>
+            )}
           </Stack>
         </Stack>
 

@@ -1,24 +1,38 @@
-
 -- ============================================================
---  CREATE_DB_ALMOXARIFADO_GILFER  —  versao 3 (atualizada)
---  Diferencas em relacao a v2 (marcadas com [v3]):
---    - Almoxarifado NAO tem mais a coluna `telefone` unica.
---    - Nova tabela Telefone_Almoxarifado (1 almoxarifado : N telefones),
---      no padrao de Telefone_Fornecedor.
---    - [CORRECAO] `email` pertence a Funcionarios (dado de contato do
---      funcionario), conforme o model/service. Uma revisao anterior do v3
---      havia movido `email` para Usuarios_Sistema por engano, quebrando o
---      cadastro de funcionario (Unknown column 'Funcionario.email' /
---      Field 'email' doesn't have a default value). Aqui isso foi revertido:
---        * Funcionarios.email  -> RESTAURADO (NOT NULL UNIQUE)
---        * Usuarios_Sistema.email -> REMOVIDO (login resolve pelo email do
---          funcionario; a credencial guarda apenas password_hash/access_level)
---  Mantidas da v2:
+--  CREATE_DB_ALMOXARIFADO_GILFER  —  versao 7
+--
+--  Novidades da v7 (marcadas com [v7]):
+--    - O vinculo de almoxarifado do usuario restrito passou de
+--      Usuarios_Sistema para Funcionarios:
+--        * Funcionarios.cod_almoxarifado (FK -> Almoxarifado, NULL = CENTRAL /
+--          sem restricao).
+--        * Usuarios_Sistema NAO tem mais cod_almoxarifado.
+--
+--  Herdado da v6:
+--    - Fila de solicitacoes de cadastro (tabela Solicitacoes_Cadastro).
+--  Herdado da v3:
+--    - Almoxarifado sem coluna `telefone` unica; telefones em Telefone_Almoxarifado.
+--    - `email` pertence a Funcionarios (contato/login); a credencial em
+--      Usuarios_Sistema guarda apenas password_hash/access_level.
+--  Herdado da v2:
 --    - Produtos.estoque_minimo/_maximo
 --    - Compra.numero_nota_fiscal
---  Use este script apenas para criar o banco DO ZERO.
---  Para um banco que ja existe, use os ALTERs correspondentes.
+--
+--  Use este script para criar o banco DO ZERO (pode ser re-executado sobre um
+--  banco existente: os DROPs abaixo apagam as tabelas antigas).
+--  Para um banco que ja existe SEM apagar dados, rode antes:
+--    Banco de Dados/ALTER_v7_almoxarifado_no_funcionario.sql
 -- ============================================================
+
+-- Cria o banco caso ainda nao exista e seleciona-o.
+CREATE DATABASE IF NOT EXISTS bd_almoxarifado
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE bd_almoxarifado;
+
+-- Desliga a checagem de FK enquanto derrubamos/recriamos as tabelas.
+-- Sem isso, re-executar o script sobre um banco existente falha no primeiro
+-- DROP por causa das foreign keys (o mysql aborta e nada e recriado).
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- Script SQL para criação das tabelas de fornecedores
 
@@ -89,6 +103,11 @@ CREATE TABLE Funcionarios (
     email VARCHAR(150) UNIQUE NOT NULL,
     id_cargo INT UNSIGNED NOT NULL,
 
+    -- [v7] Almoxarifado ao qual o funcionario esta restrito. NULL = sem
+    -- restricao (CENTRAL). A FK e adicionada no fim do script, apos criar
+    -- a tabela Almoxarifado. Definido na aprovacao da solicitacao de cadastro.
+    cod_almoxarifado INT UNSIGNED NULL,
+
     -- Auditoria Básica
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -108,6 +127,8 @@ CREATE TABLE Usuarios_Sistema (
     -- [v3][CORRECAO] `email` REMOVIDO daqui: a identificacao do usuario vem
     -- do email em Funcionarios (1:1 via id_funcionario). Esta tabela guarda
     -- apenas a credencial e o controle de acesso.
+    -- [v7] cod_almoxarifado REMOVIDO daqui: o vinculo de almoxarifado agora
+    -- fica em Funcionarios.
     password_hash TEXT NOT NULL,
     access_level ENUM('CENTRAL', 'ALMOXARIFE', 'AUXILIAR', 'CONSULTA') NOT NULL DEFAULT 'CONSULTA',
 
@@ -118,6 +139,21 @@ CREATE TABLE Usuarios_Sistema (
         FOREIGN KEY (id_funcionario)
         REFERENCES Funcionarios(id_funcionario)
         ON DELETE CASCADE
+);
+
+-- [v6] Fila de solicitacoes de cadastro de conta (aprovadas/rejeitadas pelo CENTRAL).
+DROP TABLE IF EXISTS Solicitacoes_Cadastro;
+CREATE TABLE Solicitacoes_Cadastro (
+    id_solicitacao   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome             VARCHAR(100) NOT NULL,
+    cpf              CHAR(11) NOT NULL,
+    email            VARCHAR(150) NOT NULL,
+    password_hash    TEXT NOT NULL,
+    mensagem         VARCHAR(255) DEFAULT NULL,
+    status           ENUM('PENDENTE','APROVADO','REJEITADO') NOT NULL DEFAULT 'PENDENTE',
+    motivo_rejeicao  VARCHAR(255) DEFAULT NULL,
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_decisao     TIMESTAMP NULL DEFAULT NULL
 );
 
 -- Script SQL para criação da tabela de produtos
@@ -355,3 +391,14 @@ CREATE TABLE Item_Compra (
         FOREIGN KEY (id_produto)
         REFERENCES Produtos(id_produto)
 );
+
+-- [v7] FK do vinculo funcionario -> almoxarifado (adicionada aqui porque
+-- Funcionarios e criada antes da tabela Almoxarifado).
+ALTER TABLE Funcionarios
+    ADD CONSTRAINT fk_funcionario_almoxarifado
+        FOREIGN KEY (cod_almoxarifado)
+        REFERENCES Almoxarifado(cod_almoxarifado)
+        ON DELETE SET NULL;
+
+-- Religa a checagem de FK.
+SET FOREIGN_KEY_CHECKS = 1;

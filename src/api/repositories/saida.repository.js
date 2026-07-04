@@ -40,6 +40,10 @@ export async function listarTodos(filtros = {}) {
     where.cod_almoxarifado_destino = filtros.destino
   }
 
+  if (filtros.origem) {
+    where.cod_almoxarifado_origem = filtros.origem
+  }
+
   if (filtros.tipo) {
     where.tipo_saida = filtros.tipo
   }

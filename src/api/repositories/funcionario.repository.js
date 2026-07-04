@@ -54,12 +54,25 @@ export async function listarTodos(filtros = {}) {
   })
 }
 
+// Lista enxuta para preencher selects em outros módulos (Compras, Saídas).
+// Devolve apenas id + nome dos funcionários ativos — sem dados sensíveis
+// (CPF, e-mail, credencial) — para poder ser exposta a qualquer usuário
+// autenticado, mesmo sem acesso ao módulo de Funcionários.
+export async function listarParaSelecao() {
+  return await Funcionario.findAll({
+    where: { is_active: 1 },
+    attributes: ["id_funcionario", "nome"],
+    order: [["nome", "ASC"]]
+  })
+}
+
 // Buscar por ID
 export async function buscarPorId(id) {
   return await Funcionario.findByPk(id, {
     include: [
       { model: db.Cargo, as: "cargo" },
-      { model: UsuarioSistema, as: "usuario", attributes: { exclude: ["password_hash"] } }
+      { model: UsuarioSistema, as: "usuario", attributes: { exclude: ["password_hash"] } },
+      { model: db.Almoxarifado, as: "almoxarifado", attributes: ["cod_almoxarifado", "nome"] }
     ]
   })
 }

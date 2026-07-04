@@ -38,6 +38,10 @@ export async function listarTodos(filtros = {}) {
     where.numero_nota_fiscal = filtros.numero_nota_fiscal
   }
 
+  if (filtros.cod_almoxarifado_destino) {
+    where.cod_almoxarifado_destino = filtros.cod_almoxarifado_destino
+  }
+
   if (filtros.data) {
     where.data_compra = { [Op.gte]: filtros.data.inicio, [Op.lt]: filtros.data.fim }
   }
@@ -117,6 +121,13 @@ export async function atualizar(id, dados, itens, transaction) {
     { transaction }
   )
 
+  return await buscarPorId(id, transaction)
+}
+
+// Atualiza somente o status da compra (usado ao confirmar o recebimento).
+// Não mexe nos itens — diferente de `atualizar`, que os recria.
+export async function atualizarStatus(id, status, transaction) {
+  await Compra.update({ status }, { where: { id_compra: id }, transaction })
   return await buscarPorId(id, transaction)
 }
 

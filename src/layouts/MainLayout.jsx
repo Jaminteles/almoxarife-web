@@ -12,9 +12,12 @@ import {
   AppBar,
   Avatar,
   Tooltip,
-  Divider
+  Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon as MenuItemIcon
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 
 // Ícones
 import MenuIcon from "@mui/icons-material/Menu";
@@ -27,12 +30,25 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import UploadIcon from "@mui/icons-material/Upload";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 import ColorModeContext from "../ColorModeContext";
+import { useAuth } from "../auth/AuthContext";
+import { ROTULO_NIVEL } from "../auth/permissions";
 
 const drawerWidth = 240;
+
+// Extrai as iniciais do nome para o avatar (ex.: "João Silva" → "JS").
+function iniciais(nome = "") {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length === 0 || !partes[0]) return "?";
+  const primeira = partes[0][0] || "";
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
+  return (primeira + ultima).toUpperCase();
+}
 
 /**
  * Configuração declarativa do menu.
@@ -44,22 +60,40 @@ const drawerWidth = 240;
  * `enabled: false` => vira "botão fantasma" (clicável mas leva para página
  * ComingSoon e visualmente opaco).
  */
+// `modulo` liga o item à matriz de permissões. Itens sem `modulo`
+// (ex.: Início) aparecem para todo usuário autenticado.
 const menuItems = [
   { label: "Início",        icon: <HomeIcon />,        path: "/",              enabled: true },
-  { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true },
-  { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true },
-  { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",   enabled: true },
-  { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true },
-  { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",       enabled: true },
-  { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true }
+  { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true, modulo: "funcionarios" },
+  { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true, modulo: "fornecedores" },
+  { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",   enabled: true, modulo: "produtos" },
+  { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true, modulo: "almoxarifados" },
+  { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",       enabled: true, modulo: "compras" },
+  { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true, modulo: "saidas" },
+  // Visível apenas para o CENTRAL (fila de solicitações de cadastro).
+  { label: "Solicitações",  icon: <HowToRegIcon />,    path: "/solicitacoes",  enabled: true, centralOnly: true }
 ];
 
-export default function MainLayout({ children }) {
+export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, toggle } = useContext(ColorModeContext);
+  const { user, logout, podeVer } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+
+  // Mostra apenas os itens que o nível do usuário pode ver.
+  const itensVisiveis = menuItems.filter((item) => {
+    if (item.centralOnly) return user?.access_level === "CENTRAL";
+    return !item.modulo || podeVer(item.modulo);
+  });
+
+  function handleLogout() {
+    setUserMenuAnchor(null);
+    logout();
+    navigate("/login", { replace: true });
+  }
 
   /**
    * Relógio que atualiza a cada segundo.
@@ -89,7 +123,7 @@ export default function MainLayout({ children }) {
 
       {/* Lista principal de navegação */}
       <List sx={{ flexGrow: 1, pt: 1 }}>
-        {menuItems.map((item) => {
+        {itensVisiveis.map((item) => {
           const active = isActive(item.path);
 
           const button = (
@@ -211,13 +245,49 @@ export default function MainLayout({ children }) {
               </IconButton>
             </Tooltip>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 1 }}>
-              <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>JS</Avatar>
-              <Box sx={{ display: { xs: "none", md: "block" }, lineHeight: 1.2 }}>
-                <Typography variant="body2" fontWeight={600}>Olá, João Silva</Typography>
-                <Typography variant="caption" color="text.secondary">Administrador</Typography>
+            <Tooltip title="Conta">
+              <Box
+                onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 1, cursor: "pointer" }}
+              >
+                <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>
+                  {iniciais(user?.nome)}
+                </Avatar>
+                <Box sx={{ display: { xs: "none", md: "block" }, lineHeight: 1.2 }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    Olá, {user?.nome || "Usuário"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {ROTULO_NIVEL[user?.access_level] || user?.access_level || "—"}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </Tooltip>
+
+            <Menu
+              anchorEl={userMenuAnchor}
+              open={Boolean(userMenuAnchor)}
+              onClose={() => setUserMenuAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <Box sx={{ px: 2, py: 1 }}>
+                <Typography variant="body2" fontWeight={600}>{user?.nome}</Typography>
+                <Typography variant="caption" color="text.secondary" display="block">{user?.email}</Typography>
+                {user?.almoxarifado && (
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Almoxarifado: {user.almoxarifado}
+                  </Typography>
+                )}
+              </Box>
+              <Divider />
+              <MenuItem onClick={handleLogout}>
+                <MenuItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </MenuItemIcon>
+                Sair
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>
@@ -268,7 +338,7 @@ export default function MainLayout({ children }) {
           width: { sm: `calc(100% - ${drawerWidth}px)` }
         }}
       >
-        {children}
+        <Outlet />
       </Box>
     </Box>
   );

@@ -18,6 +18,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemCompraRow from "../../components/ItemCompraRow";
+import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -35,6 +36,13 @@ const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "" };
 
 export default function CompraForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Usuário restrito: o DESTINO é fixo no seu almoxarifado.
+  const destinoTravado =
+    user && user.access_level !== "CENTRAL" && user.cod_almoxarifado
+      ? user.cod_almoxarifado
+      : null;
 
   const [form, setForm] = useState({ ...formVazio });
   const [itens, setItens] = useState([{ ...itemVazio }]);
@@ -53,7 +61,8 @@ export default function CompraForm() {
   useEffect(() => {
     Promise.all([
       fetch(`${API_URL}/fornecedores`).then((r) => r.json()),
-      fetch(`${API_URL}/funcionarios`).then((r) => r.json()),
+      // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
+      fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()),
       fetch(`${API_URL}/almoxarifados`).then((r) => r.json()),
       // produtos pode ainda não ter seed; o catch evita derrubar o resto.
       fetch(`${API_URL}/produtos`)
@@ -65,6 +74,10 @@ export default function CompraForm() {
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resProd.sucesso) setProdutos(resProd.dados);
+        // Fixa o destino no almoxarifado do usuário restrito.
+        if (destinoTravado) {
+          setForm((prev) => ({ ...prev, cod_almoxarifado_destino: destinoTravado }));
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -236,7 +249,9 @@ export default function CompraForm() {
                 onChange={handleChange}
                 required
                 fullWidth
+                disabled={!!destinoTravado}
                 SelectProps={{ displayEmpty: true }}
+                helperText={destinoTravado ? "Fixo no seu almoxarifado." : undefined}
               >
                 <MenuItem value="" disabled>
                   Selecione o destino

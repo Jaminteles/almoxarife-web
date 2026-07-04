@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { installHttpInterceptor } from './auth/http';
+
+// Instala o interceptor global (token + tratamento de 401) antes de renderizar.
+installHttpInterceptor();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

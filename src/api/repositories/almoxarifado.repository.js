@@ -21,6 +21,15 @@ export async function criar(dados) {
     })
 }
 
+// Lista enxuta (cod + nome) dos almoxarifados ativos, para selects de apoio.
+export async function listarParaSelecao() {
+    return await Almoxarifado.findAll({
+        where: { ativo: 1 },
+        attributes: ["cod_almoxarifado", "nome"],
+        order: [["nome", "ASC"]]
+    })
+}
+
 export async function listarTodos(filtros = {}) {
     const where = { ativo: 1 }
 

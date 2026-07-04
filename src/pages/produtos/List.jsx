@@ -134,6 +134,7 @@ const ProdutosList = () => {
         </Alert>
       )}
       <ListTemplate
+        modulo="produtos"
         title="Gerenciamento de Produtos"
         loading={loading}
         columns={[

@@ -30,7 +30,7 @@ O saldo de estoque por almoxarifado é mantido de forma consistente por meio de 
 ```
 almoxarife-web/
 ├── Banco de Dados/
-│   ├── CREATE_DB_ALMOXARIFADO_GILFER_v4.sql   # script de criação do banco (versão atual)
+│   ├── CREATE_DB_ALMOXARIFADO_GILFER_v7.sql   # script de criação do banco (versão atual)
 │   └── POPULA_DADOS_ALMOXARIFADO_GILFER.sql   # dados de exemplo (opcional)
 ├── src/
 │   ├── api/                       # BACK-END (Node.js + Express + Sequelize)
@@ -65,7 +65,7 @@ A aplicação tem **três partes**: o **banco de dados** (MySQL), o **back-end**
 Crie o banco executando o script de criação no MySQL:
 
 ```bash
-mysql -u root -p < "Banco de Dados/CREATE_DB_ALMOXARIFADO_GILFER_v4.sql"
+mysql -u root -p < "Banco de Dados/CREATE_DB_ALMOXARIFADO_GILFER_v7.sql"
 ```
 
 Opcionalmente, popule com dados de exemplo:
@@ -109,6 +109,63 @@ npm start
 ```
 
 O front-end abre em **http://localhost:3000** e consome a API em `http://localhost:5000/api`.
+
+## Controle de acesso (autenticação e autorização)
+
+O sistema exige **login** e aplica permissões por **nível de acesso**. As credenciais
+ficam na tabela `Usuarios_Sistema` (login pelo **e-mail do funcionário**, senha em
+`password_hash` com **bcrypt**). O nível fica em `access_level`:
+
+| Nível | Telas que enxerga | Escrita |
+|---|---|---|
+| **CENTRAL** | Todas (inclui Funcionários/usuários) | Tudo |
+| **ALMOXARIFE** | Fornecedores, Produtos, Almoxarifados, Compras, Saídas | Cria/edita nesses módulos |
+| **AUXILIAR** | Produtos, Almoxarifados, Saídas | Só cria **Saídas** (resto: leitura) |
+| **CONSULTA** | Produtos, Almoxarifados, Compras, Saídas | Nenhuma (só leitura) |
+
+**Como funciona:**
+
+- **Login:** `POST /api/auth/login` `{ email, senha }` → devolve um **JWT** (validade padrão 8h) e os dados do usuário. O token é enviado em `Authorization: Bearer <token>` a cada requisição.
+- **Back-end:** todas as rotas (exceto `/api/auth/login`) exigem token válido (`autenticar`) e respeitam a matriz de permissões por módulo (`autorizarModulo`) — leitura vs. escrita conforme o método HTTP. Fonte da verdade: [`src/api/config/permissions.js`](src/api/config/permissions.js).
+- **Front-end:** guardas de rota (`ProtectedRoute`/`RequireModule`), menu filtrado por nível e botões de escrita ocultos para quem é só leitura. Espelho da matriz em [`src/auth/permissions.js`](src/auth/permissions.js) — **mantenha os dois arquivos em sincronia**.
+
+### Primeiro acesso (criar o admin CENTRAL)
+
+Como o cadastro de funcionários passou a exigir login, use o script de bootstrap
+uma vez para criar o primeiro usuário **CENTRAL** (a partir de `src/api`):
+
+```bash
+npm run seed:admin -- admin@gilfer.com senha12345 "Administrador"
+```
+
+Depois, faça login no front-end com esse e-mail/senha. A partir daí o CENTRAL
+cria os demais funcionários e define o nível de acesso de cada um.
+
+> Em produção, defina a variável de ambiente **`JWT_SECRET`** (e opcionalmente
+> `JWT_EXPIRES_IN`). Sem ela, um segredo de desenvolvimento é usado e um aviso
+> é emitido no console.
+
+### Solicitação de cadastro e vínculo a almoxarifado
+
+Qualquer pessoa pode **solicitar acesso** pela tela pública `/solicitar-cadastro`
+(link no login). O pedido entra numa fila; o **CENTRAL** revisa em **Solicitações**
+(menu exclusivo do CENTRAL) e, ao aprovar, define o **nível** e o **cargo** e —
+para qualquer nível que **não seja CENTRAL** — **vincula a conta a um almoxarifado**.
+
+A partir daí o usuário **só tem acesso àquele almoxarifado**: o vínculo fica em
+`Funcionarios.cod_almoxarifado`, viaja no JWT e é aplicado no back-end
+(`src/api/utils/escopo.js`) em **Almoxarifados, Saídas e Compras** — listas
+filtradas e operações de escrita travadas no almoxarifado do usuário (a origem da
+saída e o destino da compra são forçados no back-end). O CENTRAL não tem vínculo e
+enxerga tudo.
+
+> **Migração de banco (v7).** Estas funções exigem a coluna
+> `Funcionarios.cod_almoxarifado` e a tabela `Solicitacoes_Cadastro`. Em um
+> banco **já existente**, rode uma vez:
+> ```bash
+> mysql -u root -p bd_almoxarifado < "Banco de Dados/ALTER_v7_almoxarifado_no_funcionario.sql"
+> ```
+> Instalações do zero pelo script `CREATE_DB_..._v7.sql` já incluem as duas estruturas.
 
 ## Endpoints principais (API REST)
 

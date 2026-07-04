@@ -133,6 +133,7 @@ export default function FuncionariosList() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <ListTemplate
+        modulo="funcionarios"
         title="Funcionários"
         columns={["Nome", "CPF", "Cargo", "Email"]}
         data={dataTabela}

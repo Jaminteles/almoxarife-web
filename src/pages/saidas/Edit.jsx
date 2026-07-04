@@ -18,6 +18,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemSaidaRow from "../../components/ItemSaidaRow";
+import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -26,6 +27,13 @@ const itemVazio = { id_produto: "", quantidade: "" };
 export default function SaidaEdit() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
+
+  // Usuário restrito: a ORIGEM é fixa no seu almoxarifado.
+  const origemTravada =
+    user && user.access_level !== "CENTRAL" && user.cod_almoxarifado
+      ? user.cod_almoxarifado
+      : null;
 
   const [form, setForm] = useState({
     cod_almoxarifado_origem: "",
@@ -51,8 +59,10 @@ export default function SaidaEdit() {
     setError("");
 
     Promise.all([
-      fetch(`${API_URL}/almoxarifados`).then((r) => r.json()),
-      fetch(`${API_URL}/funcionarios`).then((r) => r.json()),
+      // Lookup: TODOS os almoxarifados (necessário para o destino de transferência).
+      fetch(`${API_URL}/lookups/almoxarifados`).then((r) => r.json()),
+      // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
+      fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()),
       fetch(`${API_URL}/produtos`).then((r) => r.json()).catch(() => ({ sucesso: false })),
       fetch(`${API_URL}/saidas/${id}`).then((r) => r.json())
     ])
@@ -212,7 +222,9 @@ export default function SaidaEdit() {
                 onChange={handleChange}
                 required
                 fullWidth
+                disabled={!!origemTravada}
                 SelectProps={{ displayEmpty: true }}
+                helperText={origemTravada ? "Fixo no seu almoxarifado." : undefined}
               >
                 <MenuItem value="" disabled>
                   Almoxarifado de origem

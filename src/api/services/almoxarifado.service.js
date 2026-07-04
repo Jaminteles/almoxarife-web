@@ -1,5 +1,6 @@
 import * as almoxarifadoRepo from "../repositories/almoxarifado.repository.js"
 import db from "../models/index.js"
+import { assertAcessoAlmoxarifado } from "../utils/escopo.js"
 
 // ──────────────────────────────────────────────────────────────
 // Validacao de campos obrigatorios.
@@ -67,12 +68,18 @@ function normalizarFiltros(filtros = {}) {
   return limpos
 }
 
-export const listarAlmoxarifados = async (filtros = {}) => {
+export const listarAlmoxarifados = async (filtros = {}, escopo = null) => {
   const filtrosLimpos = normalizarFiltros(filtros)
-  return await almoxarifadoRepo.listarTodos(filtrosLimpos)
+  const lista = await almoxarifadoRepo.listarTodos(filtrosLimpos)
+  // Usuário restrito só enxerga o próprio almoxarifado.
+  if (escopo != null) {
+    return lista.filter((a) => Number(a.cod_almoxarifado) === Number(escopo))
+  }
+  return lista
 }
 
-export const buscarAlmoxarifadoPorId = async (id) => {
+export const buscarAlmoxarifadoPorId = async (id, escopo = null) => {
+  assertAcessoAlmoxarifado(escopo, id)
   const almoxarifado = await almoxarifadoRepo.buscarPorId(id)
 
   if (!almoxarifado) {
@@ -82,7 +89,13 @@ export const buscarAlmoxarifadoPorId = async (id) => {
   return almoxarifado
 }
 
-export const cadastrarAlmoxarifado = async (dados) => {
+export const cadastrarAlmoxarifado = async (dados, escopo = null) => {
+  // Usuário restrito a um almoxarifado não pode criar novos.
+  if (escopo != null) {
+    const erro = new Error("Acesso restrito ao seu almoxarifado")
+    erro.status = 403
+    throw erro
+  }
   validarCamposObrigatorios(dados)
 
   const emailExistente = await almoxarifadoRepo.buscarPorEmail(dados.email)
@@ -113,7 +126,8 @@ export const cadastrarAlmoxarifado = async (dados) => {
   return await almoxarifadoRepo.buscarPorId(almoxarifadoCriado.cod_almoxarifado)
 }
 
-export const editarAlmoxarifado = async (id, dados) => {
+export const editarAlmoxarifado = async (id, dados, escopo = null) => {
+  assertAcessoAlmoxarifado(escopo, id)
   const almoxarifado = await almoxarifadoRepo.buscarPorId(id)
   if (!almoxarifado) {
     throw new Error("Almoxarifado não encontrado")
@@ -156,7 +170,8 @@ export const editarAlmoxarifado = async (id, dados) => {
 // Nota fiscal não é armazenada no Estoque (vem do histórico de compras),
 // então retorna "—" por enquanto.
 // ──────────────────────────────────────────────────────────────
-export const listarEstoque = async (id) => {
+export const listarEstoque = async (id, escopo = null) => {
+  assertAcessoAlmoxarifado(escopo, id)
   const almoxarifado = await almoxarifadoRepo.buscarPorId(id)
   if (!almoxarifado) {
     throw new Error("Almoxarifado não encontrado")
@@ -205,7 +220,8 @@ export const listarEstoque = async (id) => {
   })
 }
 
-export const inativarAlmoxarifado = async (id) => {
+export const inativarAlmoxarifado = async (id, escopo = null) => {
+  assertAcessoAlmoxarifado(escopo, id)
   const almoxarifado = await almoxarifadoRepo.buscarPorId(id)
   if (!almoxarifado) {
     throw new Error("Almoxarifado não encontrado")

@@ -32,6 +32,13 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false
     },
+    // Almoxarifado ao qual o funcionário está restrito. NULL = sem restrição
+    // (nível CENTRAL). Definido na aprovação da solicitação de cadastro.
+    cod_almoxarifado: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      defaultValue: null
+    },
     is_active: {
       type: DataTypes.TINYINT(1),
       defaultValue: 1
