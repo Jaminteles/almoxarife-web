@@ -160,8 +160,7 @@ function Dashboard() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-100">Bem-vindo, João Silva! 👋</h1>
-        <p className="text-gray-400 text-sm">Aqui está o resumo do seu almoxarifado hoje.</p>
+        <h1 className="text-3xl font-bold text-gray-100">Resumo do Almoxarifado</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">

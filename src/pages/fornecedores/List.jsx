@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 export default function FornecedoresList() {
   const navigate = useNavigate();

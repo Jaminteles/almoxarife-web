@@ -16,7 +16,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import FormPageHeader from "../../components/FormPageHeader";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 export default function FuncionarioEdit() {
   const navigate = useNavigate();

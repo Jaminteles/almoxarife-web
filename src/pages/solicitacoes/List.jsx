@@ -26,7 +26,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import { NIVEIS, ROTULO_NIVEL } from "../../auth/permissions";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 const CORES_STATUS = { PENDENTE: "warning", APROVADO: "success", REJEITADO: "default" };
 

@@ -10,7 +10,11 @@
 // página que usa fetch. (Todo o front-end consome a API via fetch.)
 // ──────────────────────────────────────────────────────────────
 
-export const API_BASE = "http://localhost:5000";
+// Usa o mesmo host pelo qual a página foi aberta (localhost no PC,
+// ou o IP do PC quando acessada pelo celular na mesma rede), sempre na
+// porta 5000 da API. Assim funciona tanto no PC quanto no celular sem
+// precisar editar código.
+export const API_BASE = `http://${window.location.hostname}:5000`;
 export const TOKEN_KEY = "auth_token";
 export const USER_KEY = "auth_user";
 

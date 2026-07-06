@@ -4,7 +4,7 @@ import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Con
 import FormPageHeader from "../../components/FormPageHeader"
 import BackButton from "../../components/BackButton"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = `http://${window.location.hostname}:5000/api`
 
 // Mesma lista de unidades do cadastro (value = o que vai pro banco).
 const UNIDADES = [

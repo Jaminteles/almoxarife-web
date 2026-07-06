@@ -26,7 +26,7 @@ import EnderecoFields from "../../components/EnderecoFields";
  * do Fornecedor). O backend grava cada um na tabela Telefone_Almoxarifado.
  */
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 const enderecoVazio = {
   cep: "",

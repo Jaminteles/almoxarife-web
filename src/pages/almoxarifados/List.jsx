@@ -22,7 +22,7 @@ import { useAuth } from "../../auth/AuthContext";
  * padrao de Funcionarios e Fornecedores. O mock foi removido.
  */
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 export default function AlmoxarifadosList() {
   const navigate = useNavigate();

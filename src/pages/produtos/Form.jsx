@@ -4,7 +4,7 @@ import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Chi
 import FormPageHeader from "../../components/FormPageHeader"
 import BackButton from "../../components/BackButton"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = `http://${window.location.hostname}:5000/api`
 
 // Unidades de medida. O valor (value) é o que vai pro banco (VARCHAR(10));
 // o texto é só o rótulo amigável. Lista pensada para uma construtora.

@@ -20,7 +20,7 @@ import FormPageHeader from "../../components/FormPageHeader";
 import ItemSaidaRow from "../../components/ItemSaidaRow";
 import { useAuth } from "../../auth/AuthContext";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 const itemVazio = { id_produto: "", quantidade: "" };
 

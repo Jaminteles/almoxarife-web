@@ -20,7 +20,7 @@ import FormPageHeader from "../../components/FormPageHeader";
 import ItemCompraRow from "../../components/ItemCompraRow";
 import { useAuth } from "../../auth/AuthContext";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 // Campos EXATAMENTE como o compra.service.js (montarDadosCompra) espera.
 // Sem "status" aqui: na criação o backend força "PENDENTE" automaticamente (RF021).
@@ -57,6 +57,16 @@ export default function CompraForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Sincroniza o destino sempre que destinoTravado mudar.
+  useEffect(() => {
+    if (!destinoTravado) return;
+    setForm((prev) =>
+      prev.cod_almoxarifado_destino === destinoTravado
+        ? prev
+        : { ...prev, cod_almoxarifado_destino: destinoTravado }
+    );
+  }, [destinoTravado]);
+
   // Carrega as 4 listas EM PARALELO (Promise.all) ao montar a tela.
   useEffect(() => {
     Promise.all([
@@ -74,10 +84,6 @@ export default function CompraForm() {
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resProd.sucesso) setProdutos(resProd.dados);
-        // Fixa o destino no almoxarifado do usuário restrito.
-        if (destinoTravado) {
-          setForm((prev) => ({ ...prev, cod_almoxarifado_destino: destinoTravado }));
-        }
         setLoading(false);
       })
       .catch((err) => {

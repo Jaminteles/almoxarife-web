@@ -39,7 +39,7 @@ import SummaryCard from "../components/SummaryCard";
 import QuickAction from "../components/QuickAction";
 import AlertItem from "../components/AlertItem";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 // ── Helpers de data ──
 const mesmaData = (a, b) =>
@@ -191,10 +191,7 @@ export default function Home() {
       {/* Cabeçalho da página */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4">
-          Bem-vindo! <span role="img" aria-label="aceno">👋</span>
-        </Typography>
-        <Typography color="text.secondary">
-          Aqui está o resumo do seu almoxarifado hoje.
+          Resumo do Almoxarifado
         </Typography>
       </Box>
 

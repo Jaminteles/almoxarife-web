@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Alert, TextField } from "@mui/material";
 import ListTemplate from "../../components/ListTemplate";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 const ProdutosList = () => {
   const navigate = useNavigate();

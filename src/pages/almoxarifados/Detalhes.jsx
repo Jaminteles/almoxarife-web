@@ -44,7 +44,7 @@ import { useAuth } from "../../auth/AuthContext";
  * produto, fornecedor, nota fiscal e data de atualizacao.
  */
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 
 export default function AlmoxarifadoDetalhes() {
   const navigate = useNavigate();

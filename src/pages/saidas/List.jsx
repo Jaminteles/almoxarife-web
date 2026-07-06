@@ -16,7 +16,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import ListTemplate from "../../components/ListTemplate";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `http://${window.location.hostname}:5000/api`;
 const filtrosVazios = { data: "", destino: "", responsavel: "", produto: "", tipo: "" };
 
 export default function SaidasList() {
