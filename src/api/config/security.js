@@ -6,7 +6,7 @@
 // usado, um aviso é emitido no console para não passar despercebido.
 // ──────────────────────────────────────────────────────────────
 
-const SEGREDO_PADRAO = "dev-secret-troque-em-producao-almoxarifado-gilfer"
+const SEGREDO_PADRAO = "a7738cee3d710c514becbcb5248ef5e6fb651ee6cd16040bcbd77570615dbaaffcd5f1036c68da8c3efec3d92213d23c8bcea9d99184d38b93aa452c3df3771b"
 
 export const JWT_SECRET = process.env.JWT_SECRET || SEGREDO_PADRAO
 

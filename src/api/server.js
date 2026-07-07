@@ -1,3 +1,4 @@
+import "./config/load-env.js" // DEVE ser o primeiro import (carrega o .env)
 import app from "./app.js"
 import db from "./models/index.js"
 
