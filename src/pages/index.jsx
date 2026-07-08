@@ -5,6 +5,7 @@ import {
   Paper,
   Typography,
   Table,
+  TableContainer,
   TableHead,
   TableRow,
   TableCell,
@@ -406,7 +407,8 @@ export default function Home() {
         <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
           Últimas movimentações
         </Typography>
-        <Table size="small">
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table size="small" sx={{ minWidth: 640 }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ color: "text.secondary" }}>Data / Hora</TableCell>
@@ -445,7 +447,8 @@ export default function Home() {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </TableContainer>
       </Paper>
     </Box>
   );
