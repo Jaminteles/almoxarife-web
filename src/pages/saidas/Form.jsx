@@ -20,7 +20,7 @@ import FormPageHeader from "../../components/FormPageHeader";
 import ItemSaidaRow from "../../components/ItemSaidaRow";
 import { useAuth } from "../../auth/AuthContext";
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 const formVazio = {
   cod_almoxarifado_origem: "",
   id_funcionario_responsavel: "",

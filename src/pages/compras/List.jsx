@@ -27,7 +27,7 @@ const CORES_STATUS = {
 };
 
 // Mesmo padrão das outras telas: fetch nativo + esta constante de URL.
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 export default function ComprasList() {
   const navigate = useNavigate();

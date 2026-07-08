@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ListTemplate from "../../components/ListTemplate";
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 export default function FuncionariosList() {
   const navigate = useNavigate();

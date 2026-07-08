@@ -14,7 +14,7 @@
 // ou o IP do PC quando acessada pelo celular na mesma rede), sempre na
 // porta 5000 da API. Assim funciona tanto no PC quanto no celular sem
 // precisar editar código.
-export const API_BASE = `http://${window.location.hostname}:5000`;
+export const API_BASE = `${window.location.origin}`;
 export const TOKEN_KEY = "auth_token";
 export const USER_KEY = "auth_user";
 

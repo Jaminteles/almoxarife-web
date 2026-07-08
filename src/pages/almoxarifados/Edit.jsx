@@ -30,7 +30,7 @@ import EnderecoFields from "../../components/EnderecoFields";
  * Lemos para um array de strings (UI) e reenviamos como array no submit.
  */
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 const enderecoVazio = {
   cep: "",

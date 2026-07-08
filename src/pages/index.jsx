@@ -39,7 +39,7 @@ import SummaryCard from "../components/SummaryCard";
 import QuickAction from "../components/QuickAction";
 import AlertItem from "../components/AlertItem";
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 // ── Helpers de data ──
 const mesmaData = (a, b) =>

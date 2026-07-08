@@ -20,7 +20,7 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
 import FormPageHeader from "../../components/FormPageHeader";
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 /** Formulário de cadastro de novo funcionário. */
 export default function FuncionarioForm() {

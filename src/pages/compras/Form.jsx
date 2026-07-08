@@ -20,7 +20,7 @@ import FormPageHeader from "../../components/FormPageHeader";
 import ItemCompraRow from "../../components/ItemCompraRow";
 import { useAuth } from "../../auth/AuthContext";
 
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `${window.location.origin}/api`;
 
 // Campos EXATAMENTE como o compra.service.js (montarDadosCompra) espera.
 // Sem "status" aqui: na criação o backend força "PENDENTE" automaticamente (RF021).
