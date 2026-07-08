@@ -1,5 +1,5 @@
 import { Router } from "express"
-import * as controller from "../controllers/funcionario.controller.js"
+import * as controller from "../controllers/funcionario.controller.js" // casediference
 
 const router = Router()
 
