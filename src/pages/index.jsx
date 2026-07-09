@@ -11,7 +11,11 @@ import {
   TableCell,
   TableBody,
   Chip,
-  Link
+  Link,
+  Stack,
+  Divider,
+  useTheme,
+  useMediaQuery
 } from "@mui/material";
 import {
   ResponsiveContainer,
@@ -61,6 +65,8 @@ const nomesProdutos = (itens = []) =>
 
 export default function Home() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [carregando, setCarregando] = useState(true);
   const [resumo, setResumo] = useState({
@@ -407,48 +413,93 @@ export default function Home() {
         <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
           Últimas movimentações
         </Typography>
-        <TableContainer sx={{ overflowX: "auto" }}>
-          <Table size="small" sx={{ minWidth: 640 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ color: "text.secondary" }}>Data / Hora</TableCell>
-              <TableCell sx={{ color: "text.secondary" }}>Tipo</TableCell>
-              <TableCell sx={{ color: "text.secondary" }}>Produto(s)</TableCell>
-              <TableCell sx={{ color: "text.secondary" }}>Quantidade</TableCell>
-              <TableCell sx={{ color: "text.secondary" }}>Responsável / Fornecedor</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {ultimasMovs.length ? (
-              ultimasMovs.map((m, i) => (
-                <TableRow key={i} hover>
-                  <TableCell>{formatarDataHora(m.dataRaw)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={m.tipo === "Entrada" ? "Entrada" : "Saída"}
-                      size="small"
-                      sx={{
-                        bgcolor: m.tipo === "Entrada" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
-                        color: m.tipo === "Entrada" ? "#10b981" : "#ef4444",
-                        fontWeight: 600
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{m.produto}</TableCell>
-                  <TableCell>{Number(m.qtd).toLocaleString("pt-BR")}</TableCell>
-                  <TableCell>{m.resp}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 5, color: "text.secondary" }}>
+        {(() => {
+          // Chip de tipo (Entrada/Saída), reaproveitado nas duas visões.
+          const chipTipo = (tipo) => (
+            <Chip
+              label={tipo === "Entrada" ? "Entrada" : "Saída"}
+              size="small"
+              sx={{
+                bgcolor: tipo === "Entrada" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
+                color: tipo === "Entrada" ? "#10b981" : "#ef4444",
+                fontWeight: 600
+              }}
+            />
+          );
+
+          if (isMobile) {
+            // ── Celular: cartões (sem scroll horizontal) ──
+            if (!ultimasMovs.length) {
+              return (
+                <Typography align="center" sx={{ py: 4, color: "text.secondary" }}>
                   {carregando ? "Carregando..." : "Nenhuma movimentação registrada."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-          </Table>
-        </TableContainer>
+                </Typography>
+              );
+            }
+            return (
+              <Stack spacing={1.5}>
+                {ultimasMovs.map((m, i) => (
+                  <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                      {chipTipo(m.tipo)}
+                      <Typography variant="caption" color="text.secondary">
+                        {formatarDataHora(m.dataRaw)}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ mb: 1 }} />
+                    <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+                      {m.produto}
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Qtd: {Number(m.qtd).toLocaleString("pt-BR")}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
+                        {m.resp}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                ))}
+              </Stack>
+            );
+          }
+
+          // ── Desktop/tablet: tabela ──
+          return (
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table size="small" sx={{ minWidth: 640 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ color: "text.secondary" }}>Data / Hora</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Tipo</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Produto(s)</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Quantidade</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Responsável / Fornecedor</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ultimasMovs.length ? (
+                  ultimasMovs.map((m, i) => (
+                    <TableRow key={i} hover>
+                      <TableCell>{formatarDataHora(m.dataRaw)}</TableCell>
+                      <TableCell>{chipTipo(m.tipo)}</TableCell>
+                      <TableCell>{m.produto}</TableCell>
+                      <TableCell>{Number(m.qtd).toLocaleString("pt-BR")}</TableCell>
+                      <TableCell>{m.resp}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 5, color: "text.secondary" }}>
+                      {carregando ? "Carregando..." : "Nenhuma movimentação registrada."}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              </Table>
+            </TableContainer>
+          );
+        })()}
       </Paper>
     </Box>
   );

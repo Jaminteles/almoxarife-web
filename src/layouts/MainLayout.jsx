@@ -229,10 +229,13 @@ export default function MainLayout() {
           <Typography
             variant="h6"
             onClick={() => navigate("/")}
+            noWrap
             sx={{
               cursor: "pointer",
               flexGrow: 1,
               fontWeight: 700,
+              // Menor no celular para não espremer os ícones da direita.
+              fontSize: { xs: "1rem", sm: "1.25rem" },
               "&:hover": { opacity: 0.85 }
             }}
           >

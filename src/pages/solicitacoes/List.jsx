@@ -21,6 +21,9 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
@@ -41,6 +44,9 @@ function formatarData(v) {
 }
 
 export default function SolicitacoesList() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -165,8 +171,8 @@ export default function SolicitacoesList() {
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
       {sucesso && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSucesso("")}>{sucesso}</Alert>}
 
-      <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 2.5 }}>
+      <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2.5 }}>
           <Box>
             <Typography variant="h5" fontWeight={600}>Solicitações de acesso</Typography>
             <Typography variant="body2" color="text.secondary">
@@ -179,7 +185,7 @@ export default function SolicitacoesList() {
             size="small"
             value={statusFiltro}
             onChange={(e) => setStatusFiltro(e.target.value)}
-            sx={{ minWidth: 180 }}
+            sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}
           >
             <MenuItem value="PENDENTE">Pendentes</MenuItem>
             <MenuItem value="APROVADO">Aprovadas</MenuItem>
@@ -188,56 +194,109 @@ export default function SolicitacoesList() {
           </TextField>
         </Box>
 
-        <Box sx={{ overflowX: "auto" }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {["Nome", "Email", "CPF", "Data", "Mensagem", "Status"].map((c) => (
-                  <TableCell key={c} sx={{ color: "text.secondary", fontWeight: 600 }}>{c}</TableCell>
-                ))}
-                <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary" }}>Carregando...</TableCell></TableRow>
-              ) : data.length ? (
-                data.map((s) => (
-                  <TableRow key={s.id_solicitacao} hover>
-                    <TableCell>{s.nome}</TableCell>
-                    <TableCell>{s.email}</TableCell>
-                    <TableCell>{formatarCpf(s.cpf)}</TableCell>
-                    <TableCell>{formatarData(s.data_solicitacao)}</TableCell>
-                    <TableCell sx={{ maxWidth: 220, whiteSpace: "normal" }}>{s.mensagem || "—"}</TableCell>
-                    <TableCell><Chip label={s.status} size="small" color={CORES_STATUS[s.status] || "default"} /></TableCell>
-                    <TableCell align="right">
-                      {s.status === "PENDENTE" ? (
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title="Aprovar">
-                            <IconButton size="small" sx={{ color: "success.main" }} onClick={() => abrirAprovar(s)}>
-                              <CheckCircleOutlineIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Rejeitar">
-                            <IconButton size="small" sx={{ color: "error.main" }} onClick={() => abrirRejeitar(s)}>
-                              <CancelOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          {s.motivo_rejeicao ? `Motivo: ${s.motivo_rejeicao}` : "—"}
-                        </Typography>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary" }}>Nenhuma solicitação encontrada.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Box>
+        {isMobile ? (
+          /* ─── MOBILE: cartões ─── */
+          <Stack spacing={1.5}>
+            {loading ? (
+              <Typography align="center" sx={{ py: 6, color: "text.secondary" }}>Carregando...</Typography>
+            ) : data.length ? (
+              data.map((s) => (
+                <Paper key={s.id_solicitacao} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Typography variant="body2" fontWeight={600} sx={{ wordBreak: "break-word" }}>{s.nome}</Typography>
+                    <Chip label={s.status} size="small" color={CORES_STATUS[s.status] || "default"} sx={{ flexShrink: 0 }} />
+                  </Box>
+                  <Divider sx={{ mb: 1 }} />
+
+                  {[
+                    ["Email", s.email],
+                    ["CPF", formatarCpf(s.cpf)],
+                    ["Data", formatarData(s.data_solicitacao)],
+                    ["Mensagem", s.mensagem || "—"],
+                  ].map(([rotulo, valor]) => (
+                    <Box key={rotulo} sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, py: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, flexShrink: 0 }}>{rotulo}</Typography>
+                      <Typography variant="body2" sx={{ textAlign: "right", wordBreak: "break-word", minWidth: 0 }}>{valor}</Typography>
+                    </Box>
+                  ))}
+
+                  {s.status === "PENDENTE" ? (
+                    <>
+                      <Divider sx={{ my: 1 }} />
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Button size="small" variant="outlined" color="success" startIcon={<CheckCircleOutlineIcon />} onClick={() => abrirAprovar(s)}>
+                          Aprovar
+                        </Button>
+                        <Button size="small" variant="outlined" color="error" startIcon={<CancelOutlinedIcon />} onClick={() => abrirRejeitar(s)}>
+                          Rejeitar
+                        </Button>
+                      </Stack>
+                    </>
+                  ) : s.motivo_rejeicao ? (
+                    <>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="caption" color="text.secondary">Motivo: {s.motivo_rejeicao}</Typography>
+                    </>
+                  ) : null}
+                </Paper>
+              ))
+            ) : (
+              <Typography align="center" sx={{ py: 6, color: "text.secondary" }}>Nenhuma solicitação encontrada.</Typography>
+            )}
+          </Stack>
+        ) : (
+          /* ─── DESKTOP/TABLET: tabela ─── */
+          <Box sx={{ overflowX: "auto" }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {["Nome", "Email", "CPF", "Data", "Mensagem", "Status"].map((c) => (
+                    <TableCell key={c} sx={{ color: "text.secondary", fontWeight: 600 }}>{c}</TableCell>
+                  ))}
+                  <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>Ações</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary" }}>Carregando...</TableCell></TableRow>
+                ) : data.length ? (
+                  data.map((s) => (
+                    <TableRow key={s.id_solicitacao} hover>
+                      <TableCell>{s.nome}</TableCell>
+                      <TableCell>{s.email}</TableCell>
+                      <TableCell>{formatarCpf(s.cpf)}</TableCell>
+                      <TableCell>{formatarData(s.data_solicitacao)}</TableCell>
+                      <TableCell sx={{ maxWidth: 220, whiteSpace: "normal" }}>{s.mensagem || "—"}</TableCell>
+                      <TableCell><Chip label={s.status} size="small" color={CORES_STATUS[s.status] || "default"} /></TableCell>
+                      <TableCell align="right">
+                        {s.status === "PENDENTE" ? (
+                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                            <Tooltip title="Aprovar">
+                              <IconButton size="small" sx={{ color: "success.main" }} onClick={() => abrirAprovar(s)}>
+                                <CheckCircleOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Rejeitar">
+                              <IconButton size="small" sx={{ color: "error.main" }} onClick={() => abrirRejeitar(s)}>
+                                <CancelOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            {s.motivo_rejeicao ? `Motivo: ${s.motivo_rejeicao}` : "—"}
+                          </Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary" }}>Nenhuma solicitação encontrada.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
       </Paper>
 
       {/* Diálogo de aprovação */}
