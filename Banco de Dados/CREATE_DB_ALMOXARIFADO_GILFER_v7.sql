@@ -300,7 +300,7 @@ CREATE TABLE Saida (
     cod_almoxarifado_origem INT UNSIGNED NOT NULL,
     id_funcionario_responsavel CHAR(36) NOT NULL,
     -- Lógica de Destino
-    tipo_saida ENUM('CONSUMO', 'TRANSFERENCIA') NOT NULL,
+    tipo_saida ENUM('CONSUMO', 'SERVIÇO', 'TRANSFERENCIA') NOT NULL,
     cod_almoxarifado_destino INT UNSIGNED DEFAULT NULL,
 
     -- Auditoria

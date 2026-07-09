@@ -111,8 +111,8 @@ export default function SaidaForm() {
       return;
     }
 
-    // Ao voltar para CONSUMO, zera o destino (consumo nao tem destino).
-    if (name === "tipo_saida" && value === "CONSUMO") {
+    // So TRANSFERENCIA tem destino. Consumo/Servico zeram o destino.
+    if (name === "tipo_saida" && value !== "TRANSFERENCIA") {
       setForm((prev) => ({ ...prev, tipo_saida: value, cod_almoxarifado_destino: "" }));
       return;
     }
@@ -306,6 +306,7 @@ export default function SaidaForm() {
                   Tipo de saída
                 </MenuItem>
                 <MenuItem value="CONSUMO">Consumo</MenuItem>
+                <MenuItem value="SERVIÇO">Serviço</MenuItem>
                 <MenuItem value="TRANSFERENCIA">Transferência para outro almoxarifado</MenuItem>
               </TextField>
             </Grid>

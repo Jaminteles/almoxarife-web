@@ -30,7 +30,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     tipo_saida: {
-      type: DataTypes.ENUM("CONSUMO", "TRANSFERENCIA"),
+      type: DataTypes.ENUM("CONSUMO", "SERVIÇO","TRANSFERENCIA"),
       allowNull: false
     },
     // FK -> Almoxarifado (destino). Nulo quando tipo_saida = CONSUMO.

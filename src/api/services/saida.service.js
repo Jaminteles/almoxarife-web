@@ -3,7 +3,7 @@ import db from "../models/index.js";
 import { processarMovimentacao } from "../utils/estoqueHelper.js";
 import { assertAcessoAlmoxarifado } from "../utils/escopo.js";
 
-const TIPOS_VALIDOS = ["CONSUMO", "TRANSFERENCIA"];
+const TIPOS_VALIDOS = ["CONSUMO", "SERVIÇO", "TRANSFERENCIA"];
 
 const normalizarFiltros = (filtros = {}) => {
   const limpos = {};

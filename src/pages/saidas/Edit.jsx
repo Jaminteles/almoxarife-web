@@ -102,7 +102,8 @@ export default function SaidaEdit() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    if (name === "tipo_saida" && value === "CONSUMO") {
+    // So TRANSFERENCIA tem destino. Consumo/Servico zeram o destino.
+    if (name === "tipo_saida" && value !== "TRANSFERENCIA") {
       setForm((prev) => ({ ...prev, tipo_saida: value, cod_almoxarifado_destino: "" }));
       return;
     }
@@ -272,6 +273,7 @@ export default function SaidaEdit() {
                   Tipo de saída
                 </MenuItem>
                 <MenuItem value="CONSUMO">Consumo</MenuItem>
+                <MenuItem value="SERVIÇO">Serviço</MenuItem>
                 <MenuItem value="TRANSFERENCIA">Transferência para outro almoxarifado</MenuItem>
               </TextField>
             </Grid>

@@ -96,7 +96,12 @@ export default function SaidasList() {
           const formatado = result.dados.map((s) => ({
             "Data": formatarData(s.data_saida),
             "Origem": s.almoxarifadoOrigem?.nome || "—",
-            "Tipo": s.tipo_saida === "TRANSFERENCIA" ? "Transferência" : "Consumo",
+            "Tipo":
+              s.tipo_saida === "TRANSFERENCIA"
+                ? "Transferência"
+                : s.tipo_saida === "SERVIÇO"
+                  ? "Serviço"
+                  : "Consumo",
             // Destino so faz sentido em transferencia; em consumo nao ha destino.
             "Destino":
               s.tipo_saida === "TRANSFERENCIA"
@@ -229,6 +234,7 @@ export default function SaidasList() {
             >
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="CONSUMO">Consumo</MenuItem>
+              <MenuItem value="SERVIÇO">Serviço</MenuItem>
               <MenuItem value="TRANSFERENCIA">Transferência</MenuItem>
             </TextField>
             <TextField
