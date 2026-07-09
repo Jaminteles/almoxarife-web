@@ -1,5 +1,6 @@
 import * as funcionarioService from "../services/funcionario.service.js"
 import * as almoxarifadoRepo from "../repositories/almoxarifado.repository.js"
+import * as equipeService from "../services/equipe.service.js"
 
 // ──────────────────────────────────────────────────────────────
 // Dados de apoio ("lookups") para preencher selects em outros módulos.
@@ -23,6 +24,18 @@ export const funcionarios = async (req, res) => {
 export const almoxarifados = async (req, res) => {
   try {
     const dados = await almoxarifadoRepo.listarParaSelecao()
+    res.json({ sucesso: true, dados, total: dados.length })
+  } catch (erro) {
+    res.status(400).json({ sucesso: false, erro: erro.message })
+  }
+}
+
+// GET /api/lookups/equipes → [{ id_equipe, nome }]
+// Todas as equipes ativas, para o select de "equipe" na tela de Saída
+// (sem exigir acesso ao módulo Equipes).
+export const equipes = async (req, res) => {
+  try {
+    const dados = await equipeService.listarEquipesParaSelecao()
     res.json({ sucesso: true, dados, total: dados.length })
   } catch (erro) {
     res.status(400).json({ sucesso: false, erro: erro.message })

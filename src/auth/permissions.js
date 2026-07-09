@@ -25,6 +25,7 @@ export const PERMISSOES = {
   almoxarifados: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE"] },
   compras:       { viewers: ["CENTRAL", "ALMOXARIFE", "CONSULTA"],             editors: ["CENTRAL", "ALMOXARIFE"] },
   saidas:        { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE", "AUXILIAR"] },
+  equipes:       { viewers: ["CENTRAL", "ALMOXARIFE"],                         editors: ["CENTRAL", "ALMOXARIFE"] },
 };
 
 export function podeVer(nivel, modulo) {

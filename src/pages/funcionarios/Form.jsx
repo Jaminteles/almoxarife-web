@@ -31,6 +31,7 @@ export default function FuncionarioForm() {
     cpf: "",
     id_cargo: "",
     email: "",
+    id_equipe: "",
     senha: "",
     confirmarSenha: "",
     access_level: "CONSULTA"
@@ -38,6 +39,7 @@ export default function FuncionarioForm() {
 
   const [criarUsuario, setCriarUsuario] = useState(false);
   const [cargos, setCargos] = useState([]);
+  const [equipes, setEquipes] = useState([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -46,6 +48,14 @@ export default function FuncionarioForm() {
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) setCargos(result.dados);
+      })
+      .catch(() => {});
+
+    // Equipe é opcional — usa o lookup aberto a qualquer usuário logado.
+    fetch(`${API_URL}/lookups/equipes`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) setEquipes(result.dados);
       })
       .catch(() => {});
   }, []);
@@ -80,6 +90,7 @@ export default function FuncionarioForm() {
       cpf: form.cpf,
       id_cargo: form.id_cargo,
       email: form.email,
+      id_equipe: form.id_equipe || null,
       criarUsuario,
       ...(criarUsuario && {
         senha: form.senha,
@@ -178,7 +189,26 @@ export default function FuncionarioForm() {
                 {cargos.map(c => (
                   <MenuItem key={c.id_cargo} value={c.id_cargo}>
                     {c.nome_cargo}
-                  </MenuItem> 
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                name="id_equipe"
+                label="Equipe (opcional)"
+                select
+                value={form.id_equipe}
+                onChange={handleChange}
+                fullWidth
+                helperText="Deixe em branco se o funcionário não pertence a uma equipe."
+              >
+                <MenuItem value="">Sem equipe</MenuItem>
+                {equipes.map(e => (
+                  <MenuItem key={e.id_equipe} value={e.id_equipe}>
+                    {e.nome}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>

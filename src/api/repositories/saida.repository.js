@@ -7,11 +7,13 @@ const Almoxarifado = db.Almoxarifado
 const Funcionario = db.Funcionario
 const Produto = db.Produto
 const Estoque = db.Estoque
+const Equipe = db.Equipe
 
 const includeCompleto = [
   { model: Almoxarifado, as: "almoxarifadoOrigem" },
   { model: Almoxarifado, as: "almoxarifadoDestino" },
   { model: Funcionario, as: "responsavel" },
+  { model: Equipe, as: "equipe", required: false },
   {
     model: SaidaItem,
     as: "itens",
@@ -73,6 +75,7 @@ export async function listarTodos(filtros = {}) {
     include: [
       { model: Almoxarifado, as: "almoxarifadoOrigem" },
       { model: Almoxarifado, as: "almoxarifadoDestino" },
+      { model: Equipe, as: "equipe", required: false },
       includeResponsavel,
       includeItens
     ],

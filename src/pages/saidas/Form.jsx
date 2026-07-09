@@ -26,6 +26,7 @@ const formVazio = {
   id_funcionario_responsavel: "",
   tipo_saida: "",
   cod_almoxarifado_destino: "",
+  id_equipe: "",
   observacao: ""
 };
 
@@ -47,6 +48,7 @@ export default function SaidaForm() {
   // Listas dos selects.
   const [almoxarifados, setAlmoxarifados] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
+  const [equipes, setEquipes] = useState([]);
   // Produtos disponíveis = estoque do almoxarifado de ORIGEM selecionado.
   const [estoqueOrigem, setEstoqueOrigem] = useState([]);
 
@@ -60,11 +62,14 @@ export default function SaidaForm() {
       // Lookup: TODOS os almoxarifados (necessário para o destino de transferência).
       fetch(`${API_URL}/lookups/almoxarifados`).then((r) => r.json()),
       // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
-      fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json())
+      fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()),
+      // Equipe é opcional; lookup aberto a qualquer usuário logado.
+      fetch(`${API_URL}/lookups/equipes`).then((r) => r.json())
     ])
-      .then(([resAlm, resFunc]) => {
+      .then(([resAlm, resFunc, resEquipe]) => {
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
+        if (resEquipe.sucesso) setEquipes(resEquipe.dados);
         // Fixa a origem no almoxarifado do usuário restrito.
         if (origemTravada) {
           setForm((prev) => ({ ...prev, cod_almoxarifado_origem: origemTravada }));
@@ -184,6 +189,7 @@ export default function SaidaForm() {
       tipo_saida: form.tipo_saida,
       // Consumo nao tem destino -> envia null.
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
+      id_equipe: form.id_equipe || null,
       observacao: form.observacao,
       itens: itensValidos.map((it) => ({
         id_produto: it.id_produto,
@@ -335,6 +341,25 @@ export default function SaidaForm() {
                 </TextField>
               </Grid>
             )}
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="id_equipe"
+                label="Equipe (opcional)"
+                value={form.id_equipe}
+                onChange={handleChange}
+                fullWidth
+                helperText="Equipe que realizou a saída, se aplicável."
+              >
+                <MenuItem value="">Sem equipe</MenuItem>
+                {equipes.map((e) => (
+                  <MenuItem key={e.id_equipe} value={e.id_equipe}>
+                    {e.nome}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
 
             <Grid item xs={12}>
               <TextField

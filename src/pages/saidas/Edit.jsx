@@ -40,12 +40,14 @@ export default function SaidaEdit() {
     id_funcionario_responsavel: "",
     tipo_saida: "",
     cod_almoxarifado_destino: "",
+    id_equipe: "",
     observacao: ""
   });
   const [itens, setItens] = useState([{ ...itemVazio }]);
 
   const [almoxarifados, setAlmoxarifados] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
+  const [equipes, setEquipes] = useState([]);
   const [produtos, setProdutos] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -64,12 +66,14 @@ export default function SaidaEdit() {
       // Lookup de apoio: funciona mesmo para quem não acessa o módulo Funcionários.
       fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()),
       fetch(`${API_URL}/produtos`).then((r) => r.json()).catch(() => ({ sucesso: false })),
+      fetch(`${API_URL}/lookups/equipes`).then((r) => r.json()).catch(() => ({ sucesso: false })),
       fetch(`${API_URL}/saidas/${id}`).then((r) => r.json())
     ])
-      .then(([resAlm, resFunc, resProd, resSaida]) => {
+      .then(([resAlm, resFunc, resProd, resEquipe, resSaida]) => {
         if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
         if (resFunc.sucesso) setFuncionarios(resFunc.dados);
         if (resProd.sucesso) setProdutos(resProd.dados);
+        if (resEquipe.sucesso) setEquipes(resEquipe.dados);
 
         if (resSaida.sucesso) {
           const s = resSaida.dados;
@@ -78,6 +82,7 @@ export default function SaidaEdit() {
             id_funcionario_responsavel: s.id_funcionario_responsavel ?? "",
             tipo_saida: s.tipo_saida ?? "",
             cod_almoxarifado_destino: s.cod_almoxarifado_destino ?? "",
+            id_equipe: s.id_equipe ?? "",
             observacao: s.observacao ?? ""
           });
           // itens vem como [{ id_produto, quantidade }]. Garante ao menos 1 linha.
@@ -155,6 +160,7 @@ export default function SaidaEdit() {
       id_funcionario_responsavel: form.id_funcionario_responsavel,
       tipo_saida: form.tipo_saida,
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
+      id_equipe: form.id_equipe || null,
       observacao: form.observacao,
       itens: itensValidos.map((it) => ({
         id_produto: it.id_produto,
@@ -301,6 +307,25 @@ export default function SaidaEdit() {
                 </TextField>
               </Grid>
             )}
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="id_equipe"
+                label="Equipe (opcional)"
+                value={form.id_equipe}
+                onChange={handleChange}
+                fullWidth
+                helperText="Equipe que realizou a saída, se aplicável."
+              >
+                <MenuItem value="">Sem equipe</MenuItem>
+                {equipes.map((e) => (
+                  <MenuItem key={e.id_equipe} value={e.id_equipe}>
+                    {e.nome}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
 
             <Grid item xs={12}>
               <TextField

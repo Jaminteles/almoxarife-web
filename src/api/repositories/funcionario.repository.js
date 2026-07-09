@@ -47,9 +47,16 @@ export async function listarTodos(filtros = {}) {
     attributes: { exclude: ["password_hash"] }
   }
 
+  const includeEquipe = {
+    model: db.Equipe,
+    as: "equipe",
+    attributes: ["id_equipe", "nome"],
+    required: false
+  }
+
   return await Funcionario.findAll({
     where,
-    include: [includeCargo, includeUsuario],
+    include: [includeCargo, includeUsuario, includeEquipe],
     order: [["nome", "ASC"]]
   })
 }
@@ -72,7 +79,8 @@ export async function buscarPorId(id) {
     include: [
       { model: db.Cargo, as: "cargo" },
       { model: UsuarioSistema, as: "usuario", attributes: { exclude: ["password_hash"] } },
-      { model: db.Almoxarifado, as: "almoxarifado", attributes: ["cod_almoxarifado", "nome"] }
+      { model: db.Almoxarifado, as: "almoxarifado", attributes: ["cod_almoxarifado", "nome"] },
+      { model: db.Equipe, as: "equipe", attributes: ["id_equipe", "nome"] }
     ]
   })
 }

@@ -52,6 +52,7 @@ export default function FuncionariosList() {
             "Cargo": f.cargo?.nome_cargo || "—",
             // ⬇️ MUDANÇA AQUI: lê email direto do funcionario
             "Email": f.email || "—",
+            "Equipe": f.equipe?.nome || "—",
             __id__: f.id_funcionario
           }));
           setData(formatado);
@@ -135,7 +136,7 @@ export default function FuncionariosList() {
       <ListTemplate
         modulo="funcionarios"
         title="Funcionários"
-        columns={["Nome", "CPF", "Cargo", "Email"]}
+        columns={["Nome", "CPF", "Cargo", "Email", "Equipe"]}
         data={dataTabela}
         loading={loading}
         onCreate={() => navigate("/funcionarios/cadastro")}

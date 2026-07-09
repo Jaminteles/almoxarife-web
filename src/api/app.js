@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.routes.js"
 import funcionarioRoutes from "./routes/funcionario.routes.js"
 import fornecedorRoutes from "./routes/fornecedor.routes.js"
 import cargoRoutes from "./routes/cargo.routes.js"
+import equipeRoutes from "./routes/equipe.routes.js"
 import almoxarifadoRoutes from "./routes/almoxarifado.routes.js"
 import produtoRoutes from "./routes/produto.routes.js"
 import saidaRoutes from "./routes/saida.routes.js"
@@ -37,6 +38,7 @@ app.use("/api/lookups", autenticar, lookupRoutes)
 app.use("/api/funcionarios",  autenticar, autorizarModulo("funcionarios"),  funcionarioRoutes)
 app.use("/api/fornecedores",  autenticar, autorizarModulo("fornecedores"),  fornecedorRoutes)
 app.use("/api/cargos",        autenticar, autorizarModulo("cargos"),        cargoRoutes)
+app.use("/api/equipes",       autenticar, autorizarModulo("equipes"),       equipeRoutes)
 app.use("/api/almoxarifados", autenticar, autorizarModulo("almoxarifados"), almoxarifadoRoutes)
 app.use("/api/produtos",      autenticar, autorizarModulo("produtos"),      produtoRoutes)
 app.use("/api/saidas",        autenticar, autorizarModulo("saidas"),        saidaRoutes)

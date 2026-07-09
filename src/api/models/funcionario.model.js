@@ -39,6 +39,12 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null
     },
+    // Equipe à qual o funcionário pertence (opcional). NULL = sem equipe.
+    id_equipe: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      defaultValue: null
+    },
     is_active: {
       type: DataTypes.TINYINT(1),
       defaultValue: 1

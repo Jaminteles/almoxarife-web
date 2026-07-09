@@ -27,12 +27,14 @@ export default function FuncionarioEdit() {
     cpf: "",
     id_cargo: "",
     email: "",
+    id_equipe: "",
     senha: "",
     confirmarSenha: "",
     access_level: "CONSULTA"
   });
 
   const [cargos, setCargos] = useState([]);
+  const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -42,6 +44,13 @@ export default function FuncionarioEdit() {
       .then(res => res.json())
       .then(result => {
         if (result.sucesso) setCargos(result.dados);
+      })
+      .catch(() => {});
+
+    fetch(`${API_URL}/lookups/equipes`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) setEquipes(result.dados);
       })
       .catch(() => {});
 
@@ -55,6 +64,7 @@ export default function FuncionarioEdit() {
             cpf: f.cpf,
             id_cargo: f.id_cargo,
             email: f.email || "",
+            id_equipe: f.id_equipe || "",
             senha: "",
             confirmarSenha: "",
             access_level: f.usuario?.access_level || "CONSULTA"
@@ -98,6 +108,7 @@ export default function FuncionarioEdit() {
       cpf: form.cpf,
       id_cargo: form.id_cargo,
       email: form.email,
+      id_equipe: form.id_equipe || null,
       access_level: form.access_level,
       ...(form.senha && { senha: form.senha })
     };
@@ -191,6 +202,24 @@ export default function FuncionarioEdit() {
                 {cargos.map(c => (
                   <MenuItem key={c.id_cargo} value={c.id_cargo}>
                     {c.nome_cargo}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="id_equipe"
+                label="Equipe (opcional)"
+                select
+                value={form.id_equipe}
+                onChange={handleChange}
+                fullWidth
+                helperText="Deixe em branco se o funcionário não pertence a uma equipe."
+              >
+                <MenuItem value="">Sem equipe</MenuItem>
+                {equipes.map(e => (
+                  <MenuItem key={e.id_equipe} value={e.id_equipe}>
+                    {e.nome}
                   </MenuItem>
                 ))}
               </TextField>

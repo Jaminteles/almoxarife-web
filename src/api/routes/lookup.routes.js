@@ -7,5 +7,6 @@ const router = Router()
 // aqui não há trava por módulo — qualquer usuário logado pode ler.
 router.get("/funcionarios", controller.funcionarios)
 router.get("/almoxarifados", controller.almoxarifados)
+router.get("/equipes", controller.equipes)
 
 export default router

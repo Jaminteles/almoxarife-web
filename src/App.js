@@ -20,6 +20,11 @@ import FuncionariosList from "./pages/funcionarios/List";
 import FuncionarioForm from "./pages/funcionarios/Form";
 import FuncionarioEdit from "./pages/funcionarios/Edit";
 
+// Equipes
+import EquipesList from "./pages/equipes/List";
+import EquipeForm from "./pages/equipes/Form";
+import EquipeEdit from "./pages/equipes/Edit";
+
 // Fornecedores
 import FornecedoresList from "./pages/fornecedores/List";
 import FornecedorForm from "./pages/fornecedores/Form";
@@ -98,6 +103,11 @@ function App() {
               <Route path="/funcionarios" element={<RequireModule modulo="funcionarios"><FuncionariosList /></RequireModule>} />
               <Route path="/funcionarios/cadastro" element={<RequireModule modulo="funcionarios" acao="editar"><FuncionarioForm /></RequireModule>} />
               <Route path="/funcionarios/:id/editar" element={<RequireModule modulo="funcionarios" acao="editar"><FuncionarioEdit /></RequireModule>} />
+
+              {/*Rotas Equipes*/}
+              <Route path="/equipes" element={<RequireModule modulo="equipes"><EquipesList /></RequireModule>} />
+              <Route path="/equipes/cadastro" element={<RequireModule modulo="equipes" acao="editar"><EquipeForm /></RequireModule>} />
+              <Route path="/equipes/:id/editar" element={<RequireModule modulo="equipes" acao="editar"><EquipeEdit /></RequireModule>} />
 
               {/*Rotas Fornecedores*/}
               <Route path="/fornecedores" element={<RequireModule modulo="fornecedores"><FornecedoresList /></RequireModule>} />

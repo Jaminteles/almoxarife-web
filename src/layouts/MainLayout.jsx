@@ -24,6 +24,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import HomeIcon from "@mui/icons-material/Home";
 import PeopleIcon from "@mui/icons-material/People";
+import GroupsIcon from "@mui/icons-material/Groups";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
@@ -65,6 +66,7 @@ function iniciais(nome = "") {
 const menuItems = [
   { label: "Início",        icon: <HomeIcon />,        path: "/",              enabled: true },
   { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true, modulo: "funcionarios" },
+  { label: "Equipes",       icon: <GroupsIcon />,      path: "/equipes",       enabled: true, modulo: "equipes" },
   { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true, modulo: "fornecedores" },
   { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",   enabled: true, modulo: "produtos" },
   { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true, modulo: "almoxarifados" },

@@ -2,6 +2,7 @@ import { DataTypes, Sequelize } from "sequelize"
 
 // Models
 import cargoModel from "./cargo.model.js"
+import equipeModel from "./equipe.model.js"
 import funcionarioModel from "./funcionario.model.js"
 import usuarioSistemaModel from "./usuario-sistema.model.js"
 import fornecedorModel from "./fornecedor.model.js"
@@ -44,6 +45,7 @@ const sequelize = new Sequelize(
 // ── Registrar Models ──
 const db = {
   Cargo: cargoModel(sequelize, DataTypes),
+  Equipe: equipeModel(sequelize, DataTypes),
   Funcionario: funcionarioModel(sequelize, DataTypes),
   UsuarioSistema: usuarioSistemaModel(sequelize, DataTypes),
   Fornecedor: fornecedorModel(sequelize, DataTypes),
@@ -68,6 +70,11 @@ const db = {
 // Cargo ↔ Funcionário
 db.Cargo.hasMany(db.Funcionario, { foreignKey: "id_cargo", as: "funcionarios" })
 db.Funcionario.belongsTo(db.Cargo, { foreignKey: "id_cargo", as: "cargo" })
+
+// Equipe ↔ Funcionário (1:N, opcional). Ao remover a equipe, os funcionários
+// ficam sem equipe (SET NULL) — não são apagados.
+db.Equipe.hasMany(db.Funcionario, { foreignKey: "id_equipe", as: "funcionarios", onDelete: "SET NULL" })
+db.Funcionario.belongsTo(db.Equipe, { foreignKey: "id_equipe", as: "equipe" })
 
 // Funcionário ↔ Usuário do Sistema (1:1)
 db.Funcionario.hasOne(db.UsuarioSistema, { foreignKey: "id_funcionario", as: "usuario" })
@@ -143,6 +150,7 @@ db.Estoque.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "alm
 db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_origem", as: "almoxarifadoOrigem" })
 db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", as: "almoxarifadoDestino" })
 db.Saida.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", as: "responsavel" })
+db.Saida.belongsTo(db.Equipe, { foreignKey: "id_equipe", as: "equipe" })
 
 // Saída ↔ Itens
 db.Saida.hasMany(db.SaidaItem, { foreignKey: "id_saida", as: "itens", onDelete: "CASCADE" })

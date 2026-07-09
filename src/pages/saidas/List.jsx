@@ -108,6 +108,7 @@ export default function SaidasList() {
                 ? s.almoxarifadoDestino?.nome || "—"
                 : "—",
             "Responsável": s.responsavel?.nome || "—",
+            "Equipe": s.equipe?.nome || "—",
             "Produtos": s.itens?.map((item) => item.produto?.nome || `Produto ${item.id_produto}`).join(", ") || "—",
             "Observação": s.observacao || "—",
             // Campo "oculto" para recuperar o id nos handlers (mesmo truque do almoxarifado).
@@ -199,7 +200,7 @@ export default function SaidasList() {
       <ListTemplate
         modulo="saidas"
         title="Saídas"
-        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Produtos", "Observação"]}
+        columns={["Data", "Origem", "Tipo", "Destino", "Responsável", "Equipe", "Produtos", "Observação"]}
         data={data}
         loading={loading}
         onCreate={() => navigate("/saidas/cadastro")}

@@ -96,7 +96,9 @@ export const criarFuncionario = async (dados) => {
         nome: dados.nome.trim(),
         cpf: cpfLimpo,
         email: emailLimpo,
-        id_cargo: dados.id_cargo
+        id_cargo: dados.id_cargo,
+        // Equipe é opcional: "" / 0 / undefined viram NULL (sem equipe).
+        id_equipe: dados.id_equipe || null
       },
       transacao
     )
@@ -171,13 +173,17 @@ export const atualizarFuncionario = async (id, dados) => {
     dados.nome !== undefined ||
     dados.cpf !== undefined ||
     dados.id_cargo !== undefined ||
-    dados.email !== undefined
+    dados.email !== undefined ||
+    dados.id_equipe !== undefined
   ) {
     dadosFunc = {
       nome: dados.nome ?? funcionario.nome,
       cpf: dados.cpf ?? funcionario.cpf,
       id_cargo: dados.id_cargo ?? funcionario.id_cargo,
-      email: dados.email ?? funcionario.email
+      email: dados.email ?? funcionario.email,
+      // "" / 0 → NULL (remove da equipe); undefined → mantém a atual.
+      id_equipe:
+        dados.id_equipe !== undefined ? (dados.id_equipe || null) : funcionario.id_equipe
     }
     validarCamposFuncionario(dadosFunc)
 

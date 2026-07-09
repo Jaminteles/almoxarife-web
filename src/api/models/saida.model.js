@@ -39,6 +39,12 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null
     },
+    // FK -> Equipe que realizou a saída (opcional). Associação em index.js.
+    id_equipe: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      defaultValue: null
+    },
     observacao: {
       type: DataTypes.TEXT,
       allowNull: true

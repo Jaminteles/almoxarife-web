@@ -92,6 +92,17 @@ CREATE TABLE Cargos (
     nome_cargo VARCHAR(50) NOT NULL UNIQUE
 );
 
+-- Equipes: agrupam funcionarios (1:N via Funcionarios.id_equipe). Usa
+-- soft-delete (is_active) para nao quebrar saidas que ja referenciam a equipe.
+DROP TABLE IF EXISTS Equipes;
+CREATE TABLE Equipes (
+    id_equipe INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 DROP TABLE IF EXISTS Funcionarios;
 CREATE TABLE Funcionarios (
     -- UUID
@@ -107,6 +118,9 @@ CREATE TABLE Funcionarios (
     -- restricao (CENTRAL). A FK e adicionada no fim do script, apos criar
     -- a tabela Almoxarifado. Definido na aprovacao da solicitacao de cadastro.
     cod_almoxarifado INT UNSIGNED NULL,
+
+    -- Equipe do funcionario (opcional). FK adicionada no fim do script.
+    id_equipe INT UNSIGNED NULL,
 
     -- Auditoria Básica
     is_active TINYINT(1) DEFAULT 1,
@@ -303,6 +317,9 @@ CREATE TABLE Saida (
     tipo_saida ENUM('CONSUMO', 'SERVIÇO', 'TRANSFERENCIA') NOT NULL,
     cod_almoxarifado_destino INT UNSIGNED DEFAULT NULL,
 
+    -- Equipe que realizou a saida (opcional).
+    id_equipe INT UNSIGNED DEFAULT NULL,
+
     -- Auditoria
     data_saida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     observacao TEXT,
@@ -310,6 +327,11 @@ CREATE TABLE Saida (
     CONSTRAINT fk_saida_origem
         FOREIGN KEY (cod_almoxarifado_origem)
         REFERENCES Almoxarifado(cod_almoxarifado),
+
+    CONSTRAINT fk_saida_equipe
+        FOREIGN KEY (id_equipe)
+        REFERENCES Equipes(id_equipe)
+        ON DELETE SET NULL,
 
     CONSTRAINT fk_saida_destino
         FOREIGN KEY (cod_almoxarifado_destino)
@@ -398,6 +420,14 @@ ALTER TABLE Funcionarios
     ADD CONSTRAINT fk_funcionario_almoxarifado
         FOREIGN KEY (cod_almoxarifado)
         REFERENCES Almoxarifado(cod_almoxarifado)
+        ON DELETE SET NULL;
+
+-- FK do vinculo funcionario -> equipe (Equipes ja existe neste ponto, mas
+-- mantemos aqui junto das demais FKs "tardias" por organizacao).
+ALTER TABLE Funcionarios
+    ADD CONSTRAINT fk_funcionario_equipe
+        FOREIGN KEY (id_equipe)
+        REFERENCES Equipes(id_equipe)
         ON DELETE SET NULL;
 
 -- Religa a checagem de FK.

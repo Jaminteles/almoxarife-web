@@ -87,6 +87,8 @@ const montarDadosSaida = (dados) => {
     tipo_saida: dados.tipo_saida,
     cod_almoxarifado_destino: destino,
     observacao: dados.observacao || null,
+    // Equipe que realizou a saída é opcional ("" / 0 → sem equipe).
+    id_equipe: dados.id_equipe || null,
   };
 };
 
