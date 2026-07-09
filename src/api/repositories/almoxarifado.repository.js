@@ -119,6 +119,21 @@ export async function atualizar(id, dados) {
     return await buscarPorId(id)
 }
 
+// Conta quantos PRODUTOS ATIVOS ainda têm saldo (> 0) neste almoxarifado.
+// Usado para impedir a inativação de um almoxarifado que ainda guarda estoque.
+// Considera só produtos ativos para casar com o que aparece na tela de Estoque.
+export async function contarProdutosComSaldo(codAlmoxarifado) {
+    return await db.Estoque.count({
+        where: {
+            cod_almoxarifado: codAlmoxarifado,
+            quantidade: { [Op.gt]: 0 }
+        },
+        include: [
+            { model: db.Produto, as: "produto", where: { ativo: 1 }, required: true, attributes: [] }
+        ]
+    })
+}
+
 export async function inativar(id) {
     const almoxarifado = await Almoxarifado.findByPk(id)
 

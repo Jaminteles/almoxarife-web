@@ -179,6 +179,31 @@ const garantirEditavel = (saida) => {
   }
 };
 
+// Reverter uma saída devolve estoque à ORIGEM (e, em transferência, retira do
+// DESTINO). Não faz sentido movimentar estoque de/para um almoxarifado inativo,
+// então bloqueia a edição/exclusão enquanto algum deles estiver inativo.
+const garantirAlmoxarifadosAtivosParaReverter = async (saida) => {
+  const origem = await saidaRepo.buscarAlmoxarifado(saida.cod_almoxarifado_origem);
+  if (!origem || origem.ativo === 0) {
+    const erro = new Error(
+      "Não é possível reverter esta saída: o almoxarifado de origem está inativo. Reative-o antes de editar ou excluir a saída.",
+    );
+    erro.status = 409;
+    throw erro;
+  }
+
+  if (saida.tipo_saida === "TRANSFERENCIA" && saida.cod_almoxarifado_destino) {
+    const destino = await saidaRepo.buscarAlmoxarifado(saida.cod_almoxarifado_destino);
+    if (!destino || destino.ativo === 0) {
+      const erro = new Error(
+        "Não é possível reverter esta transferência: o almoxarifado de destino está inativo. Reative-o antes de editar ou excluir a saída.",
+      );
+      erro.status = 409;
+      throw erro;
+    }
+  }
+};
+
 export const listarSaidas = async (filtros = {}, escopo = null) => {
   const limpos = normalizarFiltros(filtros);
   // Usuário restrito só vê saídas cuja ORIGEM é o seu almoxarifado.
@@ -221,6 +246,8 @@ export const editarSaida = async (id, dados, escopo = null) => {
   // A saída existente precisa pertencer ao almoxarifado do usuário restrito.
   assertAcessoAlmoxarifado(escopo, saidaAtual.cod_almoxarifado_origem);
   garantirEditavel(saidaAtual);
+  // Editar reverte o movimento antigo — exige os almoxarifados dele ativos.
+  await garantirAlmoxarifadosAtivosParaReverter(saidaAtual);
 
   const entrada = escopo != null ? { ...dados, cod_almoxarifado_origem: escopo } : dados;
   const dadosSaida = montarDadosSaida(entrada);
@@ -244,6 +271,8 @@ export const excluirSaida = async (id, escopo = null) => {
   }
   assertAcessoAlmoxarifado(escopo, saida.cod_almoxarifado_origem);
   garantirEditavel(saida);
+  // Excluir reverte o movimento — exige os almoxarifados dele ativos.
+  await garantirAlmoxarifadosAtivosParaReverter(saida);
 
   return await db.sequelize.transaction(async (t) => {
     await reverterMovimento(saida, t);

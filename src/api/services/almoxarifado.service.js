@@ -227,5 +227,18 @@ export const inativarAlmoxarifado = async (id, escopo = null) => {
     throw new Error("Almoxarifado não encontrado")
   }
 
+  // Regra: não faz sentido inativar um almoxarifado que ainda tem estoque.
+  // O saldo precisa ser zerado (consumo/serviço ou transferência) antes.
+  const produtosComSaldo = await almoxarifadoRepo.contarProdutosComSaldo(id)
+  if (produtosComSaldo > 0) {
+    const erro = new Error(
+      `Não é possível inativar: o almoxarifado ainda tem ${produtosComSaldo} ` +
+      `produto(s) com saldo em estoque. Zere o estoque (por consumo/serviço ou ` +
+      `transferência) antes de inativar.`
+    )
+    erro.status = 409
+    throw erro
+  }
+
   return await almoxarifadoRepo.inativar(id)
 }

@@ -153,6 +153,20 @@ const aplicarEntradaCompra = async (codAlmoxarifadoDestino, itens, transaction) 
   }
 };
 
+// Reverter uma compra recebida retira estoque do almoxarifado de DESTINO. Não
+// faz sentido movimentar um almoxarifado inativo, então bloqueia a
+// edição/exclusão da compra recebida enquanto o destino estiver inativo.
+const garantirDestinoAtivoParaReverter = async (compra) => {
+  const destino = await compraRepo.buscarAlmoxarifado(compra.cod_almoxarifado_destino);
+  if (!destino || destino.ativo === 0) {
+    const erro = new Error(
+      "Não é possível reverter esta compra: o almoxarifado de destino está inativo. Reative-o antes de editar ou excluir a compra recebida.",
+    );
+    erro.status = 409;
+    throw erro;
+  }
+};
+
 // Reverte a entrada de estoque de uma compra (decrementa o destino). Reusa o
 // fluxo SAIDA_CONSUMO, que valida se ainda há saldo suficiente para reverter.
 const reverterEntradaCompra = async (compra, transaction) => {
@@ -267,6 +281,11 @@ export const editarCompra = async (id, dados, escopo = null) => {
   // Enquanto PENDENTE, a edição apenas atualiza os dados do pedido.
   const jaRecebida = compraAtual.status === "RECEBIDO";
 
+  // Editar uma compra recebida reverte a entrada no destino — exige-o ativo.
+  if (jaRecebida) {
+    await garantirDestinoAtivoParaReverter(compraAtual);
+  }
+
   return await db.sequelize.transaction(async (t) => {
     if (jaRecebida) {
       // Reverte a entrada antiga e reaplica a nova, mantendo o estoque coerente.
@@ -292,6 +311,10 @@ export const excluirCompra = async (id, escopo = null) => {
   // recebida (RECEBIDO). Uma compra PENDENTE nunca movimentou estoque, então é
   // só removê-la. Se o saldo já tiver sido consumido, a reversão falha com
   // "Saldo insuficiente" — protegendo a integridade.
+  if (compra.status === "RECEBIDO") {
+    await garantirDestinoAtivoParaReverter(compra);
+  }
+
   return await db.sequelize.transaction(async (t) => {
     if (compra.status === "RECEBIDO") {
       await reverterEntradaCompra(compra, t);
