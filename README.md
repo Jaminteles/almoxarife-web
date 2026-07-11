@@ -1,10 +1,12 @@
 # Almoxarifado GILFER — Sistema Web de Gestão de Almoxarifado
 
-Aplicação web full-stack para a **Construtora GILFER** (empresa fictícia, Bahia), desenvolvida para a disciplina de **Programação Web II** (2026.1). O sistema controla o estoque de materiais de construção distribuído entre múltiplos almoxarifados (canteiros de obra), cobrindo todo o ciclo de entrada e saída de mercadorias.
+**Link Funcional** = gilferalmoxarifado.com
+
+Aplicação web full-stack para a **Construtora GILFER**. O sistema controla o estoque de materiais de construção distribuído entre múltiplos almoxarifados (canteiros de obra), cobrindo todo o ciclo de entrada e saída de mercadorias.
 
 ## Sobre o projeto
 
-O sistema gerencia **seis módulos** com operações CRUD completas:
+O sistema gerencia **módulos** com operações CRUD completas:
 
 - **Fornecedores** — cadastro com CNPJ, e-mail, múltiplos telefones e endereços.
 - **Funcionários** — cadastro com CPF, cargo e credencial de acesso ao sistema.
@@ -12,6 +14,7 @@ O sistema gerencia **seis módulos** com operações CRUD completas:
 - **Almoxarifados** — depósitos por canteiro, com endereço e telefones.
 - **Compras** — pedidos de aquisição a fornecedores, com itens e nota fiscal; ao serem recebidas, dão entrada no estoque.
 - **Saídas** — movimentação por **consumo** ou **transferência** entre almoxarifados, com baixa/movimentação automática de estoque.
+- **Equipes** — Equipe de funcionários que atua na utilização do materiais.
 
 O saldo de estoque por almoxarifado é mantido de forma consistente por meio de transações e de validações de regra de negócio (saldo nunca negativo).
 
@@ -24,32 +27,6 @@ O saldo de estoque por almoxarifado é mantido de forma consistente por meio de 
 | Banco de dados | MySQL (driver mysql2) |
 
 **Arquitetura do back-end** (em `src/api`): separação em quatro camadas — **Routes → Controllers → Services → Repositories** — com os modelos Sequelize em `models/`.
-
-## Estrutura do projeto
-
-```
-almoxarife-web/
-├── Banco de Dados/
-│   ├── CREATE_DB_ALMOXARIFADO_GILFER_v7.sql   # script de criação do banco (versão atual)
-│   └── POPULA_DADOS_ALMOXARIFADO_GILFER.sql   # dados de exemplo (opcional)
-├── src/
-│   ├── api/                       # BACK-END (Node.js + Express + Sequelize)
-│   │   ├── routes/                # endpoints da API
-│   │   ├── controllers/           # tratamento de requisição/resposta
-│   │   ├── services/              # regra de negócio e transações
-│   │   ├── repositories/          # acesso ao banco via Sequelize
-│   │   ├── models/                # modelos e associações
-│   │   ├── utils/                 # helpers (ex.: movimentação de estoque)
-│   │   ├── app.js                 # configuração do Express e rotas
-│   │   └── server.js              # inicialização do servidor (porta 5000)
-│   ├── pages/                     # FRONT-END — telas por módulo
-│   │   ├── funcionarios/  fornecedores/  produtos/
-│   │   ├── almoxarifados/ compras/       saidas/
-│   ├── components/                # componentes reutilizáveis (ListTemplate, etc.)
-│   ├── layouts/                   # layout principal (AppBar + Drawer)
-│   └── App.js                     # rotas e tema do front-end
-└── package.json                   # dependências do front-end
-```
 
 ## Pré-requisitos
 
