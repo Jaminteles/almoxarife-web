@@ -21,10 +21,21 @@ import ItemSaidaRow from "../../components/ItemSaidaRow";
 import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = `${window.location.origin}/api`;
+
+// Data de hoje no formato aceito pelo <input type="date"> (aaaa-mm-dd).
+function hojeInputDate() {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 const formVazio = {
   cod_almoxarifado_origem: "",
   id_funcionario_responsavel: "",
   tipo_saida: "",
+  data_saida: hojeInputDate(),
   cod_almoxarifado_destino: "",
   id_equipe: "",
   observacao: ""
@@ -187,6 +198,7 @@ export default function SaidaForm() {
       cod_almoxarifado_origem: form.cod_almoxarifado_origem,
       id_funcionario_responsavel: form.id_funcionario_responsavel,
       tipo_saida: form.tipo_saida,
+      data_saida: form.data_saida,
       // Consumo nao tem destino -> envia null.
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
       id_equipe: form.id_equipe || null,
@@ -298,7 +310,20 @@ export default function SaidaForm() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={ehTransferencia ? 6 : 12}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="data_saida"
+                label="Data da saída"
+                type="date"
+                value={form.data_saida}
+                onChange={handleChange}
+                required
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
               <TextField
                 select
                 name="tipo_saida"

@@ -166,8 +166,7 @@ export default function Home() {
           dataRaw: c.data_compra,
           tipo: "Entrada",
           produto: nomesProdutos(c.itens),
-          qtd: somaQtd(c.itens),
-          resp: c.fornecedor?.razao_social || c.fornecedor?.nome_fantasia || "—"
+          observacao: c.observacao || "—"
         })
       );
       saidas.forEach((s) =>
@@ -175,8 +174,7 @@ export default function Home() {
           dataRaw: s.data_saida,
           tipo: "Saida",
           produto: nomesProdutos(s.itens),
-          qtd: somaQtd(s.itens),
-          resp: s.responsavel?.nome || "—"
+          observacao: s.observacao || "—"
         })
       );
       movs.sort((a, b) => new Date(b.dataRaw) - new Date(a.dataRaw));
@@ -187,10 +185,10 @@ export default function Home() {
   }, []);
 
   const fmt = (v) => (carregando ? "—" : Number(v).toLocaleString("pt-BR"));
-  const formatarDataHora = (valor) => {
+  const formatarData = (valor) => {
     if (!valor) return "—";
     const d = new Date(valor);
-    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("pt-BR");
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR");
   };
 
   return (
@@ -443,21 +441,16 @@ export default function Home() {
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                       {chipTipo(m.tipo)}
                       <Typography variant="caption" color="text.secondary">
-                        {formatarDataHora(m.dataRaw)}
+                        {formatarData(m.dataRaw)}
                       </Typography>
                     </Box>
                     <Divider sx={{ mb: 1 }} />
                     <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
                       {m.produto}
                     </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Qtd: {Number(m.qtd).toLocaleString("pt-BR")}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
-                        {m.resp}
-                      </Typography>
-                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, wordBreak: "break-word" }}>
+                      {m.observacao}
+                    </Typography>
                   </Paper>
                 ))}
               </Stack>
@@ -470,27 +463,25 @@ export default function Home() {
               <Table size="small" sx={{ minWidth: 640 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ color: "text.secondary" }}>Data / Hora</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Data</TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>Tipo</TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>Produto(s)</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>Quantidade</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>Responsável / Fornecedor</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>Observação</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {ultimasMovs.length ? (
                   ultimasMovs.map((m, i) => (
                     <TableRow key={i} hover>
-                      <TableCell>{formatarDataHora(m.dataRaw)}</TableCell>
+                      <TableCell>{formatarData(m.dataRaw)}</TableCell>
                       <TableCell>{chipTipo(m.tipo)}</TableCell>
                       <TableCell>{m.produto}</TableCell>
-                      <TableCell>{Number(m.qtd).toLocaleString("pt-BR")}</TableCell>
-                      <TableCell>{m.resp}</TableCell>
+                      <TableCell>{m.observacao}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 5, color: "text.secondary" }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 5, color: "text.secondary" }}>
                       {carregando ? "Carregando..." : "Nenhuma movimentação registrada."}
                     </TableCell>
                   </TableRow>

@@ -5,9 +5,9 @@
  *   - CONSUMO        → material sai do almoxarifado (sem destino)
  *   - TRANSFERENCIA  → vai para outro almoxarifado (cod_almoxarifado_destino)
  *
- * `data_saida` funciona como data de criação do registro, então mapeamos
- * como createdAt e desligamos o updatedAt (o SQL não tem coluna de update).
- * Os itens ficam em Saida_Item (ver saida-item.model.js).
+ * `data_saida` é a data da saída, informada pelo usuário no cadastro (não é
+ * mais um timestamp automático). Segue o mesmo padrão de `data_compra` em
+ * Compra. Os itens ficam em Saida_Item (ver saida-item.model.js).
  *
  * @param {import("sequelize").Sequelize} sequelize
  * @param {import("sequelize").DataTypes} DataTypes
@@ -45,15 +45,19 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null
     },
+    // Data da saída, informada pelo usuário. O MySQL mantém o
+    // DEFAULT CURRENT_TIMESTAMP como fallback caso nada seja enviado.
+    data_saida: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
     observacao: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     tableName: "Saida",
-    timestamps: true,
-    createdAt: "data_saida",
-    updatedAt: false,
+    timestamps: false,
     charset: "utf8mb4",
     validate: {
       destinoDiferenteDaOrigem() {

@@ -24,6 +24,17 @@ const API_URL = `${window.location.origin}/api`;
 
 const itemVazio = { id_produto: "", quantidade: "" };
 
+// Converte a data vinda da API para o formato do <input type="date"> (aaaa-mm-dd).
+function toInputDate(valor) {
+  if (!valor) return "";
+  const d = new Date(valor);
+  if (Number.isNaN(d.getTime())) return "";
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 export default function SaidaEdit() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -39,6 +50,7 @@ export default function SaidaEdit() {
     cod_almoxarifado_origem: "",
     id_funcionario_responsavel: "",
     tipo_saida: "",
+    data_saida: "",
     cod_almoxarifado_destino: "",
     id_equipe: "",
     observacao: ""
@@ -81,6 +93,7 @@ export default function SaidaEdit() {
             cod_almoxarifado_origem: s.cod_almoxarifado_origem ?? "",
             id_funcionario_responsavel: s.id_funcionario_responsavel ?? "",
             tipo_saida: s.tipo_saida ?? "",
+            data_saida: toInputDate(s.data_saida),
             cod_almoxarifado_destino: s.cod_almoxarifado_destino ?? "",
             id_equipe: s.id_equipe ?? "",
             observacao: s.observacao ?? ""
@@ -159,6 +172,7 @@ export default function SaidaEdit() {
       cod_almoxarifado_origem: form.cod_almoxarifado_origem,
       id_funcionario_responsavel: form.id_funcionario_responsavel,
       tipo_saida: form.tipo_saida,
+      data_saida: form.data_saida,
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
       id_equipe: form.id_equipe || null,
       observacao: form.observacao,
@@ -265,7 +279,20 @@ export default function SaidaEdit() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={ehTransferencia ? 6 : 12}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="data_saida"
+                label="Data da saída"
+                type="date"
+                value={form.data_saida}
+                onChange={handleChange}
+                required
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
               <TextField
                 select
                 name="tipo_saida"

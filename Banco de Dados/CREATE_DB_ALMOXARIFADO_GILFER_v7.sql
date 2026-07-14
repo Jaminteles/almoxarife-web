@@ -320,7 +320,7 @@ CREATE TABLE Saida (
     -- Equipe que realizou a saida (opcional).
     id_equipe INT UNSIGNED DEFAULT NULL,
 
-    -- Auditoria
+    -- Data da saída (informada pelo usuário no cadastro; CURRENT_TIMESTAMP como fallback)
     data_saida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     observacao TEXT,
 

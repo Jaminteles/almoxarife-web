@@ -65,6 +65,15 @@ const montarDadosSaida = (dados) => {
     throw new Error("Tipo de saída inválido");
   }
 
+  if (!dados.data_saida) {
+    throw new Error("A data da saída é obrigatória");
+  }
+
+  const dataSaida = new Date(dados.data_saida);
+  if (Number.isNaN(dataSaida.getTime())) {
+    throw new Error("Data da saída inválida");
+  }
+
   const origem = Number(dados.cod_almoxarifado_origem);
   const destino =
     dados.tipo_saida === "TRANSFERENCIA"
@@ -85,6 +94,7 @@ const montarDadosSaida = (dados) => {
     cod_almoxarifado_origem: origem,
     id_funcionario_responsavel: dados.id_funcionario_responsavel,
     tipo_saida: dados.tipo_saida,
+    data_saida: dataSaida,
     cod_almoxarifado_destino: destino,
     observacao: dados.observacao || null,
     // Equipe que realizou a saída é opcional ("" / 0 → sem equipe).
