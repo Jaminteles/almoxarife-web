@@ -9,6 +9,9 @@
  * mais um timestamp automático). Segue o mesmo padrão de `data_compra` em
  * Compra. Os itens ficam em Saida_Item (ver saida-item.model.js).
  *
+ * `aplicacao` é um texto livre descrevendo onde/para que os materiais da
+ * saída serão usados. É um campo da saída como um todo (não por item).
+ *
  * @param {import("sequelize").Sequelize} sequelize
  * @param {import("sequelize").DataTypes} DataTypes
  */
@@ -50,6 +53,12 @@ export default (sequelize, DataTypes) => {
     data_saida: {
       type: DataTypes.DATE,
       allowNull: false
+    },
+    // Texto livre: onde/para que os materiais dessa saída serão usados.
+    // Referente à saída inteira, não a um item específico.
+    aplicacao: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     observacao: {
       type: DataTypes.TEXT,

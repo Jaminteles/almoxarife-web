@@ -32,7 +32,8 @@ const formVazio = {
   data_compra: ""
 };
 
-const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "" };
+// automatico começa false: por padrão o usuário digita o valor manualmente.
+const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "", automatico: false };
 
 export default function CompraForm() {
   const navigate = useNavigate();
@@ -118,9 +119,10 @@ export default function CompraForm() {
     setItens((prev) => {
       const novos = [...prev];
       novos[index] = { ...novos[index], [campo]: valor };
-      // Ao escolher o produto, preenche o valor unitário automaticamente com o
-      // preço de custo do produto (o usuário não define o valor manualmente).
-      if (campo === "id_produto") {
+      // Só sobrescreve o valor unitário automaticamente se o modo
+      // "automático" desse item estiver ligado. Desligado (padrão), o
+      // usuário digita o valor livremente mesmo trocando de produto.
+      if (campo === "id_produto" && novos[index].automatico) {
         const produto = produtos.find(
           (p) => Number(p.id_produto) === Number(valor)
         );
@@ -129,6 +131,26 @@ export default function CompraForm() {
       return novos;
     });
   }
+
+  // Liga/desliga o preenchimento automático do valor unitário para um item.
+  // Ao ligar, já puxa o preço de custo do produto selecionado (se houver).
+  function toggleAutomatico(index) {
+    setItens((prev) => {
+      const novos = [...prev];
+      const ligando = !novos[index].automatico;
+      novos[index] = { ...novos[index], automatico: ligando };
+
+      if (ligando) {
+        const produto = produtos.find(
+          (p) => Number(p.id_produto) === Number(novos[index].id_produto)
+        );
+        novos[index].valor_unitario = produto ? Number(produto.preco_custo) : "";
+      }
+
+      return novos;
+    });
+  }
+
   function adicionarItem() {
     setItens((prev) => [...prev, { ...itemVazio }]);
   }
@@ -334,7 +356,8 @@ export default function CompraForm() {
                 onChange={handleItemChange}
                 onRemove={removerItem}
                 disableRemove={itens.length === 1}
-                valorReadOnly
+                valorReadOnly={item.automatico}
+                onToggleAutomatico={toggleAutomatico}
               />
             ))}
           </Stack>

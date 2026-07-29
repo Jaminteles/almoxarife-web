@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Container } from "@mui/material"
+import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Chip, Container } from "@mui/material"
 import FormPageHeader from "../../components/FormPageHeader"
 import BackButton from "../../components/BackButton"
 
@@ -34,10 +34,29 @@ const ProdutoEdit = () => {
         estoque_maximo: ""
     })
 
+    // Lista de fornecedores vinda da API e os IDs selecionados no multi-select.
+    const [fornecedores, setFornecedores] = useState([])
+    const [fornecedoresSelecionados, setFornecedoresSelecionados] = useState([])
+
     useEffect(() => {
+        carregarFornecedores()
         carregarProduto()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
+
+    // Busca a lista completa de fornecedores para popular o multi-select.
+    const carregarFornecedores = async () => {
+        try {
+            const response = await fetch(`${API_URL}/fornecedores`)
+            const result = await response.json()
+            // O controller responde { sucesso, dados, total }.
+            if (result.sucesso) {
+                setFornecedores(result.dados)
+            }
+        } catch (error) {
+            console.error("Erro ao carregar fornecedores:", error)
+        }
+    }
 
     const carregarProduto = async () => {
         try {
@@ -67,6 +86,14 @@ const ProdutoEdit = () => {
                 estoque_minimo: data.estoque_minimo ?? 0,
                 estoque_maximo: data.estoque_maximo ?? ""
             })
+
+            // Os fornecedores já vinculados ao produto vêm dentro de
+            // `data.fornecedores` (relação Produto_Fornecedor). Extraímos
+            // só os IDs para preencher o multi-select.
+            const idsVinculados = (data.fornecedores || []).map(
+                (f) => f.id_fornecedor ?? f.fornecedor?.id_fornecedor ?? f
+            )
+            setFornecedoresSelecionados(idsVinculados)
         } catch (error) {
             console.error("Erro ao buscar produto:", error)
             setErro(
@@ -96,6 +123,11 @@ const ProdutoEdit = () => {
             return
         }
 
+        if (fornecedoresSelecionados.length === 0) {
+            setErro("Selecione pelo menos um fornecedor.")
+            return
+        }
+
         try {
             setLoading(true)
             // Payload em snake_case, batendo com o model do backend.
@@ -105,7 +137,8 @@ const ProdutoEdit = () => {
                 preco_custo: Number(formData.preco_custo),
                 unidade_medida: formData.unidade_medida,
                 estoque_minimo: min,
-                estoque_maximo: max
+                estoque_maximo: max,
+                fornecedores: fornecedoresSelecionados
             }
 
             const response = await fetch(`${API_URL}/produtos/${id}`, {
@@ -228,6 +261,51 @@ const ProdutoEdit = () => {
                                 onChange={handleChange}
                                 inputProps={{ min: 0 }}
                             />
+                        </Grid>
+
+                        {/* Fornecedores (multi-select), mesmo padrão do cadastro. */}
+                        <Grid item xs={12}>
+                            <TextField
+                                select
+                                fullWidth
+                                required
+                                name="fornecedores"
+                                value={fornecedoresSelecionados}
+                                onChange={(e) => setFornecedoresSelecionados(e.target.value)}
+                                SelectProps={{
+                                    multiple: true,
+                                    displayEmpty: true,
+                                    renderValue: (selecionados) => {
+                                        if (!selecionados || selecionados.length === 0) {
+                                            return (
+                                                <Box sx={{ color: "text.disabled" }}>
+                                                    Fornecedores
+                                                </Box>
+                                            )
+                                        }
+                                        return (
+                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                {selecionados.map((id) => {
+                                                    const f = fornecedores.find((x) => x.id_fornecedor === id)
+                                                    return (
+                                                        <Chip
+                                                            key={id}
+                                                            size="small"
+                                                            label={f ? f.razao_social : id}
+                                                        />
+                                                    )
+                                                })}
+                                            </Box>
+                                        )
+                                    }
+                                }}
+                            >
+                                {fornecedores.map((f) => (
+                                    <MenuItem key={f.id_fornecedor} value={f.id_fornecedor}>
+                                        {f.razao_social}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
 
                         <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
