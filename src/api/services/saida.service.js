@@ -96,6 +96,8 @@ const montarDadosSaida = (dados) => {
     tipo_saida: dados.tipo_saida,
     data_saida: dataSaida,
     cod_almoxarifado_destino: destino,
+    // Texto livre referente à saída inteira (não por item).
+    aplicacao: dados.aplicacao || null,
     observacao: dados.observacao || null,
     // Equipe que realizou a saída é opcional ("" / 0 → sem equipe).
     id_equipe: dados.id_equipe || null,

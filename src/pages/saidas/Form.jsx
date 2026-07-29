@@ -38,6 +38,7 @@ const formVazio = {
   data_saida: hojeInputDate(),
   cod_almoxarifado_destino: "",
   id_equipe: "",
+  aplicacao: "",
   observacao: ""
 };
 
@@ -202,6 +203,7 @@ export default function SaidaForm() {
       // Consumo nao tem destino -> envia null.
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
       id_equipe: form.id_equipe || null,
+      aplicacao: form.aplicacao,
       observacao: form.observacao,
       itens: itensValidos.map((it) => ({
         id_produto: it.id_produto,
@@ -386,6 +388,17 @@ export default function SaidaForm() {
               </TextField>
             </Grid>
 
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="aplicacao"
+                label="Aplicação"
+                value={form.aplicacao}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Onde/para que os materiais serão usados"
+              />
+            </Grid>
+
             <Grid item xs={12}>
               <TextField
                 name="observacao"
@@ -445,3 +458,4 @@ export default function SaidaForm() {
     </Container>
   );
 }
+  

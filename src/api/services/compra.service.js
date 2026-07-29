@@ -84,8 +84,26 @@ const montarDadosCompra = (dados) => {
     );
   }
 
-  const dataCompra = new Date(dados.data_compra);
-  if (Number.isNaN(dataCompra.getTime())) {
+  // ATENÇÃO: new Date("YYYY-MM-DD") interpreta a string como UTC meia-noite,
+  // não como horário local. Em fusos negativos (ex: Brasil, UTC-3), isso faz
+  // a data "voltar" um dia ao ser salva ou reformatada. Por isso construímos
+  // o Date a partir dos componentes ano/mês/dia: nesse formato o construtor
+  // trata os valores como horário LOCAL, evitando o shift.
+  const [anoStr, mesStr, diaStr] = String(dados.data_compra).split("-");
+  const ano = Number(anoStr);
+  const mes = Number(mesStr);
+  const dia = Number(diaStr);
+  const dataCompra = new Date(ano, mes - 1, dia);
+
+  if (
+    !anoStr ||
+    !mesStr ||
+    !diaStr ||
+    Number.isNaN(dataCompra.getTime()) ||
+    dataCompra.getFullYear() !== ano ||
+    dataCompra.getMonth() !== mes - 1 ||
+    dataCompra.getDate() !== dia
+  ) {
     throw new Error(
       "Formato de dado inválido. Corrija as informações e tente novamente.",
     );
@@ -260,7 +278,15 @@ export const editarCompra = async (id, dados, escopo = null) => {
         : dados.cod_almoxarifado_destino || compraAtual.cod_almoxarifado_destino,
     numero_nota_fiscal:
       dados.numero_nota_fiscal || compraAtual.numero_nota_fiscal,
-    data_compra: dados.data_compra || compraAtual.data_compra,
+    // Mesmo cuidado de montarDadosCompra: se veio uma data nova (string
+    // "YYYY-MM-DD"), construímos o Date por componentes locais para não
+    // sofrer o shift de UTC. Se não veio, mantém a data já salva.
+    data_compra: dados.data_compra
+      ? (() => {
+          const [anoStr, mesStr, diaStr] = String(dados.data_compra).split("-");
+          return new Date(Number(anoStr), Number(mesStr) - 1, Number(diaStr));
+        })()
+      : compraAtual.data_compra,
     // Editar NÃO altera o status: uma compra PENDENTE continua pendente e uma
     // RECEBIDO continua recebida (o estoque é reajustado abaixo, se preciso).
     status: compraAtual.status,

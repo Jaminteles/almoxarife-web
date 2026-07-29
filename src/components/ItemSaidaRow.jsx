@@ -1,9 +1,10 @@
-import { Stack, TextField, MenuItem, IconButton } from "@mui/material";
+import { Stack, TextField, Autocomplete, IconButton } from "@mui/material";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { passoQuantidade, ehUnidadeInteira } from "../utils/quantidade";
 
 /**
- * Uma linha de item da saida: seletor de Produto + Quantidade + botao remover.
+ * Uma linha de item da saida: seletor de Produto (com busca) + Quantidade +
+ * botao remover.
  *
  * Por que existe (mesma logica do EnderecoFields):
  *   tanto Form quanto Edit de Saida renderizam essa mesma linha. Extrair
@@ -33,27 +34,33 @@ export default function ItemSaidaRow({
   const unidade = selecionado?.unidade_medida;
   const passo = passoQuantidade(unidade);
 
+  // Rótulo com o saldo junto, igual ao que os MenuItem mostravam antes —
+  // usado tanto no texto exibido quanto na busca do Autocomplete.
+  const rotuloProduto = (p) =>
+    `${p?.nome || ""}${p?.disponivel !== undefined ? ` (disp.: ${p.disponivel})` : ""}`;
+
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="flex-start">
-      <TextField
-        select
-        size="small"
-        value={item.id_produto}
-        onChange={(e) => onChange(index, "id_produto", e.target.value)}
-        required
-        SelectProps={{ displayEmpty: true }}
+      {/* Autocomplete: digita e filtra pelo nome do produto, em vez de rolar
+          uma lista longa de MenuItem. selecionado pode ser undefined
+          (nenhum produto escolhido ainda), o que o Autocomplete trata como
+          "sem valor" normalmente. */}
+      <Autocomplete
+        options={produtos}
+        getOptionLabel={rotuloProduto}
+        isOptionEqualToValue={(opcao, valor) =>
+          Number(opcao.id_produto) === Number(valor?.id_produto)
+        }
+        value={selecionado || null}
+        onChange={(_, novoValor) =>
+          onChange(index, "id_produto", novoValor ? novoValor.id_produto : "")
+        }
+        noOptionsText="Nenhum produto encontrado"
         sx={{ width: { xs: "100%", sm: "60%" } }}
-      >
-        <MenuItem value="" disabled>
-          Produto
-        </MenuItem>
-        {produtos.map((p) => (
-          <MenuItem key={p.id_produto} value={p.id_produto}>
-            {p.nome}
-            {p.disponivel !== undefined ? ` (disp.: ${p.disponivel})` : ""}
-          </MenuItem>
-        ))}
-      </TextField>
+        renderInput={(params) => (
+          <TextField {...params} size="small" label="Produto" required />
+        )}
+      />
 
       <TextField
         size="small"

@@ -26,7 +26,7 @@ import solicitacaoCadastroModel from "./solicitacao-cadastro.model.js"
 const sequelize = new Sequelize(
   process.env.DB_NAME || "bd_almoxarifado",
   process.env.DB_USER || "root",
-  process.env.DB_PASSWORD || "desus",
+  process.env.DB_PASSWORD || "55042994",
   {
   host: process.env.DB_HOST || "localhost",
   port: Number(process.env.DB_PORT) || 3306,

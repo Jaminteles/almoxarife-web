@@ -1,23 +1,26 @@
 // src/components/ItemCompraRow.jsx
-import { Stack, TextField, MenuItem, IconButton } from "@mui/material";
+import { Stack, TextField, Autocomplete, IconButton, Switch, FormControlLabel } from "@mui/material";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { passoQuantidade, ehUnidadeInteira } from "../utils/quantidade";
 
 /**
  * Uma linha de item da compra: seletor de Produto + Quantidade + Valor unitário
- * + botão remover.
+ * + switch "automático" + botão remover.
  *
  * Por que existe (mesma lógica do ItemSaidaRow):
  *   tanto Form quanto Edit de Compra renderizam essa mesma linha. Extrair
  *   evita duplicar os campos nos dois arquivos — manutenção em 1 lugar só.
  *
  * Props:
- *   - item:          { id_produto, quantidade, valor_unitario }
- *   - index:         posição no array de itens
- *   - produtos:      lista para o select [{ id_produto, nome }]
- *   - onChange:      callback (index, campo, valor)
- *   - onRemove:      callback (index)
- *   - disableRemove: desabilita o botão quando há só 1 item
+ *   - item:              { id_produto, quantidade, valor_unitario, automatico }
+ *   - index:              posição no array de itens
+ *   - produtos:           lista para o select [{ id_produto, nome }]
+ *   - onChange:           callback (index, campo, valor)
+ *   - onRemove:           callback (index)
+ *   - disableRemove:      desabilita o botão quando há só 1 item
+ *   - onToggleAutomatico: callback (index) — liga/desliga o preenchimento
+ *     automático do valor unitário. Se omitido, o switch não é exibido e o
+ *     campo de valor se comporta como antes (controlado só por valorReadOnly).
  */
 export default function ItemCompraRow({
   item,
@@ -26,7 +29,8 @@ export default function ItemCompraRow({
   onChange,
   onRemove,
   disableRemove,
-  valorReadOnly = false
+  valorReadOnly = false,
+  onToggleAutomatico
 }) {
   const selecionado = produtos.find(
     (p) => Number(p.id_produto) === Number(item.id_produto)
@@ -39,25 +43,29 @@ export default function ItemCompraRow({
       direction={{ xs: "column", sm: "row" }}
       spacing={1}
       alignItems="center"
+      flexWrap="wrap"
+      useFlexGap
     >
-      <TextField
-        select
-        size="small"
-        value={item.id_produto}
-        onChange={(e) => onChange(index, "id_produto", e.target.value)}
-        required
-        SelectProps={{ displayEmpty: true }}
-        sx={{ width: { xs: "100%", sm: "45%" } }}
-      >
-        <MenuItem value="" disabled>
-          Selecione
-        </MenuItem>
-        {produtos.map((p) => (
-          <MenuItem key={p.id_produto} value={p.id_produto}>
-            {p.nome}
-          </MenuItem>
-        ))}
-      </TextField>
+      {/* Autocomplete: digita e filtra pelo nome do produto, em vez de rolar
+          uma lista longa de MenuItem. selecionado pode ser undefined
+          (nenhum produto escolhido ainda), o que o Autocomplete trata como
+          "sem valor" normalmente. */}
+      <Autocomplete
+        options={produtos}
+        getOptionLabel={(p) => p?.nome || ""}
+        isOptionEqualToValue={(opcao, valor) =>
+          Number(opcao.id_produto) === Number(valor?.id_produto)
+        }
+        value={selecionado || null}
+        onChange={(_, novoValor) =>
+          onChange(index, "id_produto", novoValor ? novoValor.id_produto : "")
+        }
+        noOptionsText="Nenhum produto encontrado"
+        sx={{ width: { xs: "100%", sm: "35%" } }}
+        renderInput={(params) => (
+          <TextField {...params} size="small" label="Produto" required />
+        )}
+      />
 
       <TextField
         size="small"
@@ -74,7 +82,7 @@ export default function ItemCompraRow({
             ? `${unidade}${ehUnidadeInteira(unidade) ? " (inteiro)" : ""}`
             : undefined
         }
-        sx={{ width: { xs: "100%", sm: "25%" } }}
+        sx={{ width: { xs: "100%", sm: "18%" } }}
       />
 
       <TextField
@@ -88,16 +96,32 @@ export default function ItemCompraRow({
         // custo do produto) e o usuário não pode editá-lo.
         InputProps={{ readOnly: valorReadOnly }}
         disabled={valorReadOnly}
-        helperText={valorReadOnly ? "Automático" : undefined}
         // Enviado como valor_unitario; o model mapeia p/ preco_unitario_acordado.
         inputProps={{ min: 0, step: "0.01" }}
-        sx={{ width: { xs: "100%", sm: "25%" } }}
+        sx={{ width: { xs: "100%", sm: "18%" } }}
       />
+
+      {/* Só aparece se o form pai passar o callback — mantém o componente
+          compatível com quem ainda não usa esse recurso (ex: Edit). */}
+      {onToggleAutomatico && (
+        <FormControlLabel
+          sx={{ ml: 0, flexShrink: 0, whiteSpace: "nowrap" }}
+          control={
+            <Switch
+              size="small"
+              checked={!!item.automatico}
+              onChange={() => onToggleAutomatico(index)}
+            />
+          }
+          label="Automático"
+        />
+      )}
 
       <IconButton
         color="error"
         onClick={() => onRemove(index)}
         disabled={disableRemove}
+        sx={{ flexShrink: 0 }}
       >
         <RemoveCircleOutlineIcon />
       </IconButton>

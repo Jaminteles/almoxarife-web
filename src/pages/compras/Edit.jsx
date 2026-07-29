@@ -31,7 +31,8 @@ const formVazio = {
   status: "PENDENTE"
 };
 
-const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "" };
+// automatico começa false: por padrão o valor unitário fica editável.
+const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "", automatico: false };
 
 export default function CompraEdit() {
   const { id } = useParams();
@@ -103,13 +104,16 @@ export default function CompraEdit() {
             status: c.status ?? "PENDENTE"
           });
           // itens vem como [{ id_produto, quantidade, valor_unitario }].
-          // Garante ao menos 1 linha.
+          // Garante ao menos 1 linha. automatico começa false: o valor já
+          // salvo é o que o usuário definiu, então não sobrescrevemos com
+          // o preço de custo automaticamente ao carregar.
           setItens(
             c.itens?.length
               ? c.itens.map((it) => ({
                   id_produto: it.id_produto ?? "",
                   quantidade: String(it.quantidade ?? ""),
-                  valor_unitario: String(it.valor_unitario ?? "")
+                  valor_unitario: String(it.valor_unitario ?? ""),
+                  automatico: false
                 }))
               : [{ ...itemVazio }]
           );
@@ -153,8 +157,10 @@ export default function CompraEdit() {
     setItens((prev) => {
       const novos = [...prev];
       novos[index] = { ...novos[index], [campo]: valor };
-      // Valor unitário é automático: preço de custo do produto selecionado.
-      if (campo === "id_produto") {
+      // Só sobrescreve o valor unitário automaticamente se o modo
+      // "automático" desse item estiver ligado. Desligado (padrão), o
+      // usuário digita o valor livremente mesmo trocando de produto.
+      if (campo === "id_produto" && novos[index].automatico) {
         const produto = produtos.find(
           (p) => Number(p.id_produto) === Number(valor)
         );
@@ -163,6 +169,26 @@ export default function CompraEdit() {
       return novos;
     });
   }
+
+  // Liga/desliga o preenchimento automático do valor unitário para um item.
+  // Ao ligar, já puxa o preço de custo do produto selecionado (se houver).
+  function toggleAutomatico(index) {
+    setItens((prev) => {
+      const novos = [...prev];
+      const ligando = !novos[index].automatico;
+      novos[index] = { ...novos[index], automatico: ligando };
+
+      if (ligando) {
+        const produto = produtos.find(
+          (p) => Number(p.id_produto) === Number(novos[index].id_produto)
+        );
+        novos[index].valor_unitario = produto ? Number(produto.preco_custo) : "";
+      }
+
+      return novos;
+    });
+  }
+
   function adicionarItem() {
     setItens((prev) => [...prev, { ...itemVazio }]);
   }
@@ -367,7 +393,8 @@ export default function CompraEdit() {
                 onChange={handleItemChange}
                 onRemove={removerItem}
                 disableRemove={itens.length === 1}
-                valorReadOnly
+                valorReadOnly={item.automatico}
+                onToggleAutomatico={toggleAutomatico}
               />
             ))}
           </Stack>
