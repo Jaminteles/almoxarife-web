@@ -322,6 +322,7 @@ CREATE TABLE Saida (
 
     -- Data da saída (informada pelo usuário no cadastro; CURRENT_TIMESTAMP como fallback)
     data_saida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    aplicacao VARCHAR(255) NULL,
     observacao TEXT,
 
     CONSTRAINT fk_saida_origem

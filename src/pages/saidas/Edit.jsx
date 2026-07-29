@@ -53,6 +53,9 @@ export default function SaidaEdit() {
     data_saida: "",
     cod_almoxarifado_destino: "",
     id_equipe: "",
+    // Texto livre referente à saída inteira — mesmo campo já existente no
+    // Form.jsx (cadastro) e no backend (Saida.aplicacao). Faltava aqui.
+    aplicacao: "",
     observacao: ""
   });
   const [itens, setItens] = useState([{ ...itemVazio }]);
@@ -96,6 +99,7 @@ export default function SaidaEdit() {
             data_saida: toInputDate(s.data_saida),
             cod_almoxarifado_destino: s.cod_almoxarifado_destino ?? "",
             id_equipe: s.id_equipe ?? "",
+            aplicacao: s.aplicacao ?? "",
             observacao: s.observacao ?? ""
           });
           // itens vem como [{ id_produto, quantidade }]. Garante ao menos 1 linha.
@@ -175,6 +179,7 @@ export default function SaidaEdit() {
       data_saida: form.data_saida,
       cod_almoxarifado_destino: ehTransferencia ? form.cod_almoxarifado_destino : null,
       id_equipe: form.id_equipe || null,
+      aplicacao: form.aplicacao,
       observacao: form.observacao,
       itens: itensValidos.map((it) => ({
         id_produto: it.id_produto,
@@ -352,6 +357,17 @@ export default function SaidaEdit() {
                   </MenuItem>
                 ))}
               </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="aplicacao"
+                label="Aplicação"
+                value={form.aplicacao}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Onde/para que os materiais serão usados"
+              />
             </Grid>
 
             <Grid item xs={12}>
