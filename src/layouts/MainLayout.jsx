@@ -31,6 +31,8 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import UploadIcon from "@mui/icons-material/Upload";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import HandymanIcon from "@mui/icons-material/Handyman";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -68,9 +70,11 @@ const menuItems = [
   { label: "Funcionários",  icon: <PeopleIcon />,      path: "/funcionarios",  enabled: true, modulo: "funcionarios" },
   { label: "Equipes",       icon: <GroupsIcon />,      path: "/equipes",       enabled: true, modulo: "equipes" },
   { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true, modulo: "fornecedores" },
-  { label: "Produtos / Itens", icon: <Inventory2Icon />, path: "/produtos",   enabled: true, modulo: "produtos" },
+  { label: "Produtos/Serviços", icon: <Inventory2Icon />, path: "/produtos",   enabled: true, modulo: "produtos" },
   { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true, modulo: "almoxarifados" },
   { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",       enabled: true, modulo: "compras" },
+  { label: "Serviços",      icon: <HandymanIcon />,     path: "/servicos",      enabled: true, modulo: "servicos" },
+  { label: "Gastos por Aplicação", icon: <AssessmentIcon />, path: "/gastos-aplicacoes", enabled: true, modulo: "gastos_aplicacoes" },
   { label: "Saídas",        icon: <UploadIcon />,      path: "/saidas",        enabled: true, modulo: "saidas" },
   // Visível apenas para o CENTRAL (fila de solicitações de cadastro).
   { label: "Solicitações",  icon: <HowToRegIcon />,    path: "/solicitacoes",  enabled: true, centralOnly: true }

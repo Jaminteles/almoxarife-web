@@ -24,6 +24,8 @@ export const PERMISSOES = {
   almoxarifados: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE"] },
   compras:       { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"],            editors: ["CENTRAL", "ALMOXARIFE"] },
   saidas:        { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE", "AUXILIAR"] },
+  servicos:      { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE", "AUXILIAR"] },
+  gastos_aplicacoes: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: [] },
   // Módulo de apoio: o combo de cargos é lido por quem cadastra funcionários.
   cargos:        { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL"] },
   equipes:       { viewers: ["CENTRAL", "ALMOXARIFE"],                         editors: ["CENTRAL", "ALMOXARIFE"] }

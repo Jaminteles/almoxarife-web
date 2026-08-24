@@ -9,6 +9,8 @@ import almoxarifadoRoutes from "./routes/almoxarifado.routes.js"
 import produtoRoutes from "./routes/produto.routes.js"
 import saidaRoutes from "./routes/saida.routes.js"
 import compraRoutes from "./routes/compra.routes.js"
+import servicoRoutes from "./routes/servico.routes.js"
+import gastoAplicacaoRoutes from "./routes/gasto-aplicacao.routes.js"
 import lookupRoutes from "./routes/lookup.routes.js"
 import solicitacaoRoutes from "./routes/solicitacao.routes.js"
 import { autenticar, autorizarModulo } from "./middlewares/auth.middleware.js"
@@ -43,5 +45,7 @@ app.use("/api/almoxarifados", autenticar, autorizarModulo("almoxarifados"), almo
 app.use("/api/produtos",      autenticar, autorizarModulo("produtos"),      produtoRoutes)
 app.use("/api/saidas",        autenticar, autorizarModulo("saidas"),        saidaRoutes)
 app.use("/api/compras",       autenticar, autorizarModulo("compras"),       compraRoutes)
+app.use("/api/servicos",      autenticar, autorizarModulo("servicos"),      servicoRoutes)
+app.use("/api/gastos-aplicacoes", autenticar, autorizarModulo("gastos_aplicacoes"), gastoAplicacaoRoutes)
 
 export default app

@@ -1,0 +1,7 @@
+import * as service from "../services/servico.service.js";
+
+export const listar = async (req, res) => { try { const dados = await service.listarServicos(req.query); res.json({ sucesso: true, dados, total: dados.length }); } catch (erro) { res.status(400).json({ sucesso: false, erro: erro.message }); } };
+export const buscarPorId = async (req, res) => { try { res.json({ sucesso: true, dados: await service.buscarServicoPorId(req.params.id) }); } catch (erro) { res.status(404).json({ sucesso: false, erro: erro.message }); } };
+export const cadastrar = async (req, res) => { try { const dados = await service.cadastrarServico(req.body); res.status(201).json({ sucesso: true, mensagem: "Serviço registrado com sucesso", dados }); } catch (erro) { res.status(400).json({ sucesso: false, erro: erro.message }); } };
+export const editar = async (req, res) => { try { const dados = await service.editarServico(req.params.id, req.body); res.json({ sucesso: true, mensagem: "Serviço atualizado com sucesso", dados }); } catch (erro) { res.status(erro.message === "Serviço não encontrado" ? 404 : 400).json({ sucesso: false, erro: erro.message }); } };
+export const excluir = async (req, res) => { try { await service.excluirServico(req.params.id); res.json({ sucesso: true, mensagem: "Serviço excluído com sucesso" }); } catch (erro) { res.status(erro.message === "Serviço não encontrado" ? 404 : 400).json({ sucesso: false, erro: erro.message }); } };

@@ -25,6 +25,8 @@ export const PERMISSOES = {
   almoxarifados: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE"] },
   compras:       { viewers: ["CENTRAL", "ALMOXARIFE", "CONSULTA"],             editors: ["CENTRAL", "ALMOXARIFE"] },
   saidas:        { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE", "AUXILIAR"] },
+  servicos:      { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE", "AUXILIAR"] },
+  gastos_aplicacoes: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: [] },
   equipes:       { viewers: ["CENTRAL", "ALMOXARIFE"],                         editors: ["CENTRAL", "ALMOXARIFE"] },
 };
 
