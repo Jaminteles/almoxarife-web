@@ -19,6 +19,8 @@ import saidaModel from "./saida.model.js"
 import saidaItemModel from "./saida-item.model.js"
 import compraModel from "./compra.model.js"
 import itemCompraModel from "./item-compra.model.js"
+import servicoModel from "./servico.model.js"
+import servicoItemModel from "./servico-item.model.js"
 import solicitacaoCadastroModel from "./solicitacao-cadastro.model.js"
 
 // ── Conexão com o banco ──
@@ -62,6 +64,8 @@ const db = {
   SaidaItem: saidaItemModel(sequelize, DataTypes),
   Compra: compraModel(sequelize, DataTypes),
   ItemCompra: itemCompraModel(sequelize, DataTypes),
+  Servico: servicoModel(sequelize, DataTypes),
+  ServicoItem: servicoItemModel(sequelize, DataTypes),
   SolicitacaoCadastro: solicitacaoCadastroModel(sequelize, DataTypes)
 }
 
@@ -167,6 +171,14 @@ db.Compra.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_destino", a
 db.Compra.hasMany(db.ItemCompra, { foreignKey: "id_compra", as: "itens", onDelete: "CASCADE" })
 db.ItemCompra.belongsTo(db.Compra, { foreignKey: "id_compra", as: "compra" })
 db.ItemCompra.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
+
+// Serviços: apenas registram custos de materiais fornecidos diretamente;
+// não possuem vínculo nem movimentam o estoque do almoxarifado.
+db.Servico.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
+db.Servico.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", as: "responsavel" })
+db.Servico.hasMany(db.ServicoItem, { foreignKey: "id_servico", as: "itens", onDelete: "CASCADE" })
+db.ServicoItem.belongsTo(db.Servico, { foreignKey: "id_servico", as: "servico" })
+db.ServicoItem.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
 
 // ── Exportar ──
 db.Sequelize = Sequelize

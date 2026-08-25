@@ -69,8 +69,25 @@ const montarDadosSaida = (dados) => {
     throw new Error("A data da saída é obrigatória");
   }
 
-  const dataSaida = new Date(dados.data_saida);
-  if (Number.isNaN(dataSaida.getTime())) {
+  // `new Date("AAAA-MM-DD")` interpreta a string como meia-noite em UTC.
+  // Em fusos negativos, como o do Brasil, isso pode deslocar a data para o
+  // dia anterior. Montamos a data pelos componentes locais para preservar
+  // exatamente o dia selecionado no formulário.
+  const [anoStr, mesStr, diaStr] = String(dados.data_saida).split("-");
+  const ano = Number(anoStr);
+  const mes = Number(mesStr);
+  const dia = Number(diaStr);
+  const dataSaida = new Date(ano, mes - 1, dia);
+
+  if (
+    !anoStr ||
+    !mesStr ||
+    !diaStr ||
+    Number.isNaN(dataSaida.getTime()) ||
+    dataSaida.getFullYear() !== ano ||
+    dataSaida.getMonth() !== mes - 1 ||
+    dataSaida.getDate() !== dia
+  ) {
     throw new Error("Data da saída inválida");
   }
 

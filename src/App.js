@@ -45,6 +45,10 @@ import SaidaEdit from "./pages/saidas/Edit";
 import ListCompras from './pages/compras/List';
 import FormCompras from './pages/compras/Form';
 import EditCompras from './pages/compras/Edit';
+import ServicosList from "./pages/servicos/List";
+import ServicoForm from "./pages/servicos/Form";
+import ServicoEdit from "./pages/servicos/Edit";
+import GastosAplicacoesList from "./pages/gastos-aplicacoes/List";
 
 // Produtos
 
@@ -129,6 +133,11 @@ function App() {
               <Route path="/compras" element={<RequireModule modulo="compras"><ListCompras /></RequireModule>} />
               <Route path="/compras/cadastro" element={<RequireModule modulo="compras" acao="editar"><FormCompras /></RequireModule>} />
               <Route path="/compras/:id/editar" element={<RequireModule modulo="compras" acao="editar"><EditCompras /></RequireModule>} />
+
+              <Route path="/servicos" element={<RequireModule modulo="servicos"><ServicosList /></RequireModule>} />
+              <Route path="/servicos/cadastro" element={<RequireModule modulo="servicos" acao="editar"><ServicoForm /></RequireModule>} />
+              <Route path="/servicos/:id/editar" element={<RequireModule modulo="servicos" acao="editar"><ServicoEdit /></RequireModule>} />
+              <Route path="/gastos-aplicacoes" element={<RequireModule modulo="gastos_aplicacoes"><GastosAplicacoesList /></RequireModule>} />
 
               {/*Rotas Produtos*/}
               <Route path="/produtos" element={<RequireModule modulo="produtos"><ProdutosList /></RequireModule>} />
