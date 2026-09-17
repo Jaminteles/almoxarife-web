@@ -1,10 +1,15 @@
 # Almoxarifado GILFER — Sistema Web de Gestão de Almoxarifado
 
-**Link Funcional** = gilferalmoxarifado.com
+![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB) ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white) ![MUI](https://img.shields.io/badge/MUI-007FFF?logo=mui&logoColor=white) ![JWT](https://img.shields.io/badge/JWT-000000?logo=jsonwebtokens&logoColor=white)
+
+🔗 **Sistema em produção:** [gilferalmoxarifado.com](https://gilferalmoxarifado.com)
 
 Aplicação web full-stack para a **Construtora GILFER**. O sistema controla o estoque de materiais de construção distribuído entre múltiplos almoxarifados (canteiros de obra), cobrindo todo o ciclo de entrada e saída de mercadorias.
 
 ## Sobre o projeto
+
+> 📸 *Adicione aqui 2 ou 3 prints (login, dashboard e uma tela de cadastro). Salve em `docs/img/` e referencie com `![Dashboard](docs/img/dashboard.png)`.*
+
 
 O sistema gerencia **módulos** com operações CRUD completas:
 
@@ -42,13 +47,13 @@ A aplicação tem **três partes**: o **banco de dados** (MySQL), o **back-end**
 Crie o banco executando o script de criação no MySQL:
 
 ```bash
-mysql -u root -p < "Banco de Dados/CREATE_DB_ALMOXARIFADO_GILFER_v7.sql"
+mysql -u root -p < "Banco de Dados/CREATE_DB_ALMOXARIFADO_GILFER_v8.sql"
 ```
 
 Opcionalmente, popule com dados de exemplo:
 
 ```bash
-mysql -u root -p < "Banco de Dados/POPULA_DADOS_ALMOXARIFADO_GILFER.sql"
+mysql -u root -p < "Banco de Dados/POPULA_DADOS_ALMOXARIFADO_GILFER_v7.sql"
 ```
 
 ### 2. Back-end (API)
@@ -59,7 +64,7 @@ As credenciais de conexão estão em `src/api/models/index.js` e podem ser sobre
 |---|---|---|
 | `DB_NAME` | `bd_almoxarifado` | nome do banco |
 | `DB_USER` | `root` | usuário do MySQL |
-| `DB_PASSWORD` | `desus` | senha do usuário |
+| `DB_PASSWORD` | *(defina a sua)* | senha do usuário |
 | `DB_HOST` | `localhost` | host do banco |
 
 > Confirme que o nome do banco (`DB_NAME`) corresponde ao banco criado pelo script SQL.
@@ -112,7 +117,7 @@ Como o cadastro de funcionários passou a exigir login, use o script de bootstra
 uma vez para criar o primeiro usuário **CENTRAL** (a partir de `src/api`):
 
 ```bash
-npm run seed:admin -- admin@gilfer.com senha12345 "Administrador"
+npm run seed:admin -- admin@gilfer.com SUA_SENHA_FORTE "Administrador"
 ```
 
 Depois, faça login no front-end com esse e-mail/senha. A partir daí o CENTRAL
@@ -142,7 +147,7 @@ enxerga tudo.
 > ```bash
 > mysql -u root -p bd_almoxarifado < "Banco de Dados/ALTER_v7_almoxarifado_no_funcionario.sql"
 > ```
-> Instalações do zero pelo script `CREATE_DB_..._v7.sql` já incluem as duas estruturas.
+> Instalações do zero pelo script `CREATE_DB_..._v8.sql` já incluem as duas estruturas.
 
 ## Endpoints principais (API REST)
 
