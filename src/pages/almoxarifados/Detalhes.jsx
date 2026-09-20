@@ -6,6 +6,7 @@ import {
   Typography,
   Stack,
   TextField,
+  Autocomplete,
   Button,
   Box,
   Divider,
@@ -24,6 +25,10 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import UpdateIcon from "@mui/icons-material/Update";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import HandymanIcon from "@mui/icons-material/Handyman";
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import SummaryCard from "../../components/SummaryCard";
@@ -56,6 +61,10 @@ export default function AlmoxarifadoDetalhes() {
   const [almoxarifado, setAlmoxarifado] = useState(null);
   const [estoque, setEstoque] = useState([]);
   const [estoqueFiltrado, setEstoqueFiltrado] = useState([]);
+  const [valorEntrada, setValorEntrada] = useState(0);
+  const [valorSaida, setValorSaida] = useState(0);
+  const [valorServicos, setValorServicos] = useState(0);
+  const [valorAbastecimentoTanque, setValorAbastecimentoTanque] = useState(0);
   const [error, setError] = useState("");
 
   // Filtros conforme RF014: produto, fornecedor, data.
@@ -90,6 +99,21 @@ export default function AlmoxarifadoDetalhes() {
         setEstoqueFiltrado(itens);
       })
       .catch(err => setError("Erro ao carregar estoque: " + err.message));
+
+    // Totais históricos de entrada e saída deste almoxarifado. A entrada
+    // considera todas as compras já recebidas, mesmo que o produto não esteja
+    // mais no estoque.
+    fetch(`${API_URL}/almoxarifados/${id}/totais-movimentacao`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.sucesso) {
+          setValorEntrada(Number(result.dados.valor_entrada) || 0);
+          setValorSaida(Number(result.dados.valor_saida) || 0);
+          setValorServicos(Number(result.dados.valor_servicos) || 0);
+          setValorAbastecimentoTanque(Number(result.dados.valor_abastecimento_tanque) || 0);
+        }
+      })
+      .catch(err => setError("Erro ao carregar totais de movimentação: " + err.message));
   }, [id]);
 
   // ── Handlers dos filtros do estoque (filtragem LOCAL no mock) ──
@@ -121,6 +145,9 @@ export default function AlmoxarifadoDetalhes() {
   const totalItens = estoque.reduce((sum, it) => sum + it.qtd, 0);
   const valorTotal = estoque.reduce((sum, it) => sum + it.qtd * it.valor_unit, 0);
   const itensBaixoEstoque = estoque.filter(it => it.qtd < it.qtd_minima).length;
+  const fornecedoresDoEstoque = [...new Set(
+    estoque.map((item) => item.fornecedor).filter((fornecedor) => fornecedor && fornecedor !== "—")
+  )];
   const ultimaAtualizacao = almoxarifado
     ? new Date(almoxarifado.data_atualizacao).toLocaleDateString("pt-BR")
     : "—";
@@ -245,6 +272,42 @@ export default function AlmoxarifadoDetalhes() {
         </Grid>
       </Grid>
 
+      {/* === BLOCO 2b: Valor de entrada/saída (produtos comprados) === */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            icon={<ArrowDownwardIcon />}
+            color="#10b981"
+            value={formatarMoeda(valorEntrada)}
+            label="Valor total de entrada"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            icon={<ArrowUpwardIcon />}
+            color="#ef4444"
+            value={formatarMoeda(valorSaida)}
+            label="Valor total de saída"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            icon={<HandymanIcon />}
+            color="#6366f1"
+            value={formatarMoeda(valorServicos)}
+            label="Gasto total em serviços"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            icon={<LocalGasStationIcon />}
+            color="#f59e0b"
+            value={formatarMoeda(valorAbastecimentoTanque)}
+            label="Gasto em abastecimento tanque"
+          />
+        </Grid>
+      </Grid>
+
       {/* === BLOCO 3: Tabela de estoque com filtros (RF014) — MOCK === */}
       <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
         <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
@@ -269,12 +332,19 @@ export default function AlmoxarifadoDetalhes() {
             onChange={(e) => handleFiltroChange("produto", e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <TextField
-            label="Fornecedor"
-            size="small"
+          <Autocomplete
+            freeSolo
+            options={fornecedoresDoEstoque}
             value={filtros.fornecedor}
-            onChange={(e) => handleFiltroChange("fornecedor", e.target.value)}
-            onKeyDown={handleKeyDown}
+            onInputChange={(_, value) => handleFiltroChange("fornecedor", value)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Fornecedor"
+                size="small"
+                onKeyDown={handleKeyDown}
+              />
+            )}
           />
           <TextField
             label="Data de Atualização"

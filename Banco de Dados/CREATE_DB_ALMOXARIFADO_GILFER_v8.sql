@@ -423,14 +423,18 @@ CREATE TABLE Servico (
     id_servico INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     id_fornecedor INT UNSIGNED NOT NULL,
     id_funcionario_responsavel CHAR(36) NOT NULL,
+    cod_almoxarifado INT UNSIGNED NOT NULL,
     data_servico TIMESTAMP NOT NULL,
+    numero_nota_fiscal VARCHAR(50) NOT NULL,
     aplicacao VARCHAR(255) NOT NULL,
     observacao TEXT NULL,
     valor_total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     CONSTRAINT fk_servico_fornecedor
         FOREIGN KEY (id_fornecedor) REFERENCES Fornecedores(id_fornecedor),
     CONSTRAINT fk_servico_responsavel
-        FOREIGN KEY (id_funcionario_responsavel) REFERENCES Funcionarios(id_funcionario)
+        FOREIGN KEY (id_funcionario_responsavel) REFERENCES Funcionarios(id_funcionario),
+    CONSTRAINT fk_servico_almoxarifado
+        FOREIGN KEY (cod_almoxarifado) REFERENCES Almoxarifado(cod_almoxarifado)
 );
 
 CREATE TABLE Servico_Item (

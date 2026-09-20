@@ -107,6 +107,20 @@ export const estoque = async (req, res) => {
   }
 }
 
+// Totais de entrada/saída (produtos comprados) do almoxarifado
+export const totaisMovimentacao = async (req, res) => {
+  try {
+    const escopo = escopoAlmoxarifado(req.usuario)
+    const dados = await almoxarifadoService.calcularTotaisMovimentacao(req.params.id, escopo)
+    res.json({ sucesso: true, dados })
+  } catch (erro) {
+    if (erro.message === "Almoxarifado não encontrado") {
+      return res.status(404).json({ sucesso: false, erro: erro.message })
+    }
+    res.status(erro.status || 400).json({ sucesso: false, erro: erro.message })
+  }
+}
+
 // Inativar
 export const inativar = async (req, res) => {
   try {

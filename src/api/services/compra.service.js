@@ -71,6 +71,11 @@ const normalizarItens = (itens = []) => {
   }));
 };
 
+// Soma quantidade * valor_unitario de cada item — usado para preencher
+// Compra.valor_total, que antes ficava sempre em 0 (nunca era calculado).
+const calcularValorTotal = (itens = []) =>
+  itens.reduce((soma, item) => soma + item.quantidade * item.valor_unitario, 0);
+
 const montarDadosCompra = (dados) => {
   if (
     !dados.id_fornecedor ||
@@ -226,6 +231,7 @@ export const cadastrarCompra = async (dados, escopo = null) => {
   dadosCompra.status = "PENDENTE";
 
   const itens = normalizarItens(dados.itens);
+  dadosCompra.valor_total = calcularValorTotal(itens);
   await garantirReferencias(dadosCompra, itens);
   await verificarDuplicidadeNota(
     dadosCompra.numero_nota_fiscal,
@@ -302,6 +308,10 @@ export const editarCompra = async (id, dados, escopo = null) => {
       valor_unitario: item.valor_unitario,
     }));
   }
+
+  // Recalcula o valor total sempre, para os itens antigos (que podem nunca
+  // ter tido o total calculado) também ficarem corretos ao serem editados.
+  dadosParaAtualizar.valor_total = calcularValorTotal(itens);
 
   // Só há estoque a ajustar quando a compra já deu entrada (RECEBIDO).
   // Enquanto PENDENTE, a edição apenas atualiza os dados do pedido.

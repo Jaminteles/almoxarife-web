@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import ListTemplate from "../../components/ListTemplate";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
 
 const API_URL = `${window.location.origin}/api`;
 const filtrosVazios = { data: "", destino: "", responsavel: "", produto: "", tipo: "" };
@@ -256,24 +257,16 @@ export default function SaidasList() {
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
-              select
+            <EntityAutocomplete
+              options={funcionarios}
+              value={filtros.responsavel}
+              onChange={(value) => handleFiltroChange("responsavel", value)}
+              getOptionId={(funcionario) => funcionario.id_funcionario}
+              getOptionLabel={(funcionario) => funcionario.nome || ""}
               label="Responsável"
               size="small"
-              value={filtros.responsavel}
-              onChange={(e) => handleFiltroChange("responsavel", e.target.value)}
               sx={{ minWidth: 190 }}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {funcionarios.map((funcionario) => (
-                <MenuItem
-                  key={funcionario.id_funcionario}
-                  value={funcionario.id_funcionario}
-                >
-                  {funcionario.nome}
-                </MenuItem>
-              ))}
-            </TextField>
+            />
             <TextField
               select
               label="Produto"

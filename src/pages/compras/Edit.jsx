@@ -18,6 +18,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemCompraRow from "../../components/ItemCompraRow";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
 import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = `${window.location.origin}/api`;
@@ -265,45 +266,27 @@ export default function CompraEdit() {
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="id_fornecedor"
+              <EntityAutocomplete
+                options={fornecedores}
                 value={form.id_fornecedor}
-                onChange={handleChange}
+                onChange={(value) => handleChange({ target: { name: "id_fornecedor", value } })}
+                getOptionId={(fornecedor) => fornecedor.id_fornecedor}
+                getOptionLabel={(fornecedor) => fornecedor.razao_social || fornecedor.nome_fantasia || ""}
+                label="Fornecedor"
                 required
-                fullWidth
-                SelectProps={{ displayEmpty: true }}
-              >
-                <MenuItem value="" disabled>
-                  Selecione o fornecedor
-                </MenuItem>
-                {fornecedores.map((f) => (
-                  <MenuItem key={f.id_fornecedor} value={f.id_fornecedor}>
-                    {f.razao_social || f.nome_fantasia}
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="id_funcionario_comprador"
+              <EntityAutocomplete
+                options={funcionarios}
                 value={form.id_funcionario_comprador}
-                onChange={handleChange}
+                onChange={(value) => handleChange({ target: { name: "id_funcionario_comprador", value } })}
+                getOptionId={(funcionario) => funcionario.id_funcionario}
+                getOptionLabel={(funcionario) => funcionario.nome || ""}
+                label="Funcionário comprador"
                 required
-                fullWidth
-                SelectProps={{ displayEmpty: true }}
-              >
-                <MenuItem value="" disabled>
-                  Selecione o funcionário comprador
-                </MenuItem>
-                {funcionarios.map((f) => (
-                  <MenuItem key={f.id_funcionario} value={f.id_funcionario}>
-                    {f.nome}
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
             </Grid>
 
             <Grid item xs={12} sm={6}>
