@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, TextField } from "@mui/material";
 import ListTemplate from "../../components/ListTemplate";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
 
 const API_URL = `${window.location.origin}/api`;
 
@@ -13,6 +14,7 @@ const ProdutosList = () => {
   // faixa vermelha. Assim, se a lista vier vazia por erro do backend,
   // o motivo aparece na tela.
   const [erro, setErro] = useState("");
+  const [fornecedores, setFornecedores] = useState([]);
 
   // Filtros de busca [RF002]: ID, nome, preço de custo, fornecedor,
   // estoque mínimo e estoque máximo.
@@ -95,6 +97,12 @@ const ProdutosList = () => {
 
   useEffect(() => {
     carregarProdutos();
+    fetch(`${API_URL}/fornecedores`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.sucesso) setFornecedores(result.dados);
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -181,12 +189,15 @@ const ProdutosList = () => {
               onChange={(e) => handleFiltroChange("preco_custo", e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <TextField
+            <EntityAutocomplete
+              options={fornecedores}
+              value={filtros.fornecedor}
+              onChange={(value) => handleFiltroChange("fornecedor", value)}
+              getOptionId={(fornecedor) => fornecedor.id_fornecedor}
+              getOptionLabel={(fornecedor) => fornecedor.razao_social || fornecedor.nome_fantasia || ""}
               label="Fornecedor"
               size="small"
-              value={filtros.fornecedor}
-              onChange={(e) => handleFiltroChange("fornecedor", e.target.value)}
-              onKeyDown={handleKeyDown}
+              sx={{ minWidth: 180 }}
             />
             <TextField
               label="Estoque Mín."

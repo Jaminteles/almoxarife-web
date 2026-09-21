@@ -7,6 +7,7 @@ router.post("/", controller.cadastrar)
 router.get("/", controller.listar)
 router.get("/:id", controller.buscarPorId)
 router.get("/:id/estoque", controller.estoque)
+router.get("/:id/totais-movimentacao", controller.totaisMovimentacao)
 router.put("/:id", controller.editar)
 router.delete("/:id", controller.inativar)
 

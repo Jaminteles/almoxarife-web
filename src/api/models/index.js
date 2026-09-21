@@ -172,10 +172,11 @@ db.Compra.hasMany(db.ItemCompra, { foreignKey: "id_compra", as: "itens", onDelet
 db.ItemCompra.belongsTo(db.Compra, { foreignKey: "id_compra", as: "compra" })
 db.ItemCompra.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })
 
-// Serviços: apenas registram custos de materiais fornecidos diretamente;
-// não possuem vínculo nem movimentam o estoque do almoxarifado.
+// Serviços registram custos de materiais fornecidos diretamente e pertencem
+// a um almoxarifado, mas não movimentam o estoque.
 db.Servico.belongsTo(db.Fornecedor, { foreignKey: "id_fornecedor", as: "fornecedor" })
 db.Servico.belongsTo(db.Funcionario, { foreignKey: "id_funcionario_responsavel", as: "responsavel" })
+db.Servico.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "almoxarifado" })
 db.Servico.hasMany(db.ServicoItem, { foreignKey: "id_servico", as: "itens", onDelete: "CASCADE" })
 db.ServicoItem.belongsTo(db.Servico, { foreignKey: "id_servico", as: "servico" })
 db.ServicoItem.belongsTo(db.Produto, { foreignKey: "id_produto", as: "produto" })

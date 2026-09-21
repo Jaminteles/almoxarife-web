@@ -40,7 +40,7 @@ const movimentos = async () => {
   return resultado;
 };
 
-export const listarGastosPorAplicacao = async () => {
+export const listarGastosPorAplicacao = async (filtros = {}) => {
   const agrupados = new Map();
   for (const movimento of await movimentos()) {
     const atual = agrupados.get(movimento.chave) || { aplicacao: movimento.aplicacao, total: 0, total_saidas: 0, total_servicos: 0, itens: 0 };
@@ -50,7 +50,10 @@ export const listarGastosPorAplicacao = async () => {
     else atual.total_servicos += movimento.total;
     agrupados.set(movimento.chave, atual);
   }
-  return [...agrupados.values()].sort((a, b) => b.total - a.total || a.aplicacao.localeCompare(b.aplicacao, "pt-BR"));
+  const aplicacao = String(filtros.aplicacao || "").trim().toLocaleLowerCase("pt-BR");
+  return [...agrupados.values()]
+    .filter((item) => !aplicacao || item.aplicacao.toLocaleLowerCase("pt-BR").includes(aplicacao))
+    .sort((a, b) => a.aplicacao.localeCompare(b.aplicacao, "pt-BR"));
 };
 
 export const detalharAplicacao = async (aplicacao) => {

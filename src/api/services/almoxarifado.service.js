@@ -163,9 +163,71 @@ export const editarAlmoxarifado = async (id, dados, escopo = null) => {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Custo médio ponderado de cada produto num almoxarifado, baseado em todas
+// as compras RECEBIDAS: Σ(quantidade × valor unitário) ÷ Σ(quantidade).
+// Isso absorve as variações de preço entre compras, em vez de avaliar todo o
+// estoque pelo valor da última compra. Retorna um Map<id_produto, custo_medio>.
+// Produto sem nenhuma compra
+// recebida nesse almoxarifado (ex: estoque inicial cadastrado à mão) fica
+// de fora do Map — quem chama decide o fallback (hoje, preco_custo).
+// ──────────────────────────────────────────────────────────────
+const buscarCustosMedios = async (codAlmoxarifado) => {
+  const itensRecebidos = await db.ItemCompra.findAll({
+    attributes: ["id_produto", "quantidade", "valor_unitario"],
+    include: [
+      {
+        model: db.Compra,
+        as: "compra",
+        attributes: [],
+        where: {
+          cod_almoxarifado_destino: codAlmoxarifado,
+          status: "RECEBIDO"
+        },
+        required: true
+      }
+    ]
+  })
+
+  const acumuladosPorProduto = new Map()
+  for (const registro of itensRecebidos) {
+    const item = registro.toJSON()
+    const quantidade = Number(item.quantidade) || 0
+    const valorUnitario = Number(item.valor_unitario) || 0
+    const atual = acumuladosPorProduto.get(item.id_produto) || {
+      quantidade: 0,
+      valorTotal: 0
+    }
+    atual.quantidade += quantidade
+    atual.valorTotal += quantidade * valorUnitario
+    acumuladosPorProduto.set(item.id_produto, atual)
+  }
+
+  const custos = new Map()
+  for (const [idProduto, info] of acumuladosPorProduto) {
+    if (info.quantidade > 0) custos.set(idProduto, info.valorTotal / info.quantidade)
+  }
+  return custos
+}
+
+// Todos os valores monetários dos cards são formados a partir dos itens:
+// quantidade × valor unitário. Centralizar a conta evita que um card use um
+// campo total antigo enquanto outro usa os valores realmente informados nos
+// itens da movimentação.
+const somarValorDosItens = (itens, obterValorUnitario) =>
+  itens.reduce((soma, item) => {
+    const registro = typeof item.toJSON === "function" ? item.toJSON() : item
+    const quantidade = Number(registro.quantidade) || 0
+    const valorUnitario = Number(obterValorUnitario(registro)) || 0
+    return soma + quantidade * valorUnitario
+  }, 0)
+
+// ──────────────────────────────────────────────────────────────
 // Estoque de um almoxarifado [RF014 - Consultar Almoxarifado].
 // Lê a tabela Estoque (saldo por produto) e junta com Produto para obter
-// nome, estoque mínimo (qtd. mínima) e preço de custo (valor unitário).
+// nome e estoque mínimo (qtd. mínima). O valor unitário usa o custo da
+// custo médio ponderado das compras RECEBIDAS do produto nesse almoxarifado
+// (ver buscarCustosMedios) — só cai para o preço de cadastro do produto
+// (preco_custo) se ele nunca tiver sido comprado nesse almoxarifado.
 // O fornecedor é derivado do primeiro fornecedor vinculado ao produto.
 // Nota fiscal não é armazenada no Estoque (vem do histórico de compras),
 // então retorna "—" por enquanto.
@@ -177,23 +239,26 @@ export const listarEstoque = async (id, escopo = null) => {
     throw new Error("Almoxarifado não encontrado")
   }
 
-  const itens = await db.Estoque.findAll({
-    where: { cod_almoxarifado: id },
-    include: [
-      {
-        model: db.Produto,
-        as: "produto",
-        where: { ativo: 1 }, // não lista saldo de produtos inativados
-        include: [
-          {
-            model: db.Fornecedor,
-            as: "fornecedores",
-            through: { attributes: [] }
-          }
-        ]
-      }
-    ]
-  })
+  const [itens, custosMedios] = await Promise.all([
+    db.Estoque.findAll({
+      where: { cod_almoxarifado: id },
+      include: [
+        {
+          model: db.Produto,
+          as: "produto",
+          where: { ativo: 1 }, // não lista saldo de produtos inativados
+          include: [
+            {
+              model: db.Fornecedor,
+              as: "fornecedores",
+              through: { attributes: [] }
+            }
+          ]
+        }
+      ]
+    }),
+    buscarCustosMedios(id)
+  ])
 
   // Normaliza para o formato que a tela de Detalhes espera (campos numéricos
   // como Number — o DECIMAL do Sequelize vem como string).
@@ -204,6 +269,8 @@ export const listarEstoque = async (id, escopo = null) => {
       Array.isArray(produto.fornecedores) && produto.fornecedores.length > 0
         ? produto.fornecedores[0].razao_social
         : "—"
+    const custoMedio = custosMedios.get(item.id_produto)
+    const valorUnit = custoMedio !== undefined ? custoMedio : Number(produto.preco_custo) || 0
 
     return {
       id: `${item.cod_almoxarifado}-${item.id_produto}`,
@@ -214,10 +281,120 @@ export const listarEstoque = async (id, escopo = null) => {
       nota_fiscal: "—",
       qtd: Number(item.quantidade) || 0,
       qtd_minima: Number(produto.estoque_minimo) || 0,
-      valor_unit: Number(produto.preco_custo) || 0,
+      valor_unit: valorUnit,
       data_atualizacao: item.ultima_atualizacao
     }
   })
+}
+
+// ──────────────────────────────────────────────────────────────
+// Totais de entrada/saída de um almoxarifado, calculados só em cima de
+// produtos comprados.
+//
+// Entrada: soma de quantidade * preco_unitario_acordado dos itens das
+// compras já RECEBIDAS com destino este almoxarifado. Pedidos
+// PENDENTE/CANCELADO ainda não entraram fisicamente no estoque, então não
+// contam.
+//
+// Saída: Saida_Item não guarda valor_unitario (ver comentário em
+// saida-item.model.js), então o valor de cada item de saída usa o custo da
+// custo médio ponderado das compras RECEBIDAS daquele produto nesse
+// almoxarifado (mesma lógica de buscarCustosMedios usada no card de Estoque)
+// — não o preço
+// de cadastro do produto, que não reflete o valor realmente pago.
+// ──────────────────────────────────────────────────────────────
+export const calcularTotaisMovimentacao = async (id, escopo = null) => {
+  assertAcessoAlmoxarifado(escopo, id)
+  const codAlmoxarifado = Number(id)
+  const almoxarifado = await almoxarifadoRepo.buscarPorId(codAlmoxarifado)
+  if (!almoxarifado) {
+    throw new Error("Almoxarifado não encontrado")
+  }
+
+  // Entrada: soma direto de Item_Compra (quantidade * preco_unitario_acordado)
+  // das compras já RECEBIDAS com destino este almoxarifado. Somamos pelos
+  // itens em vez de usar Compra.valor_total porque esse campo não estava
+  // sendo calculado no cadastro/edição da compra (ver correção em
+  // compra.service.js) — compras antigas ficariam de fora se usássemos ele.
+  const [itensCompra, custosMedios, itensServico] = await Promise.all([
+    db.ItemCompra.findAll({
+      attributes: ["id_produto", "quantidade", "valor_unitario"],
+      include: [
+        {
+          model: db.Compra,
+          as: "compra",
+          attributes: [],
+          where: {
+            cod_almoxarifado_destino: codAlmoxarifado,
+            status: "RECEBIDO"
+          },
+          required: true
+        }
+      ]
+    }),
+    buscarCustosMedios(codAlmoxarifado),
+    db.ServicoItem.findAll({
+      attributes: ["quantidade", "valor_unitario"],
+      include: [
+        {
+          model: db.Servico,
+          as: "servico",
+          attributes: [],
+          where: { cod_almoxarifado: codAlmoxarifado },
+          required: true
+        }
+      ]
+    })
+  ])
+
+  const valorEntrada = somarValorDosItens(
+    itensCompra,
+    (item) => custosMedios.get(item.id_produto) ?? item.valor_unitario
+  )
+  const valorServicos = somarValorDosItens(
+    itensServico,
+    (item) => item.valor_unitario
+  )
+
+  const itensSaida = await db.SaidaItem.findAll({
+    attributes: ["id_produto", "quantidade"],
+    include: [
+      {
+        model: db.Saida,
+        as: "saida",
+        attributes: ["aplicacao"],
+        where: { cod_almoxarifado_origem: codAlmoxarifado },
+        required: true
+      },
+      {
+        model: db.Produto,
+        as: "produto",
+        attributes: ["preco_custo"]
+      }
+    ]
+  })
+
+  const valorUnitarioDaSaida = (registro) => {
+    const custoMedio = custosMedios.get(registro.id_produto)
+    return custoMedio !== undefined
+      ? custoMedio
+      : Number(registro.produto?.preco_custo) || 0
+  }
+  const valorSaida = somarValorDosItens(itensSaida, valorUnitarioDaSaida)
+  const valorAbastecimentoTanque = somarValorDosItens(
+    itensSaida.filter((item) => {
+      const registro = item.toJSON()
+      return String(registro.saida?.aplicacao || "").trim().toLocaleUpperCase("pt-BR") === "ABASTECIMENTO TANQUE"
+    }),
+    valorUnitarioDaSaida
+  )
+
+  return {
+    valor_entrada: Number(valorEntrada) || 0,
+    valor_saida: valorSaida,
+    valor_servicos: Number(valorServicos) || 0,
+    valor_abastecimento_tanque: Number(valorAbastecimentoTanque) || 0
+  }
 }
 
 export const inativarAlmoxarifado = async (id, escopo = null) => {

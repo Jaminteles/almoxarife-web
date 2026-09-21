@@ -4,6 +4,8 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { useNavigate } from "react-router-dom";
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemCompraRow from "../../components/ItemCompraRow";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
+import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = `${window.location.origin}/api`;
 const itemVazio = { id_produto: "", quantidade: "", valor_unitario: "", automatico: false };
@@ -12,27 +14,34 @@ const paraInput = (valor) => { const d = new Date(valor); return Number.isNaN(d.
 
 export default function ServicoForm({ id = null }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ id_fornecedor: "", id_funcionario_responsavel: "", data_servico: hoje(), aplicacao: "", observacao: "" });
+  const { user } = useAuth();
+  const almoxarifadoTravado = user && user.access_level !== "CENTRAL" && user.cod_almoxarifado ? user.cod_almoxarifado : null;
+  const [form, setForm] = useState({ id_fornecedor: "", id_funcionario_responsavel: "", cod_almoxarifado: almoxarifadoTravado || "", data_servico: hoje(), numero_nota_fiscal: "", aplicacao: "", observacao: "" });
   const [itens, setItens] = useState([{ ...itemVazio }]);
-  const [fornecedores, setFornecedores] = useState([]), [funcionarios, setFuncionarios] = useState([]), [produtos, setProdutos] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]), [funcionarios, setFuncionarios] = useState([]), [almoxarifados, setAlmoxarifados] = useState([]), [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true), [saving, setSaving] = useState(false), [error, setError] = useState("");
 
   useEffect(() => {
-    const requisicoes = [fetch(`${API_URL}/fornecedores`).then((r) => r.json()), fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()), fetch(`${API_URL}/produtos`).then((r) => r.json())];
+    const requisicoes = [fetch(`${API_URL}/fornecedores`).then((r) => r.json()), fetch(`${API_URL}/lookups/funcionarios`).then((r) => r.json()), fetch(`${API_URL}/lookups/almoxarifados`).then((r) => r.json()), fetch(`${API_URL}/produtos`).then((r) => r.json())];
     if (id) requisicoes.push(fetch(`${API_URL}/servicos/${id}`).then((r) => r.json()));
-    Promise.all(requisicoes).then(([resForn, resFunc, resProd, resServico]) => {
+    Promise.all(requisicoes).then(([resForn, resFunc, resAlm, resProd, resServico]) => {
       if (resForn.sucesso) setFornecedores(resForn.dados);
       if (resFunc.sucesso) setFuncionarios(resFunc.dados);
+      if (resAlm.sucesso) setAlmoxarifados(resAlm.dados);
       if (resProd.sucesso) setProdutos(resProd.dados);
       if (id) {
         if (!resServico?.sucesso) throw new Error(resServico?.erro || "Serviço não encontrado");
         const s = resServico.dados;
-        setForm({ id_fornecedor: s.id_fornecedor || "", id_funcionario_responsavel: s.id_funcionario_responsavel || "", data_servico: paraInput(s.data_servico), aplicacao: s.aplicacao || "", observacao: s.observacao || "" });
+        setForm({ id_fornecedor: s.id_fornecedor || "", id_funcionario_responsavel: s.id_funcionario_responsavel || "", cod_almoxarifado: almoxarifadoTravado || s.cod_almoxarifado || "", data_servico: paraInput(s.data_servico), numero_nota_fiscal: s.numero_nota_fiscal || "", aplicacao: s.aplicacao || "", observacao: s.observacao || "" });
         setItens(s.itens?.length ? s.itens.map((i) => ({ id_produto: i.id_produto, quantidade: String(i.quantidade), valor_unitario: String(i.valor_unitario), automatico: false })) : [{ ...itemVazio }]);
       }
       setLoading(false);
     }).catch((err) => { setError(`Erro ao carregar os dados: ${err.message}`); setLoading(false); });
-  }, [id]);
+  }, [id, almoxarifadoTravado]);
+
+  useEffect(() => {
+    if (almoxarifadoTravado) setForm((atual) => ({ ...atual, cod_almoxarifado: almoxarifadoTravado }));
+  }, [almoxarifadoTravado]);
 
   const alterarItem = (index, campo, valor) => setItens((atual) => atual.map((item, i) => {
     if (i !== index) return item;
@@ -66,9 +75,11 @@ export default function ServicoForm({ id = null }) {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       <form onSubmit={salvar}><Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>Dados do serviço</Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}><TextField select name="id_fornecedor" value={form.id_fornecedor} onChange={(e) => setForm({ ...form, id_fornecedor: e.target.value })} required fullWidth SelectProps={{ displayEmpty: true }}><MenuItem value="" disabled>Selecione o fornecedor</MenuItem>{fornecedores.map((f) => <MenuItem key={f.id_fornecedor} value={f.id_fornecedor}>{f.razao_social || f.nome_fantasia}</MenuItem>)}</TextField></Grid>
-          <Grid item xs={12} sm={6}><TextField select name="id_funcionario_responsavel" value={form.id_funcionario_responsavel} onChange={(e) => setForm({ ...form, id_funcionario_responsavel: e.target.value })} required fullWidth SelectProps={{ displayEmpty: true }}><MenuItem value="" disabled>Selecione o responsável</MenuItem>{funcionarios.map((f) => <MenuItem key={f.id_funcionario} value={f.id_funcionario}>{f.nome}</MenuItem>)}</TextField></Grid>
+          <Grid item xs={12} sm={6}><EntityAutocomplete options={fornecedores} value={form.id_fornecedor} onChange={(value) => setForm({ ...form, id_fornecedor: value })} getOptionId={(fornecedor) => fornecedor.id_fornecedor} getOptionLabel={(fornecedor) => fornecedor.razao_social || fornecedor.nome_fantasia || ""} label="Fornecedor" required /></Grid>
+          <Grid item xs={12} sm={6}><EntityAutocomplete options={funcionarios} value={form.id_funcionario_responsavel} onChange={(value) => setForm({ ...form, id_funcionario_responsavel: value })} getOptionId={(funcionario) => funcionario.id_funcionario} getOptionLabel={(funcionario) => funcionario.nome || ""} label="Responsável" required /></Grid>
+          <Grid item xs={12} sm={6}><TextField select name="cod_almoxarifado" value={form.cod_almoxarifado} onChange={(e) => setForm({ ...form, cod_almoxarifado: e.target.value })} required fullWidth disabled={!!almoxarifadoTravado} SelectProps={{ displayEmpty: true }}><MenuItem value="" disabled>Selecione o almoxarifado</MenuItem>{almoxarifados.map((a) => <MenuItem key={a.cod_almoxarifado} value={a.cod_almoxarifado}>{a.nome}</MenuItem>)}</TextField></Grid>
           <Grid item xs={12} sm={6}><TextField name="data_servico" label="Data do serviço" type="date" value={form.data_servico} onChange={(e) => setForm({ ...form, data_servico: e.target.value })} required fullWidth InputLabelProps={{ shrink: true }} /></Grid>
+          <Grid item xs={12} sm={6}><TextField name="numero_nota_fiscal" label="Nota fiscal" value={form.numero_nota_fiscal} onChange={(e) => setForm({ ...form, numero_nota_fiscal: e.target.value })} required fullWidth inputProps={{ maxLength: 50 }} /></Grid>
           <Grid item xs={12}><TextField name="aplicacao" label="Aplicação" value={form.aplicacao} onChange={(e) => setForm({ ...form, aplicacao: e.target.value })} required fullWidth placeholder="Onde os materiais serão aplicados" /></Grid>
           <Grid item xs={12}><TextField name="observacao" label="Observação" value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} fullWidth multiline minRows={2} /></Grid>
         </Grid>

@@ -18,6 +18,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import FormPageHeader from "../../components/FormPageHeader";
 import ItemSaidaRow from "../../components/ItemSaidaRow";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
 import { useAuth } from "../../auth/AuthContext";
 
 const API_URL = `${window.location.origin}/api`;
@@ -264,24 +265,15 @@ export default function SaidaEdit() {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="id_funcionario_responsavel"
+              <EntityAutocomplete
+                options={funcionarios}
                 value={form.id_funcionario_responsavel}
-                onChange={handleChange}
+                onChange={(value) => handleChange({ target: { name: "id_funcionario_responsavel", value } })}
+                getOptionId={(funcionario) => funcionario.id_funcionario}
+                getOptionLabel={(funcionario) => funcionario.nome || ""}
+                label="Responsável"
                 required
-                fullWidth
-                SelectProps={{ displayEmpty: true }}
-              >
-                <MenuItem value="" disabled>
-                  Responsável
-                </MenuItem>
-                {funcionarios.map((f) => (
-                  <MenuItem key={f.id_funcionario} value={f.id_funcionario}>
-                    {f.nome}
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
             </Grid>
 
             <Grid item xs={12} sm={6}>

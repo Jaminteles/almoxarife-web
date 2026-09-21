@@ -1,5 +1,6 @@
 import * as repo from "../repositories/servico.repository.js";
 import db from "../models/index.js";
+import { assertAcessoAlmoxarifado } from "../utils/escopo.js";
 
 const dataLocal = (valor) => {
   const [anoStr, mesStr, diaStr] = String(valor).split("-");
@@ -20,10 +21,10 @@ const normalizarItens = (itens) => {
   return [...agrupados].map(([id_produto, item]) => ({ id_produto, ...item }));
 };
 const montarDados = (dados, itens) => {
-  if (!dados.id_fornecedor || !dados.id_funcionario_responsavel || !dados.data_servico || !String(dados.aplicacao || "").trim()) throw new Error("Fornecedor, responsável, data e aplicação são obrigatórios");
+  if (!dados.id_fornecedor || !dados.id_funcionario_responsavel || !dados.cod_almoxarifado || !dados.data_servico || !String(dados.numero_nota_fiscal || "").trim() || !String(dados.aplicacao || "").trim()) throw new Error("Fornecedor, responsável, almoxarifado, data, nota fiscal e aplicação são obrigatórios");
   return {
-    id_fornecedor: Number(dados.id_fornecedor), id_funcionario_responsavel: String(dados.id_funcionario_responsavel).trim(), data_servico: dataLocal(dados.data_servico),
-    aplicacao: String(dados.aplicacao).trim(), observacao: String(dados.observacao || "").trim() || null,
+    id_fornecedor: Number(dados.id_fornecedor), id_funcionario_responsavel: String(dados.id_funcionario_responsavel).trim(), cod_almoxarifado: Number(dados.cod_almoxarifado), data_servico: dataLocal(dados.data_servico),
+    numero_nota_fiscal: String(dados.numero_nota_fiscal).trim(), aplicacao: String(dados.aplicacao).trim(), observacao: String(dados.observacao || "").trim() || null,
     valor_total: itens.reduce((total, item) => total + item.quantidade * item.valor_unitario, 0)
   };
 };
@@ -32,22 +33,31 @@ const validarReferencias = async (dados, itens) => {
   if (!fornecedor || fornecedor.ativo === 0) throw new Error("Fornecedor não encontrado");
   const responsavel = await repo.buscarFuncionario(dados.id_funcionario_responsavel);
   if (!responsavel || responsavel.is_active === 0) throw new Error("Responsável não encontrado");
+  const almoxarifado = await repo.buscarAlmoxarifado(dados.cod_almoxarifado);
+  if (!almoxarifado || almoxarifado.ativo === 0) throw new Error("Almoxarifado não encontrado");
   for (const item of itens) { const produto = await repo.buscarProduto(item.id_produto); if (!produto || produto.ativo === 0) throw new Error("Produto informado não está cadastrado"); }
 };
-export const listarServicos = async (filtros) => repo.listarTodos(filtros);
-export const buscarServicoPorId = async (id) => { const servico = await repo.buscarPorId(id); if (!servico) throw new Error("Serviço não encontrado"); return servico; };
-export const cadastrarServico = async (entrada) => {
-  const itens = normalizarItens(entrada.itens), dados = montarDados(entrada, itens);
+export const listarServicos = async (filtros = {}, escopo = null) => repo.listarTodos(escopo != null ? { ...filtros, cod_almoxarifado: escopo } : filtros);
+export const buscarServicoPorId = async (id, escopo = null) => {
+  const servico = await repo.buscarPorId(id);
+  if (!servico) throw new Error("Serviço não encontrado");
+  assertAcessoAlmoxarifado(escopo, servico.cod_almoxarifado);
+  return servico;
+};
+export const cadastrarServico = async (entrada, escopo = null) => {
+  const dadosEntrada = escopo != null ? { ...entrada, cod_almoxarifado: escopo } : entrada;
+  const itens = normalizarItens(dadosEntrada.itens), dados = montarDados(dadosEntrada, itens);
   await validarReferencias(dados, itens);
   return db.sequelize.transaction(async (t) => { const servico = await repo.criar(dados, itens, t); return repo.buscarPorId(servico.id_servico, t); });
 };
-export const editarServico = async (id, entrada) => {
-  await buscarServicoPorId(id);
-  const itens = normalizarItens(entrada.itens), dados = montarDados(entrada, itens);
+export const editarServico = async (id, entrada, escopo = null) => {
+  await buscarServicoPorId(id, escopo);
+  const dadosEntrada = escopo != null ? { ...entrada, cod_almoxarifado: escopo } : entrada;
+  const itens = normalizarItens(dadosEntrada.itens), dados = montarDados(dadosEntrada, itens);
   await validarReferencias(dados, itens);
   return db.sequelize.transaction((t) => repo.atualizar(id, dados, itens, t));
 };
-export const excluirServico = async (id) => {
-  await buscarServicoPorId(id);
+export const excluirServico = async (id, escopo = null) => {
+  await buscarServicoPorId(id, escopo);
   return db.sequelize.transaction((t) => repo.excluir(id, t));
 };

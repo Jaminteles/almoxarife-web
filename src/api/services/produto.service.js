@@ -18,12 +18,18 @@ export const listarTodos = async (filtros = {}) => {
   if (limpar(filtros.estoque_maximo)) where.estoque_maximo = limpar(filtros.estoque_maximo);
   if (limpar(filtros.unidade_medida)) where.unidade_medida = limpar(filtros.unidade_medida);
 
-  // Filtro por fornecedor (razão social): descobre os IDs de produto que têm
-  // algum fornecedor cuja razão social bate, e restringe a busca a eles.
+  // Filtro por fornecedor (ID ou razão social): descobre os IDs de produto
+  // vinculados ao fornecedor escolhido no autocomplete e restringe a busca.
   // Mantém a lista COMPLETA de fornecedores de cada produto no resultado.
   if (limpar(filtros.fornecedor)) {
     const fornecedores = await db.Fornecedor.findAll({
-      where: { razao_social: { [Op.like]: `%${limpar(filtros.fornecedor)}%` } },
+      where: {
+        [Op.or]: [
+          { id_fornecedor: limpar(filtros.fornecedor) },
+          { razao_social: { [Op.like]: `%${limpar(filtros.fornecedor)}%` } },
+          { nome_fantasia: { [Op.like]: `%${limpar(filtros.fornecedor)}%` } }
+        ]
+      },
       include: [
         {
           model: db.Produto,

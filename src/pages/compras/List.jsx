@@ -18,6 +18,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useNavigate } from "react-router-dom";
 import ListTemplate from "../../components/ListTemplate";
+import EntityAutocomplete from "../../components/EntityAutocomplete";
 
 // Cor do chip conforme o status do pedido (ENUM status_pedido).
 const CORES_STATUS = {
@@ -54,9 +55,16 @@ export default function ComprasList() {
     produto: "",
     fornecedor: ""
   });
+  const [fornecedores, setFornecedores] = useState([]);
 
   useEffect(() => {
     carregarCompras();
+    fetch(`${API_URL}/fornecedores`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.sucesso) setFornecedores(result.dados);
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -283,14 +291,15 @@ export default function ComprasList() {
               }
               onKeyDown={handleKeyDown}
             />
-            <TextField
+            <EntityAutocomplete
+              options={fornecedores}
+              value={filtros.fornecedor}
+              onChange={(value) => handleFiltroChange("fornecedor", value)}
+              getOptionId={(fornecedor) => fornecedor.id_fornecedor}
+              getOptionLabel={(fornecedor) => fornecedor.razao_social || fornecedor.nome_fantasia || ""}
               label="Fornecedor"
               size="small"
-              value={filtros.fornecedor}
-              onChange={(e) =>
-                handleFiltroChange("fornecedor", e.target.value)
-              }
-              onKeyDown={handleKeyDown}
+              sx={{ minWidth: 180 }}
             />            
             <TextField
               select

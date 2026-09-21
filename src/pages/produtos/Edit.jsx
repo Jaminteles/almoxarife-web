@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Chip, Container } from "@mui/material"
+import { Box, Button, GridLegacy as Grid, TextField, Paper, Alert, MenuItem, Container } from "@mui/material"
 import FormPageHeader from "../../components/FormPageHeader"
 import BackButton from "../../components/BackButton"
+import EntityAutocomplete from "../../components/EntityAutocomplete"
 
 const API_URL = `${window.location.origin}/api`
 
@@ -263,49 +264,17 @@ const ProdutoEdit = () => {
                             />
                         </Grid>
 
-                        {/* Fornecedores (multi-select), mesmo padrão do cadastro. */}
                         <Grid item xs={12}>
-                            <TextField
-                                select
-                                fullWidth
-                                required
-                                name="fornecedores"
+                            <EntityAutocomplete
+                                options={fornecedores}
                                 value={fornecedoresSelecionados}
-                                onChange={(e) => setFornecedoresSelecionados(e.target.value)}
-                                SelectProps={{
-                                    multiple: true,
-                                    displayEmpty: true,
-                                    renderValue: (selecionados) => {
-                                        if (!selecionados || selecionados.length === 0) {
-                                            return (
-                                                <Box sx={{ color: "text.disabled" }}>
-                                                    Fornecedores
-                                                </Box>
-                                            )
-                                        }
-                                        return (
-                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                                                {selecionados.map((id) => {
-                                                    const f = fornecedores.find((x) => x.id_fornecedor === id)
-                                                    return (
-                                                        <Chip
-                                                            key={id}
-                                                            size="small"
-                                                            label={f ? f.razao_social : id}
-                                                        />
-                                                    )
-                                                })}
-                                            </Box>
-                                        )
-                                    }
-                                }}
-                            >
-                                {fornecedores.map((f) => (
-                                    <MenuItem key={f.id_fornecedor} value={f.id_fornecedor}>
-                                        {f.razao_social}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
+                                onChange={setFornecedoresSelecionados}
+                                getOptionId={(fornecedor) => fornecedor.id_fornecedor}
+                                getOptionLabel={(fornecedor) => fornecedor.razao_social || fornecedor.nome_fantasia || ""}
+                                label="Fornecedores"
+                                multiple
+                                required
+                            />
                         </Grid>
 
                         <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
