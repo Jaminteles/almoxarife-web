@@ -170,3 +170,4 @@ As respostas seguem o envelope `{ sucesso, dados, erro }`.
 - **Ordem de inicialização:** o banco deve existir antes de subir a API. O servidor não recria as tabelas (`sync({ alter: false })`); ele apenas se conecta ao banco criado pelo script SQL.
 - **Exclusão lógica:** Fornecedores, Funcionários e Almoxarifados usam *soft delete* (campo de ativo). Saídas usam exclusão física.
 - **Integridade do estoque:** compras e saídas movimentam o estoque dentro de transações; uma saída é bloqueada quando não há saldo suficiente.
+- Como logar na produção: ssh -p 'porta' 'usuario'@'ip'. 
