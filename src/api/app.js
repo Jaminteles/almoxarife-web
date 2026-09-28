@@ -13,6 +13,7 @@ import servicoRoutes from "./routes/servico.routes.js"
 import gastoAplicacaoRoutes from "./routes/gasto-aplicacao.routes.js"
 import lookupRoutes from "./routes/lookup.routes.js"
 import solicitacaoRoutes from "./routes/solicitacao.routes.js"
+import equipamentoRoutes from "./routes/equipamento.routes.js"
 import { autenticar, autorizarModulo } from "./middlewares/auth.middleware.js"
 
 const app = express()
@@ -47,5 +48,6 @@ app.use("/api/saidas",        autenticar, autorizarModulo("saidas"),        said
 app.use("/api/compras",       autenticar, autorizarModulo("compras"),       compraRoutes)
 app.use("/api/servicos",      autenticar, autorizarModulo("servicos"),      servicoRoutes)
 app.use("/api/gastos-aplicacoes", autenticar, autorizarModulo("gastos_aplicacoes"), gastoAplicacaoRoutes)
+app.use("/api/equipamentos", autenticar, autorizarModulo("equipamentos"), equipamentoRoutes)
 
 export default app
