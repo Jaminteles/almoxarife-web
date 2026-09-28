@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { podeEditar, podeVer } from './auth/permissions';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('aplica a permissão existente de equipamentos', () => {
+  expect(podeVer('CONSULTA', 'equipamentos')).toBe(true);
+  expect(podeEditar('CONSULTA', 'equipamentos')).toBe(false);
+  expect(podeEditar('ALMOXARIFE', 'equipamentos')).toBe(true);
 });

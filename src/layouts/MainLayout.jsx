@@ -37,6 +37,8 @@ import HowToRegIcon from "@mui/icons-material/HowToReg";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
+import ConstructionIcon from "@mui/icons-material/Construction";
+import BuildIcon from "@mui/icons-material/Build";
 
 import ColorModeContext from "../ColorModeContext";
 import { useAuth } from "../auth/AuthContext";
@@ -72,6 +74,8 @@ const menuItems = [
   { label: "Fornecedores",  icon: <StorefrontIcon />,  path: "/fornecedores",  enabled: true, modulo: "fornecedores" },
   { label: "Produtos/Serviços", icon: <Inventory2Icon />, path: "/produtos",   enabled: true, modulo: "produtos" },
   { label: "Almoxarifados", icon: <WarehouseIcon />,   path: "/almoxarifados", enabled: true, modulo: "almoxarifados" },
+  { label: "Equipamentos",  icon: <ConstructionIcon />, path: "/equipamentos", enabled: true, modulo: "equipamentos" },
+  { label: "Manutenção", icon: <BuildIcon />, path: "/equipamentos/manutencao", enabled: true, modulo: "equipamentos" },
   { label: "Compras",       icon: <AssignmentIcon />,  path: "/compras",       enabled: true, modulo: "compras" },
   { label: "Serviços",      icon: <HandymanIcon />,     path: "/servicos",      enabled: true, modulo: "servicos" },
   { label: "Gastos por Aplicação", icon: <AssessmentIcon />, path: "/gastos-aplicacoes", enabled: true, modulo: "gastos_aplicacoes" },

@@ -28,7 +28,8 @@ export const PERMISSOES = {
   gastos_aplicacoes: { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: [] },
   // Módulo de apoio: o combo de cargos é lido por quem cadastra funcionários.
   cargos:        { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL"] },
-  equipes:       { viewers: ["CENTRAL", "ALMOXARIFE"],                         editors: ["CENTRAL", "ALMOXARIFE"] }
+  equipes:       { viewers: ["CENTRAL", "ALMOXARIFE"],                         editors: ["CENTRAL", "ALMOXARIFE"] },
+  equipamentos:  { viewers: ["CENTRAL", "ALMOXARIFE", "AUXILIAR", "CONSULTA"], editors: ["CENTRAL", "ALMOXARIFE"] }
 }
 
 const METODOS_LEITURA = ["GET", "HEAD", "OPTIONS"]
