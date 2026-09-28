@@ -23,6 +23,8 @@ import servicoModel from "./servico.model.js"
 import servicoItemModel from "./servico-item.model.js"
 import solicitacaoCadastroModel from "./solicitacao-cadastro.model.js"
 import equipamentoModel from "./equipamento.model.js"
+import horimetroEquipamentoModel from "./horimetro-equipamento.model.js"
+import manutencaoEquipamentoModel from "./manutencao-equipamento.model.js"
 
 // ── Conexão com o banco ──
 // ALTERAR PARAMETROS conforme seu ambiente
@@ -68,7 +70,9 @@ const db = {
   Servico: servicoModel(sequelize, DataTypes),
   ServicoItem: servicoItemModel(sequelize, DataTypes),
   SolicitacaoCadastro: solicitacaoCadastroModel(sequelize, DataTypes),
-  Equipamento: equipamentoModel(sequelize, DataTypes)
+  Equipamento: equipamentoModel(sequelize, DataTypes),
+  HorimetroEquipamento: horimetroEquipamentoModel(sequelize, DataTypes),
+  ManutencaoEquipamento: manutencaoEquipamentoModel(sequelize, DataTypes)
 }
 
 // ── Associações ──
@@ -156,6 +160,15 @@ db.Estoque.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado", as: "alm
 // almoxarifado/canteiro já cadastrado; por isso obraId referencia sua PK.
 db.Almoxarifado.hasMany(db.Equipamento, { foreignKey: "obraId", as: "equipamentos", onDelete: "RESTRICT" })
 db.Equipamento.belongsTo(db.Almoxarifado, { foreignKey: "obraId", as: "obra" })
+
+// Histórico de utilização e de manutenção do equipamento. Os registros são
+// preservados; os cálculos usam a leitura/manutenção mais recente.
+db.Equipamento.hasMany(db.HorimetroEquipamento, { foreignKey: "id_equipamento", as: "horimetros", onDelete: "RESTRICT" })
+db.HorimetroEquipamento.belongsTo(db.Equipamento, { foreignKey: "id_equipamento", as: "equipamento" })
+db.HorimetroEquipamento.belongsTo(db.Funcionario, { foreignKey: "id_funcionario", as: "responsavel" })
+db.Equipamento.hasMany(db.ManutencaoEquipamento, { foreignKey: "id_equipamento", as: "manutencoes", onDelete: "RESTRICT" })
+db.ManutencaoEquipamento.belongsTo(db.Equipamento, { foreignKey: "id_equipamento", as: "equipamento" })
+db.ManutencaoEquipamento.belongsTo(db.Funcionario, { foreignKey: "id_funcionario", as: "responsavel" })
 
 // Saída
 db.Saida.belongsTo(db.Almoxarifado, { foreignKey: "cod_almoxarifado_origem", as: "almoxarifadoOrigem" })

@@ -60,6 +60,8 @@ import ProdutoEdit from "./pages/produtos/Edit"
 import EquipamentosList from "./pages/equipamentos/List"
 import EquipamentoForm from "./pages/equipamentos/Form"
 import EquipamentoEdit from "./pages/equipamentos/Edit"
+import ManutencaoList from "./pages/manutencao/List"
+import ManutencaoDetalhes from "./pages/manutencao/Detalhes"
 
 function App() {
   // Modo do tema, persistido no navegador (mantém a escolha ao recarregar).
@@ -152,6 +154,8 @@ function App() {
               {/* Rotas Equipamentos */}
               <Route path="/equipamentos" element={<RequireModule modulo="equipamentos"><EquipamentosList /></RequireModule>} />
               <Route path="/equipamentos/cadastro" element={<RequireModule modulo="equipamentos" acao="editar"><EquipamentoForm /></RequireModule>} />
+              <Route path="/equipamentos/manutencao" element={<RequireModule modulo="equipamentos"><ManutencaoList /></RequireModule>} />
+              <Route path="/equipamentos/:id/manutencao" element={<RequireModule modulo="equipamentos"><ManutencaoDetalhes /></RequireModule>} />
               <Route path="/equipamentos/:id/editar" element={<RequireModule modulo="equipamentos" acao="editar"><EquipamentoEdit /></RequireModule>} />
             </Route>
 

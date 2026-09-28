@@ -96,6 +96,7 @@ export default function EquipamentosList() {
         loading={loading}
         onCreate={() => navigate("/equipamentos/cadastro")}
         onEdit={(item) => navigate(`/equipamentos/${item.__id__}/editar`)}
+        onRowClick={(item) => navigate(`/equipamentos/${item.__id__}/manutencao`)}
         onInactivate={(item) => setSelecionado(item)}
         onSearch={() => carregarEquipamentos(filtros)}
         onClear={handleLimpar}

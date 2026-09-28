@@ -46,6 +46,9 @@ export default function ListTemplate({
   // Permite esconder só o botão "Novo" mantendo as demais ações (ex.: usuário
   // restrito a um almoxarifado, que pode editar o seu mas não criar outros).
   canCreate = true,
+  // Algumas listas são apenas painéis de consulta, embora o usuário tenha
+  // escrita no módulo. Permite ocultar a coluna de ações sem ocultar o resto.
+  showRowActions = true,
   // Customização opcional do botão destrutivo (padrão = Inativar):
   actionLabel = "Inativar",
   actionIcon = <BlockIcon fontSize="small" />,
@@ -53,6 +56,7 @@ export default function ListTemplate({
 }) {
   const { podeEditar } = useAuth();
   const canEdit = modulo ? podeEditar(modulo) : true;
+  const exibeAcoes = canEdit && showRowActions;
 
   const theme = useTheme();
   // No celular (xs) trocamos a tabela larga por cartões, que leem melhor numa
@@ -208,7 +212,7 @@ export default function ListTemplate({
                   </Box>
                 ))}
 
-                {canEdit && (
+                {exibeAcoes && (
                   <>
                     <Divider sx={{ my: 1 }} />
                     {renderAcoes(item)}
@@ -233,7 +237,7 @@ export default function ListTemplate({
                     {col}
                   </TableCell>
                 ))}
-                {canEdit && (
+                {exibeAcoes && (
                   <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 600 }}>
                     Ações
                   </TableCell>
@@ -244,7 +248,7 @@ export default function ListTemplate({
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + (canEdit ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                  <TableCell colSpan={columns.length + (exibeAcoes ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
                     Carregando registros...
                   </TableCell>
                 </TableRow>
@@ -260,7 +264,7 @@ export default function ListTemplate({
                     {columns.map((col, j) => (
                       <TableCell key={j}>{item[col]}</TableCell>
                     ))}
-                    {canEdit && (
+                    {exibeAcoes && (
                       <TableCell align="right">{renderAcoes(item)}</TableCell>
                     )}
                   </TableRow>
@@ -268,7 +272,7 @@ export default function ListTemplate({
               ) : (
                 // Mensagem quando não há dados — melhor UX que tabela vazia
                 <TableRow>
-                  <TableCell colSpan={columns.length + (canEdit ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
+                  <TableCell colSpan={columns.length + (exibeAcoes ? 1 : 0)} align="center" sx={{ py: 6, color: "text.secondary" }}>
                     {emptyMessage}
                   </TableCell>
                 </TableRow>

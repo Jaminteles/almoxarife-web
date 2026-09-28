@@ -213,6 +213,8 @@ CREATE TABLE Produto_Fornecedor (
 
 -- Script SQL para criação da tabela de Almoxarifado
 
+DROP TABLE IF EXISTS Manutencoes_Equipamento;
+DROP TABLE IF EXISTS Horimetros_Equipamento;
 DROP TABLE IF EXISTS Equipamentos;
 DROP TABLE IF EXISTS Endereco_Almoxarifado;
 CREATE TABLE Endereco_Almoxarifado (
@@ -282,6 +284,47 @@ CREATE TABLE Equipamentos (
         REFERENCES Almoxarifado(cod_almoxarifado)
         ON DELETE RESTRICT,
     INDEX idx_equipamentos_obra (obra_id)
+);
+
+-- Histórico de horímetro: nunca sobrescreve uma leitura anterior.
+CREATE TABLE Horimetros_Equipamento (
+    id_horimetro INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_equipamento INT UNSIGNED NOT NULL,
+    horimetro DECIMAL(14,2) UNSIGNED NOT NULL,
+    data_leitura DATE NOT NULL,
+    observacao TEXT NULL,
+    id_funcionario CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_horimetro_equipamento
+        FOREIGN KEY (id_equipamento) REFERENCES Equipamentos(id_equipamento)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_horimetro_funcionario
+        FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+        ON DELETE RESTRICT,
+    INDEX idx_horimetro_equipamento_data (id_equipamento, data_leitura)
+);
+
+-- Histórico de manutenções. A linha mais recente define a próxima revisão.
+CREATE TABLE Manutencoes_Equipamento (
+    id_manutencao INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_equipamento INT UNSIGNED NOT NULL,
+    data_manutencao DATE NOT NULL,
+    horimetro DECIMAL(14,2) UNSIGNED NOT NULL,
+    tipo VARCHAR(100) NOT NULL,
+    intervalo_horas DECIMAL(14,2) UNSIGNED NOT NULL,
+    observacao TEXT NULL,
+    id_funcionario CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_manutencao_equipamento
+        FOREIGN KEY (id_equipamento) REFERENCES Equipamentos(id_equipamento)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_manutencao_funcionario
+        FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+        ON DELETE RESTRICT,
+    INDEX idx_manutencao_equipamento_data (id_equipamento, data_manutencao)
 );
 
 DROP TABLE IF EXISTS Gestao_Almoxarifado;
